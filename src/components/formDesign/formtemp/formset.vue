@@ -94,30 +94,31 @@
 		    			</el-tab-pane>
 					</el-tabs>
 				</div> 					
-			
-				
+							
 				<div class="form-set " v-show="!mainset">
 					<div class="item-title">{{widgetobj.type}} - {{widgetobj.id}}</div>					
 					<div class="set-tool" v-if="getForm">						
 						 <el-tabs v-model="formSetActive" type="card">
 						 	<el-tab-pane label="配置" name="config">
-						    	<div  class="" style="padding-left: 20px;">
-									<span class="tool-lable">标签名：</span>
-									<div>
-										<el-input size="small" style='width: 200px;' v-model='widgetobj.label' @blur="setWidget('label')" ></el-input>	
-									</div>	
+						    	<div  class="" style="padding-left: 20px;" >
+									<span class="tool-lable">绑定标签：</span><br />
+									<el-input type='text' v-model = 'widgetobj.label' @blur = 'setWidget("label")'></el-input>
 								</div>
 						    	<div  class="" style="padding-left: 20px;" v-if='formConfig.bindData'>
 									<span class="tool-lable">绑定字段：</span><br />
-									<el-select style='width: 120px;' v-model="widgetobj.databind" clearable size='small' @change="setWidget('databind')">
+									<el-select style='width: 120px;' v-model="widgetobj.databind" clearable size='small' @change="setWidget('databind')" @visible-change = 'showBindField'>
 									    <el-option
-									      v-for="item in [{'value':'f1','label':'字段一'}]"
+									      v-for="item in fieldList"
 									      :key="item.value"
 									      :label="item.label"
 									      :value="item.value">
 									    </el-option>
 									</el-select>
-								</div> 						    	
+								</div> 	
+								<div  class="" style="padding-left: 20px;" v-if='widgetobj.option'>
+									<span class="tool-lable">选项列表：</span><br />
+									<el-input type='text' v-model = 'widgetobj.option' @blur = 'changeArr("option")'></el-input>
+								</div>
 						    </el-tab-pane>
 						    <el-tab-pane label="样式" name="style">
 								<div  class="tool-item">
@@ -146,7 +147,7 @@
 								</div>
 								<div  class="tool-item">
 									<span class="tool-lable">边框样式：</span>
-									<el-select style='width: 120px;' v-model="ostyle.borderStyle" size='small' placeholder="请选择" @change="drawing('borderStyle')">
+									<el-select style='width: 120px;' v-model="ostyle.borderStyle" size='small' placeholder="请选择" @change="drawing('borderStyle')"  @visible-change = 'showBorder'>
 									    <el-option
 									      v-for="item in [{'value': 'none','label': '无边框'}, {'value': 'solid','label': '实线'},{'value': 'dashed','label': '虚线'},{'value': 'dotted','label': '点线'}]"
 									      :key="item.value"
@@ -213,6 +214,7 @@
 		components:{},
 		data(){
 			return {
+				fieldList:[{'value':'f1','label':'字段一'}],
 				formSetActive:'config',
 				haspx:['height','width','lineHeight','fontSize','borderRadius','borderWidth','marginTop','marginLeft','marginBottom','marginRight','paddingTop','paddingBottom','paddingLeft','paddingRight'],				
 				mainActive:'first',
@@ -230,7 +232,10 @@
               		style:{
               			backgroundColor:'#FFF'
               		}
-              	}
+              	},
+              	// 选择框控制
+              	_showBindField: false,
+              	_showBorder:false
 			}
 		},
 		computed: {
@@ -254,9 +259,15 @@
 			},
 			showSetbox(oid){
 				this.mainset = false;			
-				console.log(this.getForm.widgetList);
-				this.widgetobj = this.getForm.widgetList['widget'+oid];
+//				console.log(this.getForm.widgetList);
+				debugger
+				this.widgetobj = this.deepCopy(this.getForm.widgetList['widget'+oid])
 				
+				var x= this.widgetobj.option.join(',');
+				debugger
+				console.log(this.widgetobj.option)
+				console.log(this.getForm.widgetList.widget1.option);
+				console.log(this.widgetobj.option.split(','))
 				// 处理样式
 				var ostyle = this.widgetobj.style;
 				for(let key in ostyle){
@@ -267,24 +278,63 @@
 				this.ostyle = ostyle;
 				
 			},
-			
+			deepCopy(p, c) {
+		　　　　var c = c || {};
+		　　　　for (var i in p) {
+		　　　　　　if (typeof p[i] === 'object') {
+		　　　　　　　　c[i] = (p[i].constructor === Array) ? [] : {};
+		　　　　　　　　this.deepCopy(p[i], c[i]);
+		　　　　　　} else {
+		　　　　　　　　　c[i] = p[i];
+		　　　　　　}
+		　　　　}
+		　　　　return c;
+			},
 			drawing(attr){
-				
+				if(attr == 'borderStyle' && !this._showBorder){
+					return;
+				}
 				let value=this.ostyle[attr] || '';
 				let oid = this.widgetobj.id || '';
 				if(this.haspx.includes(attr)){
 					value = this.ostyle[attr] +'px';
 				}
-				console.log(this.widgetobj.id,attr,value);				
+//				console.log(this.widgetobj.id,attr,value);				
 				this._changeStyle({oid,attr,value});
 				_Bus_.$emit('change-style',oid,attr,value);
 			},
-			setWidget(attr){
-				let value = this.widgetobj[attr] || '';
+			changeArr(attr){
+				this.widgetobj.option = this.widgetobj.option.split(',');
+				this.setWidget(attr);
+			},
+			setWidget(attr){		
 				let oid = this.widgetobj.id || '';
-				console.log(attr,value);
-				this._setWidget({oid,attr,value});				
-				_Bus_.$emit('change-set',oid,attr,value);				
+				let value = this.widgetobj[attr] || '';
+//				console.log(attr,value);
+				if(attr === 'option'){	
+					debugger
+					this._setWidget({oid,attr,value});	
+					_Bus_.$emit('change-set',oid,attr,value);						
+					return;
+				}else if(attr === 'databind'){
+					if (!this._showBindField) {
+						return;
+					}
+					this._setWidget({oid,attr,value});	
+					_Bus_.$emit('change-set',oid,attr,value);
+					return;
+				}else if(attr === 'label'){
+					this._setWidget({oid,attr,value});	
+					_Bus_.$emit('change-set',oid,attr,value);	
+					return;
+				}
+							
+			},
+			showBindField(isShow){
+				this._showBindField = isShow;
+			},
+			showBorder(isShow){
+				this._showBorder = isShow;
 			},
 			setDrag(attr){
 				let value = this.formConfig[attr];

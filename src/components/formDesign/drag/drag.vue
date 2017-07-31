@@ -15,18 +15,7 @@
                 > 
                 <slot :name="'slot'+index" ></slot>
                 <span title="缩放" class="resizeHandle" v-show="resizable" @mousedown="startResize($event,item,index)"></span>
-            	<span title="拖动" style="cursor: move;
-                	display: inline-block;
-                	height: 16px;
-                	width: 16px;
-           			box-sizing: border-box;
- 					background-color: rgba(102,204,255,0.5);
-                	position: absolute;
-                	z-index：99999;
-                	top: 0;
-                	left: 0;" 
-                	class="dragicon" v-show="draggable" @mousedown="startMove($event,item,index)" 
-                	>
+            	<span title="拖动" class="dragicon" v-show="draggable" @mousedown="startMove($event,item,index)" >
                 </span>
             </div>
        </div>     
@@ -63,7 +52,19 @@
 
        /* border: 1px dotted #BBBBBB;*/
         background-color: #fff;
-
+		.dragicon{
+			cursor: move;
+        	display: inline-block;
+        	height: 16px;
+        	width: 16px;
+   			box-sizing: border-box;
+			background-color: transparent;
+			border: 1px solid rgba(213,213,213,0.5);
+        	position: absolute;
+        	
+        	top: 0;
+        	left: 0;
+		}
         .resizeHandle
         {
             position: absolute;

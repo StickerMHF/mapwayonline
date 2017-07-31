@@ -4,3 +4,7 @@ export const getForm = (data) => {
 export const getLogin = (data) => {
 	return data.login;
 }
+
+export const render = (state) => {
+  return state.render;
+}

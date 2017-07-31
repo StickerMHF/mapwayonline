@@ -1,6 +1,6 @@
 <template>
 	<div id="formcontent">
-		<div style="border-bottom: 1px solid #BBBBBB;padding-bottom: 10px;background-color: #FFFFFF;">
+		<div style="display: none;border-bottom: 1px solid #BBBBBB;padding-bottom: 10px;background-color: #FFFFFF;">
 			<div>formcontent</div>
 			<button @click="addwidget('input')">添加一个input控件</button>
 			<button @click="getList">展示列表</button>
@@ -125,12 +125,13 @@
                 // 把新增的控价对象的属性和控件容器，绑定字段等数据存入控件对象，并用oid命名对象名
                	let wi = {                     	
                 	type:t,
+                	description:'',
                 	label:'the_label',
                 	id:vm.dragConfig.maxid,
                 	databind:'',                 
                 	style:{
                 		height:'30px',
-                		width:'250px',
+                		width:'200px',
                 		lineHeight:'30px',
                 		backgroundColor:'#FFF',
                 		fontSize:'14px',
@@ -139,13 +140,68 @@
                 		borderWidth:'1px',
                 		borderColor:'#eee',
                 		borderRadius:'0',
-                		marginTop:'15px',
+                		marginTop:'0',
                 		marginLeft:'0',               	
                 		paddingTop:'0',               	
                 		paddingLeft:'0'              	
                 	}
                 }
-                vm._addWidget(wi);  
+                // 这里是根据不同的控件，添加不同的控件需要的属性，还有属性的过滤
+				switch (t){
+					case 'select':
+						wi.option = ['选项一','选项二','选项三'];
+						wi.style.width = '150px';
+						wi.description = '下拉选择框';
+						break;
+					case 'input_checkbox':
+						wi.option = ['选项一','选项二','选项三'];
+						wi.description = '复选框';
+						break;
+					case 'input_radio':
+						wi.option = ['选项一','选项二','选项三'];
+						wi.description = '单选框';
+						break;
+					case 'textarea':
+						wi.style.height = '70px';
+						wi.description = '文本域';
+						break;	
+					case 'button':
+						wi.style.width = '70px';
+						wi.description = '按钮';
+						break;
+					case 'input_text':
+						wi.style.width = '150px';	
+						wi.description = '文本框';
+						break;	
+					case 'input_password':
+						wi.style.width = '150px';
+						wi.description = '密码框';
+						break;	
+					case 'input_file':
+						wi.style.width = '150px';	
+						wi.description = '文件上传';
+						break;
+					case 'h1':
+						wi.style.width = '250px';
+						wi.description = '标题';
+						break;	
+					case 'p':
+						wi.style.width = '200px';
+						wi.style.height = '70px';
+						wi.description = '段落';
+						break;
+					case 'img':
+						wi.style.width = '150px';
+						wi.style.height = '200px';
+						wi.description = '图片';
+						break;					
+					default:
+						break;
+				}
+
+
+				vm._addWidget(wi);  // 最后把该控件的数据，添加到vuex中。
+				
             	gridster.$nextTick(function () {
                    	// 添加对应得控件
                    	var widget = vm.$refs['widget' + (vm.myList.length - 1)][0];
@@ -153,20 +209,45 @@
 
                    	// 为控件容器中添加内容                  
                    	widget.innerHTML= `
-                   			<span class='label'>`+wi.label+`</span>
-                   			<span class='type'>`+t+'-'+vm.dragConfig.maxid+`</span>            			
+							<i class='icon'></i>
+							<span class='label'></span> 
+                   			<span class='type'>`+wi.description+'-'+vm.dragConfig.maxid+`</span>            			
                 		`
                    	for(var key in ostyle){
                    		widget.style[key] = ostyle[key];
                    		widget.setAttribute('class','widget'+ vm.dragConfig.maxid+' widget')
                    	}
-                   	let label = widget.getElementsByClassName('label')[0];
-                   	label.style.display = 'inline-block';
-                   	label.style.paddingRight = '6px';
-                   	label.style.borderRight = '1px solid #eee';
+                   	
+                   	let icon = widget.getElementsByClassName('icon')[0];
+                   	$(icon).css({
+                   		'display':'inline-block',
+                   		'width':'14px',
+                   		'height':'14px'                 		
+                   	})
+               /*    	
+                   	let type = widget.getElementsByClassName('type')[0];
+                   	$(type).css({
+                   		'width' : 'calc(100% - 90px)',
+                   		'display' : 'inline-block',
+                   		'box-sizing': 'border-box',
+                   	})
+                   	$(label).css({
+                   		'display':'inline-block',
+                   		'width': '90px',
+                   		'box-sizing': 'border-box',
+                   		'border':'1px solid #bbb',
+                   		'height':'28px'
+                   	})
+                */
+					$('.dragHandle').hover(function(){
+		            	$(this).children('.tool').css({'display':'inline-block'});
+		           },function(){
+		            	$(this).children('.tool').css({'display':'none'});
+		            })
                    	
                 })
 //          	console.log(vm.widgetInstanceBox,vm.myList)
+				
             },
             
             // 删除对应的控件
@@ -223,18 +304,19 @@
             		that.addwidget(type);
             	})
         		_Bus_.$on('change-style',function(id,attr,value){
-        			let w = that.$refs['cyGridster'].$el.getElementsByClassName('widget'+id)[0];	
+        			let w = that.$refs['cyGridster'].$el.getElementsByClassName('widget'+id)[0];
+        			console.log(w.getElementsByClassName('type')[0])
         			w.style[attr] = value;
         		});
         		_Bus_.$on('change-set',function(id,attr,value){
-        			let label = that.$refs['cyGridster'].$el.getElementsByClassName('widget'+id)[0].getElementsByClassName('label')[0];	
+        			let icon = that.$refs['cyGridster'].$el.getElementsByClassName('widget'+id)[0].getElementsByClassName('icon')[0];	
         			if(attr == 'label'){
-        				label.innerText = value;
+        				that.$refs['cyGridster'].$el.getElementsByClassName('widget'+id)[0].getElementsByClassName('label')[0].innerText = value ;
         			}else if(attr == 'databind'){
         				if(value == ''){
-        					label.setAttribute('class','label');
+        					icon.setAttribute('class','icon');
         				}else{
-        					label.setAttribute('class','label el-icon-circle-check')
+        					icon.setAttribute('class','icon el-icon-circle-check')
         				}
         			}
         		});
@@ -256,10 +338,7 @@
 		            	},100)
 					}
 				}
-				
-				
-				
-				
+						
 			},
             // 屏幕适配
             initdrag(t,cb){
@@ -297,6 +376,8 @@
 	                if(typeof cb == 'function'){
 	                	cb();
 	                }
+	                
+            
 	            })
             },  
             
@@ -309,6 +390,8 @@
 	                _.forEach(that.myList, function (item, index) {
 	                 	// 这里给每一个已经保存好的控件按要求渲染出来 
 	                   
+	                   
+	                   
 	                });
 	            })				
 	            gridster.init();
@@ -317,6 +400,7 @@
         },      
         created() {  	
         	
+        /*	
         	this.$http.get('http://localhost/fz/json.php').then((res)=>{
         		var data = res.data[0];
         		console.log(data);
@@ -328,12 +412,14 @@
         			name:'widgetList',
         			data:data.widgetList
         		})
-        		this.dragBase = data.dragBase;
+        		this.dragConfig = data.dragBase;
         		this.myList = data.layout;
      		
         	}).catch((err)=>{
         		console.log(err)
         	})
+        	
+        */	
         	 // console.log(this.oid);根据路由传递的oid（数据的id）来判断是否为二次编辑并取出该数据或者建立一个空的模板
         	if(this.oid == 'new'){
         		console.log('新建form模板');
@@ -386,6 +472,7 @@
 			box-shadow:6px 6px 5px #888888;
 			background-color: #FFFFFF;			
 			margin: 0 auto;
+			text-align: left;
 		}
 	}
 	
@@ -397,7 +484,8 @@
 	margin: 0 auto;	
 	/*padding: 20px 15px 10px !important;*/
 	height: 100%;
-	border: 1px dashed #C0C0C0;	
+	border: 1px #FFFFFF dashed;
+	border-bottom: 1px dashed #C0C0C0;	
 	&:hover{
 		border: 1px dashed chartreuse;	
 	}

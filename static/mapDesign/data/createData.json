@@ -1,0 +1,4 @@
+{
+  "name": "New Dataset",
+  "schema": [{"name":"text_0454","alias":"text 0","type":"string","nullable":true,"default":null,"visible":true,"editable":true}]
+}

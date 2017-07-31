@@ -1,9 +1,8 @@
 <template>
-	<div id="form-index">
-		
-		<h2>表格列表</h2>
-		
 	
+	<div id="form-index">
+		<ContentLeft></ContentLeft>
+		
 		<el-button @click="editForm('new')">新建表</el-button>
 		<ul>
 			<li>
@@ -21,9 +20,10 @@
 </template>
 
 <script>
+import ContentLeft from './ContentLeft.vue';
 	export default {
 		name:'form-index',
-		components:{},
+		components:{ContentLeft},
 		data(){
 			return {
 				formPath:'/formDesign/init/'
@@ -35,18 +35,23 @@
 			editForm(oid){				
 				this.$router.push(this.formPath+oid);
 				console.log(this.formPath+oid)
+				
 			}
 		},
 		created(){
 			
 		},
 		mounted(){
-			
+			this.$Tools.html2images(document.getElementById("nav-bar"),function(canvas){
+					var imageData = canvas.toDataURL(1);
+				});
 		}
 	}
 </script>
 
 <style scoped>
-
+#form-index{
+	height: 100%;
+}
 
 </style>

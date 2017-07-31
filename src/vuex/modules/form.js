@@ -29,8 +29,10 @@ export default {
 		CHANGE_STYLE(state,obj){	
 			state.widgetList['widget'+ obj.oid].style[obj.attr] = obj.value;
 		},
-		SET_WIDGET(state,obj){
+		SET_WIDGET(state,obj){	
+			debugger
 			state.widgetList['widget'+ obj.oid][obj.attr] = obj.value;
+			
 		},
 		SET_DRAG(state,obj){
 			state.formConfig[obj.attr] = obj.value;

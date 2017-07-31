@@ -1,0 +1,41 @@
+{
+  "style": [
+    {
+      "opacity": "0.9",
+      "outline-color": "#ffffff",
+      "zoom_level_min": "0",
+      "outline-opacity": "1",
+      "color": "#DD1C77",
+      "type": "point",
+      "zoom_level_max": "22",
+      "filter": "\"ogc_fid\" <= 85",
+      "filter_hash": "78dc707b",
+      "outline-size": "1",
+      "size": "11"
+    },
+    {
+      "opacity": "0.9",
+      "outline-color": "#ffffff",
+      "zoom_level_min": "0",
+      "outline-opacity": "1",
+      "color": "#C994C7",
+      "type": "point",
+      "zoom_level_max": "22",
+      "filter": "\"ogc_fid\" > 85 AND \"ogc_fid\" <= 169",
+      "outline-size": "1",
+      "size": "11"
+    },
+    {
+      "opacity": "0.9",
+      "outline-color": "#ffffff",
+      "zoom_level_min": "0",
+      "outline-opacity": "1",
+      "color": "#E7E1EF",
+      "type": "point",
+      "zoom_level_max": "22",
+      "filter": "\"ogc_fid\" > 169",
+      "outline-size": "1",
+      "size": "11"
+    }
+  ]
+}

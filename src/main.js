@@ -6,19 +6,27 @@ import router from './router'
 import store from './vuex'
 Vue.config.productionTip = false
 
-//  导入element-ui
+// 导入element-ui
 import ElementUI from 'element-ui'
 import 'element-ui/lib/theme-default/index.css'
 Vue.use(ElementUI)
 
-//  导入vue2.0中ajax模块
-import axios from './utils/http'
-Vue.prototype.$http = axios;
+// 导入font-awesome
+import 'font-awesome/css/font-awesome.css'
 
+// 导入vue2.0中ajax模块
+import axios from './utils/http'
+import Tools from './utils/utils'
+Vue.prototype.$http = axios;
+Vue.prototype.$Tools = Tools;
+
+// 导入VueBus（事件总线）
+import VueBus from 'vue-bus';
+Vue.use(VueBus);
 
 // 全局导航钩子
 router.beforeEach((to, from, next) => {
-	
+
   if (to.meta.requireAuth) {
   // console.log(isEmptyObject(store.state.user))
   if(store.getters.getLogin.user!=null&&!isEmptyObject(store.getters.getLogin.user.userinfo.username)) {
@@ -35,7 +43,6 @@ else {
   next();
 }
 })
-
 
 function isEmptyObject(obj) {
   for (var key in obj) {

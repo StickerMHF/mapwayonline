@@ -1,0 +1,26 @@
+{
+  "count": 2,
+  "data": {
+    "features": [{
+      "type": "Feature",
+      "properties": {
+        "name": "西安",
+        "wuran": 10
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [108, 34]
+      }
+    }, {
+      "type": "Feature",
+      "properties": {
+        "name": "北京",
+        "wuran": 1000
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [116, 39]
+      }
+    }]
+  }
+}

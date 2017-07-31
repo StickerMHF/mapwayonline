@@ -1,0 +1,24 @@
+{
+  "count": 2,
+  "limit": 50,
+  "columns": [
+    {
+      "type": "string",
+      "name": "name"
+    },
+    {
+      "type": "string",
+      "name": "id"
+    }
+  ],
+  "data": [
+    {
+      "name": "北京",
+      "id": "beijing"
+    },
+    {
+      "name": "西安",
+      "id": "xi'an"
+    }
+  ]
+}

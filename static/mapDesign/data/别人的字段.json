@@ -1,0 +1,53 @@
+{
+  "schema": [
+    {
+      "name": "text_0",
+      "alias": "\u57ce\u5e02",
+      "default": "haha41",
+      "nullable": true,
+      "editable": false,
+      "visible": false,
+      "max_length": 7,
+      "type": "string"
+    },
+    {
+      "name": "number_1",
+      "nullable": true,
+      "default": null,
+      "max_value": null,
+      "min_value": null,
+      "editable": true,
+      "visible": true,
+      "alias": "number 1",
+      "type": "integer"
+    },
+    {
+      "name": "decimal_2",
+      "nullable": true,
+      "default": null,
+      "max_value": null,
+      "min_value": null,
+      "editable": true,
+      "visible": true,
+      "alias": "decimal 2",
+      "type": "float"
+    },
+    {
+      "name": "wkb_geometry",
+      "alias": "wkb geometry",
+      "geometry_type": "polyline",
+      "nullable": false,
+      "editable": true,
+      "visible": true,
+      "type": "geometry"
+    },
+    {
+      "name": "amigo_id",
+      "nullable": false,
+      "default": "GENERATE_UUID",
+      "auto_populate": true,
+      "max_length": 32,
+      "type": "string"
+    }
+  ]
+}

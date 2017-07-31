@@ -1,0 +1,20 @@
+{
+  "status": "success",
+  "maps": [
+    {
+      "name": "我的点",
+      "img": "http://www.gbtags.com/gb/laitu/1000/222222/ffffff",
+      "id": 0
+    },
+    {
+      "name": "我的线",
+      "img": "http://www.gbtags.com/gb/laitu/1000/222222/ffffff",
+      "id": 1
+    },
+    {
+      "name": "我的面",
+      "img": "http://www.gbtags.com/gb/laitu/1000/222222/ffffff",
+      "id": 2
+    }
+  ]
+}

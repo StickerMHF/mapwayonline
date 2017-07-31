@@ -21,7 +21,6 @@
 							<div class="forget" v-on:click="toForget">忘记密码</div>
 							<div class="register" v-on:click="toRegister">用户注册</div>
 						</div>
-						</el-form>
 					</div>
 					<div class="box_forget lbox" id="box_forget">
 						<h3>忘记密码</h3>
@@ -107,7 +106,7 @@
 			}
 		},
 		beforeUpdate(){
-			
+
 		},
 		mounted() {
 			var _this=this;
@@ -121,7 +120,7 @@
 		created() {
 			this.loginurl = this.$http.defaults.baseURL + this.loginurl;
 			console.log(this.loginurl);
-			
+
 			//debugger
 		},
 		methods: {
@@ -130,8 +129,9 @@
 				'setUserInfo'
 			]),
 			login() {
+				this.$router.replace('/index');
 				//this.setUserName(this.loginForm.username);
-
+				/*
 				var param = "data=" + JSON.stringify(this.loginForm);
 				this.$http.post(this.loginurl, param).then((res) => {
 					if(res.data.result){
@@ -141,6 +141,7 @@
 						console.info(res)
 					}
 				});
+				*/
 				//this.$router.push('/user/' + this.loginForm.username);
 			},
 			signUp() {
@@ -217,12 +218,12 @@
 						this.points.push(p);
 					}
 				}
-				
+
 				//assign a circle to each point
 								for(var i in this.points) {
 									var c = new this.Circle(this.points[i], 2 + Math.random() * 2, 'rgba(255,255,255,0.3)');
 									this.points[i].circle = c;
-									debugger
+
 								}
 			},
 			initstar(){
@@ -258,7 +259,7 @@
 				}
 				console.timeEnd("each point")
 
-				 
+
 			},
 			// Event handling
 			addListeners() {
