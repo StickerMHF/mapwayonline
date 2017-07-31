@@ -42,4 +42,11 @@
 	padding: 23px 18px 22px 18px;
     line-height: 22px;
 }
+.cl_head h2{
+	float: left;
+    font-size: 14px;
+    margin-right: 10px;
+    font-weight: bold;
+    color: #333;
+}
 </style>
