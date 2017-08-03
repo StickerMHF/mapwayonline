@@ -6,7 +6,7 @@
     <ul class="nav-list">
       <el-tooltip class="item" effect="dark" content="数据中心" placement="right">
         <li class="nav-item">
-          <router-link to='/formDesign'>
+          <router-link to='/datacenter'>
             <i class="nav_data nav_img"></i>
           </router-link>
         </li>
@@ -60,7 +60,7 @@
   export default {
     name: 'navBar',
     components: {},
-    data() {
+    data () {
       return {
 
       }
@@ -73,11 +73,11 @@
     methods: {
 
     },
-    created() {
+    created () {
 
     },
-    mounted() {
-      console.log(this.getLogin.userInfo)
+    mounted () {
+      //console.log(this.getLogin.userInfo);
     }
   }
 </script>

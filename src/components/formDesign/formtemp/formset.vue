@@ -74,6 +74,11 @@
 									    <el-radio label="suit" >自适应</el-radio>
 									</el-radio-group>
 								</div>
+								<div class="tool-item">
+									<span class="tool-lable">画布背景：</span>									
+									<el-color-picker v-model="formConfig.style.backgroundColor" @change = "setDrag('backgroundColor')" show-alpha></el-color-picker>						
+									
+								</div>
 								
 							</div>	
 						</el-tab-pane>
@@ -117,7 +122,7 @@
 								</div> 	
 								<div  class="" style="padding-left: 20px;" v-if='widgetobj.option'>
 									<span class="tool-lable">选项列表：</span><br />
-									<el-input type='text' v-model = 'widgetobj.option' @blur = 'changeArr("option")'></el-input>
+									<el-input type='text' v-model = 'widgetobj.option' @blur = 'setWidget("option")'></el-input>
 								</div>
 						    </el-tab-pane>
 						    <el-tab-pane label="样式" name="style">
@@ -222,17 +227,7 @@
 				widgetobj:{ },
               	ostyle:{},
               	userDataList:[{'value': '4','label': '4'}, {'value': '3','label': '3'},{'value': '2','label': '2'},{'value': '1','label': '1'}],
-              	formConfig:{
-              		name:'',
-              		description:'',
-              		isApp:true,
-              		bindData:'4',
-              		dataId:'',
-              		layout:'wide',
-              		style:{
-              			backgroundColor:'#FFF'
-              		}
-              	},
+              	formConfig:{},
               	// 选择框控制
               	_showBindField: false,
               	_showBorder:false
@@ -247,7 +242,8 @@
 			...mapActions([
 				'_changeStyle',
 				'_setWidget',
-				'_setDrag'
+				'_setDrag',
+				'_setDragStyle'
 				
 			]),
 			initEvent(){
@@ -259,15 +255,8 @@
 			},
 			showSetbox(oid){
 				this.mainset = false;			
-//				console.log(this.getForm.widgetList);
-				debugger
-				this.widgetobj = this.deepCopy(this.getForm.widgetList['widget'+oid])
-				
-				var x= this.widgetobj.option.join(',');
-				debugger
-				console.log(this.widgetobj.option)
-				console.log(this.getForm.widgetList.widget1.option);
-				console.log(this.widgetobj.option.split(','))
+//				console.log(this.getForm.widgetList);			
+				this.widgetobj = this.getForm.widgetList['widget'+oid];	
 				// 处理样式
 				var ostyle = this.widgetobj.style;
 				for(let key in ostyle){
@@ -277,18 +266,6 @@
 				}
 				this.ostyle = ostyle;
 				
-			},
-			deepCopy(p, c) {
-		　　　　var c = c || {};
-		　　　　for (var i in p) {
-		　　　　　　if (typeof p[i] === 'object') {
-		　　　　　　　　c[i] = (p[i].constructor === Array) ? [] : {};
-		　　　　　　　　this.deepCopy(p[i], c[i]);
-		　　　　　　} else {
-		　　　　　　　　　c[i] = p[i];
-		　　　　　　}
-		　　　　}
-		　　　　return c;
 			},
 			drawing(attr){
 				if(attr == 'borderStyle' && !this._showBorder){
@@ -301,32 +278,23 @@
 				}
 //				console.log(this.widgetobj.id,attr,value);				
 				this._changeStyle({oid,attr,value});
+				
 				_Bus_.$emit('change-style',oid,attr,value);
 			},
-			changeArr(attr){
-				this.widgetobj.option = this.widgetobj.option.split(',');
-				this.setWidget(attr);
-			},
 			setWidget(attr){		
+				// 这里的value有个错误 
 				let oid = this.widgetobj.id || '';
 				let value = this.widgetobj[attr] || '';
 //				console.log(attr,value);
-				if(attr === 'option'){	
-					debugger
-					this._setWidget({oid,attr,value});	
-					_Bus_.$emit('change-set',oid,attr,value);						
-					return;
-				}else if(attr === 'databind'){
+				if(attr === 'databind'){
 					if (!this._showBindField) {
 						return;
 					}
 					this._setWidget({oid,attr,value});	
-					_Bus_.$emit('change-set',oid,attr,value);
-					return;
-				}else if(attr === 'label'){
+					_Bus_.$emit('change-set',oid,attr,value);					
+				}else{
 					this._setWidget({oid,attr,value});	
-					_Bus_.$emit('change-set',oid,attr,value);	
-					return;
+					_Bus_.$emit('change-set',oid,attr,value);					
 				}
 							
 			},
@@ -337,19 +305,44 @@
 				this._showBorder = isShow;
 			},
 			setDrag(attr){
-				let value = this.formConfig[attr];
-				this._setDrag({attr,value});
 				
-				if(attr == 'layout'){
+				
+				if(['layout', 'bindData','isApp'].indexOf(attr) < 0){
+					if(attr === 'backgroundImage'){
+						console.log('背景图片');
+						// ...
+						return;
+					}
+					let value = this.formConfig.style[attr];
+					this._setDragStyle({attr,value});
 					_Bus_.$emit('set-drag',attr,value);
+				}else{
+					let value = this.formConfig[attr];
+					this._setDrag({attr,value});
 				}
 				
 				
+			},
+			cloneObj(obj){  // 深拷贝
+			    var str, newobj = obj.constructor === Array ? [] : {};
+			    if(typeof obj !== 'object'){
+			        return;
+			    } else if(window.JSON){
+			        str = JSON.stringify(obj), //系列化对象
+			        newobj = JSON.parse(str); //还原
+			    } else {
+			        for(var i in obj){
+			            newobj[i] = typeof obj[i] === 'object' ? 
+			            this.cloneObj(obj[i]) : obj[i]; 
+			        }
+			    }
+			    return newobj;
 			}
 		},
 		created(){
 			this.initEvent();
-			
+			this.formConfig =this.cloneObj(this.getForm.formConfig);
+			console.log(this.formConfig)
 		},
 		mounted(){			
 			

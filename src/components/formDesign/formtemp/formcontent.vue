@@ -20,15 +20,13 @@
 					
 					>
 					<template v-for="(item,index) in myList" :slot="'slot'+index">
-						<div class="dragHandle" 
-							
-							>
+						<div class="dragHandle">
 							<div class="tool">								
 								<span title="删除" @click="deleteItem(index)" class="tool-icon icon-del">&times;</span> 
 								<span title="编辑" @click="editor(index)" class="editor tool-icon">&cong;</span>
 							</div>
 							
-		                    <div :ref="'widget'+index" ></div>
+		                    <div  :ref="'widget'+index" ></div>
 		               </div>					
 					</template>	
 				</drag-box>		
@@ -149,16 +147,16 @@
                 // 这里是根据不同的控件，添加不同的控件需要的属性，还有属性的过滤
 				switch (t){
 					case 'select':
-						wi.option = ['选项一','选项二','选项三'];
+						wi.option = "选项一,选项二,选项三"
 						wi.style.width = '150px';
 						wi.description = '下拉选择框';
 						break;
 					case 'input_checkbox':
-						wi.option = ['选项一','选项二','选项三'];
+						wi.option = "选项一,选项二,选项三"
 						wi.description = '复选框';
 						break;
 					case 'input_radio':
-						wi.option = ['选项一','选项二','选项三'];
+						wi.option ="选项一,选项二,选项三"
 						wi.description = '单选框';
 						break;
 					case 'textarea':
@@ -198,8 +196,7 @@
 					default:
 						break;
 				}
-
-
+				
 				vm._addWidget(wi);  // 最后把该控件的数据，添加到vuex中。
 				
             	gridster.$nextTick(function () {
@@ -246,8 +243,7 @@
 		            })
                    	
                 })
-//          	console.log(vm.widgetInstanceBox,vm.myList)
-				
+//          	console.log(vm.widgetInstanceBox,vm.myList)				
             },
             
             // 删除对应的控件
@@ -327,9 +323,10 @@
             },
             setDrag(attr,value){
 				console.log(attr,value);
-				var that = this ;
+				var that = this;
 				let gridster = that.$refs['cyGridster']; //获取gridster实例
-				if(attr == 'layout'){					
+				
+				if(attr === 'layout'){					
 					that.initdrag(value,gridster.init);									
 					window.onresize = function(){
 						setTimeout(function(){
@@ -337,6 +334,9 @@
 		            				            		
 		            	},100)
 					}
+				}else{
+					console.log(document.getElementById('drag-area'));
+					document.getElementById('drag-area').style[attr] = value;
 				}
 						
 			},

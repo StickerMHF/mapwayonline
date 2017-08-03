@@ -9,14 +9,16 @@ export default {
 	  		dataId:'',
 	  		layout:'wide',
 	  		style:{
-	  			backgroundColor:'#FFF'
+	  			backgroundColor:'#FFFFFF',
+	  			backgroundImage:'',
+	  			backgroundPosition:'over',
+	  			backgroundRepeat:'no-repeat',
 	  		}
 		},
 		
 	},
 	mutations:{
 		UPDATA(state,obj) {
-//			console.log(arguments);
 			state[obj.name]= obj.data;
 		},
 		ADD_WIDGET (state, widget) {
@@ -30,12 +32,13 @@ export default {
 			state.widgetList['widget'+ obj.oid].style[obj.attr] = obj.value;
 		},
 		SET_WIDGET(state,obj){	
-			debugger
-			state.widgetList['widget'+ obj.oid][obj.attr] = obj.value;
-			
+			state.widgetList['widget'+ obj.oid][obj.attr] = obj.value;	
 		},
 		SET_DRAG(state,obj){
 			state.formConfig[obj.attr] = obj.value;
+		},
+		SET_DRAGSTYLE(state,obj){
+			state.formConfig.style[obj.attr] = obj.value;
 		}
 	},
 	actions:{
@@ -53,6 +56,9 @@ export default {
 		},
 		_setDrag({commit},obj){
 			commit('SET_DRAG',obj);	
+		},
+		_setDragStyle({commit},obj){
+			commit('SET_DRAGSTYLE',obj);	
 		},
 		_upData({commit},obj){
 			commit('UPDATA',obj);	

@@ -16,7 +16,7 @@
         <div class="setLine">
           <el-button-group>
             <el-button type="primary" icon="minus" @click="labelSizeMinus"></el-button>
-            <el-input class="render-input" style="float: left;"  v-model="label.size"></el-input>
+            <el-input class="render-input" style="float: left;"  v-model="label.size" @blur="labelSizeBlur($event)"></el-input>
             <el-button type="primary" icon="plus" @click="labelSizePlus"></el-button>
           </el-button-group>
 
@@ -41,7 +41,10 @@
           fields: [],
           value: "",
           color: '#000',
-          size: 12
+          size: 12,
+          min: 12,
+          max: 50,
+          step: 1,
         },
         labelFieldShow: false,
         labelSet: false
@@ -100,7 +103,10 @@
           fields: [],
           value: "",
           color: '#000',
-          size: 12
+          size: 12,
+          min: 12,
+          max: 50,
+          step: 1,
         };
       },
 
@@ -123,36 +129,59 @@
         this.$bus.$emit('label-change', this.label);
       },
 
-      labelSizeMinus () {
-        if (!this.label.value) {
-          this.$message({
-            showClose: true,
-            message: '请先选择标注字段',
-            type: 'warning'
-          });
-          return;
-        }
-
-        if (this.label.size - 1 === 10) {
-          this.label.size = 10;
-        } else {
-          this.label.size -= 1;
-        }
+      labelChange () {
         this.$bus.$emit('label-change', this.label);
       },
 
-      labelSizePlus () {
-        if (!this.label.value) {
+      labelSizeMinus () {
+        if (this.label.size - 1 === this.label.min + 1) {
+          this.label.size = this.label.min;
+        } else {
+          this.label.size -= 1;
+        }
+        this.labelChange();
+      },
+
+      labelSizeBlur (e) {
+        var obj = e.srcElement ? e.srcElement:e.target, value = Number(obj.value);
+        if (!Tool.isNumber(value)) {
           this.$message({
             showClose: true,
-            message: '请先选择标注字段',
-            type: 'warning'
+            message: '请输入正确的数字',
+            type: 'error'
           });
           return;
         }
 
-        this.label.size += 1;
-        this.$bus.$emit('label-change', this.label);
+        if (value < this.label.min) {
+          this.$message({
+            showClose: true,
+            message: '允许输入的最小值为' + this.label.min,
+            type: 'error'
+          });
+          return;
+        }
+
+        if (value > this.label.max) {
+          this.$message({
+            showClose: true,
+            message: '允许输入的最大值为' + this.label.max,
+            type: 'error'
+          });
+          return;
+        }
+
+        this.label.size = value;
+        this.labelChange();
+      },
+
+      labelSizePlus () {
+        if (this.label.size + 1 === this.label.max + 1) {
+          this.label.size = this.label.min;
+        } else {
+          this.label.size += 1;
+        }
+        this.labelChange();
       },
 
       labelColorChange () {
@@ -166,7 +195,7 @@
           return;
         }
 
-        this.$bus.$emit('label-change', this.label);
+        this.labelChange();
       }
     }
   }

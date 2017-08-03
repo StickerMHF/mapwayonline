@@ -8,3 +8,7 @@ export const getLogin = (data) => {
 export const render = (state) => {
   return state.render;
 }
+
+export const edit = (state) => {
+  return state.edit;
+}

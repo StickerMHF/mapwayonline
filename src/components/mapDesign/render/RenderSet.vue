@@ -158,7 +158,7 @@
           if (res.data) {
             this.$message({
               showClose: true,
-              message: '保存成功',
+              message: '成功保存至数据库',
               type: 'success',
             });
           }

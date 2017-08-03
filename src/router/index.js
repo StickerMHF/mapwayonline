@@ -3,7 +3,6 @@ import Router from 'vue-router'
 import Index from '@/components/index.vue'
 import formDesign from '@/components/formDesign/index.vue'
 import chartDesign from '@/components/chartDesign/index.vue'
-import mapDesign from '@/components/mapDesign/index.vue'
 
 Vue.use(Router)
 
@@ -19,6 +18,16 @@ export default new Router({
           name:'main',
           meta: {requireAuth: false,}, // 添加该字段，表示进入这个路由是需要登录的
           component:res => require(['@/components/main.vue'],res)
+        },
+        {
+          path:'/datacenter',
+          component: res => require(['@/components/dataCenter/DataCenter.vue'], res),
+          meta: {requireAuth: false,}, // 添加该字段，表示进入这个路由是需要登录的
+        },
+        {
+          path:'/datacenter/:dataid/edit',
+          component: res => require(['@/components/dataCenter/edit/Edit.vue'], res),
+          meta: {requireAuth: false,}, // 添加该字段，表示进入这个路由是需要登录的
         },
         {
           path:'/formdesign',

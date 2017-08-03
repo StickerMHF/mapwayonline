@@ -2,18 +2,14 @@
  * Created by mhf on 2017/7/28.
  * http配置
  */
-
-
 import axios from 'axios'
-//import store from './store/store'
-//import * as types from './store/types'
-import router from '../router'
 
 // axios 配置
 axios.defaults.timeout = 5000;
-axios.defaults.baseURL = 'http://192.168.0.222:8082/mapwayonline/';
+axios.defaults.baseURL = 'http://192.168.0.116:8082/mapwayonline/';
 axios.defaults.headers.get['Content-Type'] = 'application/json;charset=utf-8';
 axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';
+
 //// http request 拦截器
 //axios.interceptors.request.use(
 //  config => {

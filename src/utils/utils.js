@@ -1,6 +1,6 @@
 import Vue from 'vue'
 //import html2canvas from './html2image/html2canvas.min.js'
-	require('./html2image/html2canvas.min.js');
+	require('./html2image/html2canvas.js');
 var Tools = {
 	data: {
 		message: 'Hello Vue!'

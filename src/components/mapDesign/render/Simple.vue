@@ -232,7 +232,7 @@
           return;
         }
 
-        if (value < 1) {
+        if (value < this.renderSet.fill.min) {
           this.$message({
             showClose: true,
             message: '允许输入的最小值为' + this.renderSet.fill.min,
@@ -241,10 +241,10 @@
           return;
         }
 
-        if (value > 10) {
+        if (value > this.renderSet.fill.max) {
           this.$message({
             showClose: true,
-            message: '允许输入的最大值为' + this.renderSet.fill.min,
+            message: '允许输入的最大值为' + this.renderSet.fill.max,
             type: 'error'
           });
           return;

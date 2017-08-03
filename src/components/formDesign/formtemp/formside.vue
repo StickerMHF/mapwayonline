@@ -55,11 +55,7 @@
 				_Bus_.$emit('add-widget',type);
 			}
 			
-				
 		
-			
-			
-			
 			
 		},
 		created(){

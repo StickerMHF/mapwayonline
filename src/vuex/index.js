@@ -4,6 +4,7 @@ import form from './modules/form'
 import * as getters from './getters'
 import login from './modules/login'
 import render from './modules/render'
+import edit from './modules/edit'
 
 Vue.use(Vuex)
 
@@ -13,7 +14,8 @@ export default new Vuex.Store({
 	modules: {
 		form,
 		login,
-    render
+    render,
+    edit,
 	},
 	strict: process.env.NODE_ENV !== 'production', //在非生产环境下，使用严格模式
 })
