@@ -23,16 +23,6 @@
           :total="pagetotal">
         </el-pagination>
 
-        <!--
-                      <el-row :gutter="10">
-                        <el-col :xs="6" :sm="6" :md="4" :lg="8" v-for="item in data_list" :key="item.name">
-                          <div style="cursor: pointer; margin: 15px 0; height: 100px;" @click.prevent="getName(item.id)">
-                            <img :src="item.img" alt="" style="height: 100px; width: 100px;">
-                            <div>{{ item.name }}</div>
-                          </div>
-                        </el-col>
-                      </el-row>
-                                        -->
       </el-tab-pane>
       <el-tab-pane label='新增数据' name='getDataSets' class='getDataSets'>
 
@@ -115,12 +105,16 @@
         // 获取用户数据集
         //var url = this.login.userName + this.data_url;
         var url = 'TBUSER000001' + this.data_url;
-        this.$http.get(url)
-          .then((res) => {
-            this.data_list = res.data.data;
-            this.pagetotal = this.data_list.length;
-          });
-
+        this.$http.get(url).then((res) => {
+          if (!res.data.data) {
+            console.log('后台返回数据为null');
+            return;
+          }
+          this.data_list = res.data.data;
+          this.pagetotal = this.data_list.length;
+          console.log(1)
+          //debugger
+        });
       },
       getName (id) {
         this.$router.push('/datacenter/' + id + '/edit');
@@ -133,6 +127,7 @@
   ul,li{
     list-style: none;
   }
+
   #app {
     font-family: 'Avenir', Helvetica, Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -140,9 +135,11 @@
     text-align: center;
     color: #2c3e50;
   }
+
   .tabs {
     padding: 40px 10%;
   }
+
   .tips{
     padding: 20px 0;
     background-color: #f9f9f9;

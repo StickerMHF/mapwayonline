@@ -9,9 +9,12 @@
     <el-row>
       <div class="fieldSetList">
         <el-form label-position="left" label-width="80px">
-          <el-form-item :label="key" v-for="val, key, index in edit.mViewProperties" :key="key">
-            <el-input v-model="val"></el-input>
+          <el-form-item :label="key" v-for="val, key, index in mViewProperties" :key="key">
+            <el-input :value="val | isNull" :disabled="editable(key)"></el-input>
           </el-form-item>
+          <!--<el-form-item :label="(val.name)" v-for="val in edit.schema" :key="val.name">
+            <el-input v-model="mViewProperties[val.name]"></el-input>
+          </el-form-item>-->
         </el-form>
       </div>
     </el-row>
@@ -31,42 +34,87 @@
 
 <script scoped>
   import { mapGetters, mapActions } from 'vuex'
+  import Tool from '@/components/tool.vue'
 
   export default {
     name: 'editset',
     data: function () {
-        return {
-
-        }
+      return {
+        mViewProperties: null,
+      }
     },
     computed: {
-        ...mapGetters([
-            'edit'
-        ])
+      ...mapGetters([
+        'edit'
+      ])
+    },
+    filters: {
+      isNull (val) {
+        if (!val) {
+          return 'Null';
+        }
+        return val;
+      },
     },
     mounted: function () {
-      console.log('editSet',this.edit)
+
+    },
+    created () {
+      console.log('editSet',this.edit);
+      //this.mViewProperties = Tool.clone(this.edit.mViewProperties);
+      console.log(this.mViewProperties)
+      //debugger
+      this.initEvent();
+      //debugger
     },
     methods: {
+      initEvent () {
+        this.$bus.on('m-v-property', (obj) => {
+          //debugger
+          this.mViewProperties = obj;
+        });
+      },
+
       handleSave: function () {
-        console.log('重置前this.edit',this.edit);
+        //console.log('重置前this.edit',this.edit);
         this.$bus.emit('reset-edit-state');
-        console.log('重置后this.edit',this.edit);
+        //console.log('重置后this.edit',this.edit);
         // TODO 将用户编辑好的属性信息上传至服务器
+
+      },
+
+      editable (key) {
+        var schema = this.edit.schema;
+        schema.some((item) => {
+          if (key === item.mapwayid) {
+            return true;
+          }
+        });
+      },
+
+      canNull (key) {
+        var schema = this.edit.schema;
+        schema.some((item) => {
+          if (key === item.name) {
+            if (item.notnull) {
+              return false;
+            }
+            return true;
+          }
+        });
       },
 
       handleDelete: function () {
-        this.$confirm('确认删除？')
-          .then(function () {
-            this.$message({
-              showClose: true,
-              message: '删除成功',
-              type: 'success'
-            });
-            this.$bus.emit('delete-feature');
-            this.$bus.emit('reset-edit-state');
-            //  TODO 重新请求数据刷新表格列表
-          }.bind(this));
+        this.$confirm('确认删除？').then(() =>  {
+          this.$message({
+            showClose: true,
+            message: '删除成功',
+            type: 'success'
+          });
+          this.$bus.emit('delete-feature');
+          this.$bus.emit('reset-edit-state');
+          //  TODO 重新请求数据刷新表格列表
+        });
       }
     }
   }

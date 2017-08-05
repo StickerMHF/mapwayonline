@@ -16,7 +16,7 @@
 			   			</div>
 			   			
 			   				<div class="form-set" > 
-			   						<form-set :oid = 'oid' :list = 'list'></form-set>		   						
+			   						<form-set :oid = 'oid'></form-set>		   						
 			   				</div>  				 			
 	   		</div>
    		</div>
@@ -44,20 +44,12 @@ export default {
   data () {
     return {     
       open:true,
-      oid:'',
-      list:{}
+      oid:''
+ 
     }
   },
   methods:{
-  		initData(){
-  			this.$http.get('TBUSER000001/formdesign/form/allform').then((res)=>{
-        	console.log('表',res.data[0]);       		
-     			this.list = res.data[0];
-        }).catch((err)=>{
-        		console.log(err)
-        });
-       
-  		},
+  		
 			initEvent(){
 				var that = this;
 				
@@ -66,7 +58,7 @@ export default {
 	},
 	created(){
 			this.initEvent();		
-			this.initData();
+
 			this.oid = this.$route.params.id;		
 	},
 	mounted(){

@@ -36,7 +36,7 @@
 								<div class="tool-item">
 									<span class="tool-lable">绑定表名：</span>
 									<div>
-										<el-select  style='width: 200px;'  v-model="formConfig.bindData"size='small' placeholder="请选择请选择" >
+										<el-select  style='width: 200px;' @change="setDrag('bindData')" v-model="formConfig.bindData"size='small' placeholder="请选择请选择" >
 										    <el-option
 										      v-for="item in userDataList"
 										      :key="item.value"
@@ -55,14 +55,16 @@
 								<div class="tool-item" v-if="!formConfig.isApp">
 									<span class="tool-lable">绑定数据ID：</span>
 									<div>
-										<el-select  style='width: 200px;'  v-model="formConfig.bindData" size='small' @change = "setDrag('bindData')" placeholder="请选择绑定表名" >
-										    <el-option
-										      v-for="item in userDataList"
-										      :key="item.value"
-										      :label="item.label"
-										      :value="item.value">
-										    </el-option>
-										</el-select>	
+										<el-autocomplete
+									      class="inline-input"
+									      v-model="selectDataId"
+									      :fetch-suggestions="querySearch"
+									      placeholder="请输入内容"
+									      :trigger-on-focus="false"
+									      <!--@select="handleSelect"-->
+									    ></el-autocomplete>
+										<el-button size="mini" @click = "setdataId">查询</el-button>
+										
 									</div>	
 								</div>
 								<div class="line"></div>
@@ -75,10 +77,14 @@
 									</el-radio-group>
 								</div>
 								<div class="tool-item">
-									<span class="tool-lable">画布背景：</span>									
+									<span class="tool-lable">画布背景色：</span>									
 									<el-color-picker v-model="formConfig.style.backgroundColor" @change = "setDrag('backgroundColor')" show-alpha></el-color-picker>						
 									
 								</div>
+								<div class="tool-item">
+									<span class="tool-lable">画布背景图：</span>																		
+								</div>
+								
 								
 							</div>	
 						</el-tab-pane>
@@ -90,12 +96,15 @@
 		    				</div>
 		    														
 		    			</el-tab-pane>
-		    			<el-tab-pane label="表" name="three">
-		    				<div class="table-list">
-		    					<div class="table-item" >
-		    						
+		    			<el-tab-pane label="  表  " name="three">
+		    			
+	    					<div class="table-list" v-if="userDataList">
+		    					<div class="table-item" v-for="item in userDataList" >
+		    						{{item.value}} - {{item.label}}
 		    					</div>
 		    				</div>
+		    			
+		    				
 		    			</el-tab-pane>
 					</el-tabs>
 				</div> 					
@@ -104,35 +113,14 @@
 					<div class="item-title">{{widgetobj.type}} - {{widgetobj.id}}</div>					
 					<div class="set-tool" v-if="getForm">						
 						 <el-tabs v-model="formSetActive" type="card">
-						 	<el-tab-pane label="配置" name="config">
-						    	<div  class="" style="padding-left: 20px;" >
-									<span class="tool-lable">绑定标签：</span><br />
-									<el-input type='text' v-model = 'widgetobj.label' @blur = 'setWidget("label")'></el-input>
-								</div>
-						    	<div  class="" style="padding-left: 20px;" v-if='formConfig.bindData'>
-									<span class="tool-lable">绑定字段：</span><br />
-									<el-select style='width: 120px;' v-model="widgetobj.databind" clearable size='small' @change="setWidget('databind')" @visible-change = 'showBindField'>
-									    <el-option
-									      v-for="item in fieldList"
-									      :key="item.value"
-									      :label="item.label"
-									      :value="item.value">
-									    </el-option>
-									</el-select>
-								</div> 	
-								<div  class="" style="padding-left: 20px;" v-if='widgetobj.option'>
-									<span class="tool-lable">选项列表：</span><br />
-									<el-input type='text' v-model = 'widgetobj.option' @blur = 'setWidget("option")'></el-input>
-								</div>
-						    </el-tab-pane>
-						    <el-tab-pane label="样式" name="style">
+						 							    <el-tab-pane label="样式" name="style">
 								<div  class="tool-item">
-									 <span class="tool-lable">高度(px)：</span>
-									 <el-input-number :step="5" size="small" v-model="ostyle.height" @change="drawing('height')" :min="20" :max='666'></el-input-number>
+									 <span class="tool-lable">高度(%)：</span>
+									 <el-input-number :step="5" size="small" v-model="ostyle.height" @change="drawing('height')" :min="20" :max='100'></el-input-number>
 								</div>
 								<div  class="tool-item">
-									<span class="tool-lable">宽度(px)：</span>
-									<el-input-number :step="5" size="small" v-model="ostyle.width" @change="drawing('width')" :min="20" :max='666'></el-input-number>												
+									<span class="tool-lable">宽度(%)：</span>
+									<el-input-number :step="5" size="small" v-model="ostyle.width" @change="drawing('width')" :min="20" :max='100'></el-input-number>												
 								</div>
 								<div  class="tool-item">
 									<span class="tool-lable">行高(px)：</span>
@@ -171,9 +159,9 @@
 								</div>
 								<div  class="tool-item" v-if="ostyle.borderStyle != 'none'">
 									<span class="tool-lable">边框圆角：</span>
-									<el-input-number  size="small" v-model="ostyle.borderRadius" @change="drawing('borderRadius')" :min="0" :max='666'></el-input-number>		
+									<el-input-number  size="small" v-model="ostyle.borderRadius" @change="drawing('borderRadius')" :min="-66" :max='666'></el-input-number>		
 								</div>
-								<div  class="tool-item">
+								<!--<div  class="tool-item">
 									<span class="tool-lable">上外边距：</span>
 									<el-input-number size="small" v-model="ostyle.marginTop" @change="drawing('marginTop')" :min="-666" :max='666'></el-input-number>		
 								</div>						
@@ -181,19 +169,49 @@
 									<span class="tool-lable">左外边距：</span>
 									<el-input-number  size="small" v-model="ostyle.marginLeft" @change="drawing('marginLeft')" :min="-666" :max='666'></el-input-number>		
 								</div>
-								
+								-->
 								<div  class="tool-item">
-									<span class="tool-lable">上内边距：</span>
-									<el-input-number  size="small" v-model="ostyle.paddingTop" @change="drawing('paddingTop')" :min="-666" :max='666'></el-input-number>		
+									<span class="tool-lable">上边距：</span>
+									<el-input-number  size="small" v-model="ostyle.paddingTop" @change="drawing('paddingTop')" :min="0" :max='666'></el-input-number>		
 								</div>						
 								
 								<div  class="tool-item">
-									<span class="tool-lable">左内边距：</span>
-									<el-input-number  size="small" v-model="ostyle.paddingLeft" @change="drawing('paddingLeft')" :min="-666" :max='666'></el-input-number>		
+									<span class="tool-lable">左边距：</span>
+									<el-input-number  size="small" v-model="ostyle.paddingLeft" @change="drawing('paddingLeft')" :min="0" :max='666'></el-input-number>		
 								</div>
-										    	
+								<div  class="tool-item">
+									<span class="tool-lable">下边距：</span>
+									<el-input-number  size="small" v-model="ostyle.paddingBottom" @change="drawing('paddingBottom')" :min="0" :max='666'></el-input-number>		
+								</div>						
+								
+								<div  class="tool-item">
+									<span class="tool-lable">右边距：</span>
+									<el-input-number  size="small" v-model="ostyle.paddingRight" @change="drawing('paddingRight')" :min="0" :max='666'></el-input-number>		
+								</div>		    	
 						    </el-tab-pane>
-						   
+	
+						 	<el-tab-pane label="配置" name="config">
+						    	<div  class="" style="padding-left: 20px;" v-if="widgetobj.label">
+									<span class="tool-lable">绑定标签：</span><br />
+									<el-input type='text' v-model = 'widgetobj.label' @blur = 'setWidget("label")'></el-input>
+								</div>
+						    	<div  class="" style="padding-left: 20px;" v-if='formConfig.bindData'>
+									<span class="tool-lable">绑定字段：</span><br />
+									<el-select style='width: 120px;' v-model="widgetobj.databind" clearable size='small' @change="setWidget('databind')" @visible-change = 'showBindField'>
+									    <el-option
+									      v-for="item in fieldList"
+									      :key="item.value"
+									      :label="item.label"
+									      :value="item.value">
+									    </el-option>
+									</el-select>
+								</div> 	
+								<div  class="" style="padding-left: 20px;" v-if='widgetobj.option'>
+									<span class="tool-lable">选项列表：</span><br />
+									<el-input type='text' v-model = 'widgetobj.option' @blur = 'setWidget("option")'></el-input>
+								</div>
+						    </el-tab-pane>
+					   
 						 </el-tabs>
 						
 						
@@ -213,24 +231,28 @@
 	import _Bus_ from './formcontral.js';  
 	import {mapGetters,mapActions} from 'vuex'
 
-	
 	export default {
 		name:'formset',
 		components:{},
 		data(){
 			return {
-				fieldList:[{'value':'f1','label':'字段一'}],
-				formSetActive:'config',
-				haspx:['height','width','lineHeight','fontSize','borderRadius','borderWidth','marginTop','marginLeft','marginBottom','marginRight','paddingTop','paddingBottom','paddingLeft','paddingRight'],				
+				formSetActive:'style',
+				haspx:['lineHeight','fontSize','borderRadius','borderWidth','marginTop','marginLeft','marginBottom','marginRight','paddingTop','paddingBottom','paddingLeft','paddingRight'],				
 				mainActive:'first',
 				mainset:true,
 				widgetobj:{ },
               	ostyle:{},
-              	userDataList:[{'value': '4','label': '4'}, {'value': '3','label': '3'},{'value': '2','label': '2'},{'value': '1','label': '1'}],
+              	// 获取用户已有的数据表
+              	// {'value': '4','label': '4'}, {'value': '3','label': '3'},{'value': '2','label': '2'},{'value': '1','label': '1'}
+              	userDataList:[],
+              	// 获取到的对应表的字段列表 {'value':'f1','label':'字段一'}
+              	fieldList:[],
               	formConfig:{},
               	// 选择框控制
               	_showBindField: false,
-              	_showBorder:false
+              	_showBorder:false,
+              	dataIdList:[],
+              	selectDataId:''
 			}
 		},
 		computed: {
@@ -257,15 +279,22 @@
 				this.mainset = false;			
 //				console.log(this.getForm.widgetList);			
 				this.widgetobj = this.getForm.widgetList['widget'+oid];	
+				
+				var bindData = this.getForm.formConfig.bindData || '';
+				
+				console.log(this.getForm.formConfig.bindData);
+				console.log(bindData);
 				// 处理样式
 				var ostyle = this.widgetobj.style;
 				for(let key in ostyle){
 					if(this.haspx.includes(key)){
-						ostyle[key] = parseInt(ostyle[key])
+						ostyle[key] = parseInt(ostyle[key]);
 					}					
+					if(key === 'width' || key === 'height'){
+						ostyle[key] = parseInt(ostyle[key]);
+					}
 				}
-				this.ostyle = ostyle;
-				
+				this.ostyle = ostyle;				
 			},
 			drawing(attr){
 				if(attr == 'borderStyle' && !this._showBorder){
@@ -276,9 +305,11 @@
 				if(this.haspx.includes(attr)){
 					value = this.ostyle[attr] +'px';
 				}
+				if(attr === 'width' || attr === 'height'){
+					value = this.ostyle[attr] +'%';
+				}
 //				console.log(this.widgetobj.id,attr,value);				
-				this._changeStyle({oid,attr,value});
-				
+				this._changeStyle({oid,attr,value});				
 				_Bus_.$emit('change-style',oid,attr,value);
 			},
 			setWidget(attr){		
@@ -287,9 +318,9 @@
 				let value = this.widgetobj[attr] || '';
 //				console.log(attr,value);
 				if(attr === 'databind'){
-					if (!this._showBindField) {
-						return;
-					}
+//					if (!this._showBindField) {
+//						return;
+//					}
 					this._setWidget({oid,attr,value});	
 					_Bus_.$emit('change-set',oid,attr,value);					
 				}else{
@@ -304,25 +335,78 @@
 			showBorder(isShow){
 				this._showBorder = isShow;
 			},
+			setdataId(attr){
+				// 设置展示表单的绑定数据id
+				
+				var that = this;
+				if(that.formConfig.bindData){ // 只有数据表已经绑定了表，才能获取对应的展示列表的信息，模糊查找
+					
+					that.$http.get('TBUSER000001/formdesign/form/'+that.formConfig.bindData+'/like',{
+						type:that.selectDataId
+					})
+					.then((res)=>{
+			        	console.log('dataId',res);       		
+			     		that.dataIdList = res.data[0];
+			        }).catch((err)=>{
+			        	console.log(err);
+			        });
+					
+				}
+					
+				
+				
+			},
 			setDrag(attr){
+				var that = this;
+				// 过滤不需要修改样式的表单配置项 
+				if(['bindData','isApp'].indexOf(attr) < 0){
 				
-				
-				if(['layout', 'bindData','isApp'].indexOf(attr) < 0){
 					if(attr === 'backgroundImage'){
 						console.log('背景图片');
 						// ...
 						return;
 					}
-					let value = this.formConfig.style[attr];
-					this._setDragStyle({attr,value});
+					let value = that.formConfig.style[attr];
+					if(attr === 'layout'){
+						value = that.formConfig[attr]
+					}
+					that._setDragStyle({attr,value});
 					_Bus_.$emit('set-drag',attr,value);
+					
 				}else{
-					let value = this.formConfig[attr];
-					this._setDrag({attr,value});
-				}
-				
-				
+					// 如果在修改表单绑定的表时，会获取到对应表中的字段 
+					if(attr === 'bindData' && that.formConfig.bindData){
+						
+						console.log('查找表字段',that.getForm.formConfig.bindData)
+						
+						that.$http.get('http://localhost/fz/json.php?f=filed',{})
+						.then((res)=>{
+				        	console.log('字段',res);       		
+				     		that.fieldList = res.data[0];
+				        }).catch((err)=>{
+				        	console.log(err);
+				        });	 
+				        
+					}
+					
+					let value = that.formConfig[attr];
+					that._setDrag({attr,value});
+				}			
 			},
+			querySearch(queryString, cb){ // 展示列表获取到的id列表
+				
+				// 请求dataIdList
+							
+				var list = this.dataIdList || []; 
+		        var results = queryString ? list.filter(this.createFilter(queryString)) : list;
+		        // 调用 callback 返回建议列表的数据
+		        cb(results);
+			},
+			  createFilter(queryString) {
+		        return (data) => {
+		          return (data.value.indexOf(queryString.toLowerCase()) === 0);
+		        };
+		      },
 			cloneObj(obj){  // 深拷贝
 			    var str, newobj = obj.constructor === Array ? [] : {};
 			    if(typeof obj !== 'object'){
@@ -337,10 +421,19 @@
 			        }
 			    }
 			    return newobj;
-			}
+			},
+			initData(){				
+	  			this.$http.get('http://localhost/fz/json.php?f=form').then((res)=>{
+		        	console.log('表',res);       		
+		     		this.userDataList = res.data[0];
+		        }).catch((err)=>{
+		        	console.log(err)
+		        });	       
+	  		},
 		},
 		created(){
 			this.initEvent();
+			this.initData(); // 获取到的用户列表
 			this.formConfig =this.cloneObj(this.getForm.formConfig);
 			console.log(this.formConfig)
 		},
@@ -367,6 +460,7 @@
 	margin-right: -20px;
 	width:257px;
 	background-color: #FFFFFF;
+	padding-bottom: 40px;
 	.back{
 		position: absolute;
 		top: 0;
@@ -399,6 +493,16 @@
 				}
 			}
 		}
+		.table-list{
+			.table-item{
+				border: 1px solid #333333;
+				padding: 10px;
+				border-radius: 5px;
+				box-sizing: border-box;
+				margin: 0 10px 10px;
+			}
+		}
+		
 	}
 	
 	

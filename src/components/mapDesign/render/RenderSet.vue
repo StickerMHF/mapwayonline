@@ -53,7 +53,7 @@
   import Type from './Type.vue'
   import Simple from './Simple.vue'
   import LabelLayer from './LabelLayer.vue'
-  import Tool from './tool.vue'
+  import Tool from '@/components/tool.vue'
 
   export default {
     name: 'renderSet',

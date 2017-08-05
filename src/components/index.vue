@@ -32,7 +32,7 @@
   	bottom: 0;
   	right: 0;
   	left: 60px;
-    overflow-y: scroll;
+    overflow-y: auto;
   }
   .el-message-box__header {
     		padding: 0px !important;

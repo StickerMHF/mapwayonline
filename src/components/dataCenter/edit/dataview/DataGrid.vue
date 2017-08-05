@@ -299,7 +299,7 @@
       };
     },
     mounted: function () {
-      this.getData('rest/service/ags/FeatureService/s000341/343/query?returnGeometry=true&outSr=4326&f=geojson');
+      //this.getData('rest/service/ags/FeatureService/s000341/343/query?returnGeometry=true&outSr=4326&f=geojson');
     },
     methods: {
       // 表格

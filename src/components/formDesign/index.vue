@@ -3,7 +3,7 @@
 	<div id="form-index">
 		<ContentLeft></ContentLeft>
 		
-		
+		<el-button @click="editForm('new')">新建表</el-button>
 		
 	</div>
 </template>
@@ -41,6 +41,7 @@ import ContentLeft from './ContentLeft.vue';
 <style scoped>
 #form-index{
 	height: 100%;
+	padding-left: 220px;
 }
 
 </style>

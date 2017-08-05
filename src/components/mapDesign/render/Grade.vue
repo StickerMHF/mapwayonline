@@ -114,7 +114,7 @@
 </template>
 
 <script>
-  import Tool from './tool.vue'
+  import Tool from '@/components/tool.vue'
   import { mapActions, mapGetters } from 'vuex'
 
   export default {

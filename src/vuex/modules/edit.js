@@ -17,15 +17,8 @@ export default {
     /*公共的*/
     // 用于检测当前正在的编辑的feature是否保存
     isSave: false,
-
-    // 要提交的feature对象,例如：
-    /*submitFeature: {
-     "geometry": {"x": -118.15, "y": 33.80},
-     "attribute": {
-     "OWNER": "Joe Smith"
-     }
-     }*/
     submitFeature: null,
+    schema: null,
   },
 
   mutations: {
@@ -50,6 +43,11 @@ export default {
 
     SET_SUBMIT_FEATURE (state, arcFeature) {
       state.submitFeature = arcFeature;
+    },
+
+    SET_SCHEMA (state, field) {
+      state.schema = field;
+      console.log('Huoqu de schema', state.schema)
     },
   },
 
@@ -84,5 +82,9 @@ export default {
     setSubmitFeature ({commit}, arcFeature) {
       commit('SET_SUBMIT_FEATURE', arcFeature);
     },
+
+    setSchema ({commit}, field) {
+      commit('SET_SCHEMA', field);
+    }
   }
 }

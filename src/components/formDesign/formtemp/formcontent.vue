@@ -21,7 +21,7 @@
 					>
 					<template v-for="(item,index) in myList" :slot="'slot'+index">
 						<div class="dragHandle">
-							<div class="tool">								
+							<div class="tool" >								
 								<span title="删除" @click="deleteItem(index)" class="tool-icon icon-del">&times;</span> 
 								<span title="编辑" @click="editor(index)" class="editor tool-icon">&cong;</span>
 							</div>
@@ -67,7 +67,9 @@
 	               	maxid:0, // 默认开始的ID 0表示从1开始
 	               	basePoint:5, // 对于缩放盒子的基点 越小越细致  
 	               	baseMargin:0 // 对于拖拽盒子之间的间隔 越小间隔越小	               	
-                }               
+                },
+                // 属性设置给右边的模拟控件的 
+                ow:['lineHeight','borderStyle','borderWidth','borderRadius','borderColor','backgroundColor','fontSize','color']
             }
         },
         computed: {
@@ -83,6 +85,7 @@
         	]),
             getList() {  // 获取布局的对象数据
                 let gridster = this.$refs['cyGridster']; //获取gridster实例
+                console.log(this.oid);
                 console.log(JSON.stringify(gridster.getList())); 
                 console.log(JSON.stringify(this.getForm.widgetList));  
                 console.log(JSON.stringify(this.getForm.formConfig));  
@@ -109,17 +112,19 @@
             addwidget(type){
             	let vm = this;
             	vm.dragConfig.maxid++;           	
-            	let t = type || 'none';
-           
+            	let t = type || 'input_text';
+           		
             	let gridster = this.$refs['cyGridster']; //获取gridster实例
-
-                gridster.addItemBox({
-                    id: vm.dragConfig.maxid,
+            	
+            	// 创建一个新的容器盒子的参数大小
+				let newBoxSize = {
+					id: vm.dragConfig.maxid,
                     x: 1,
                     y: 1,
                     sizex: 100,
-                    sizey:15
-                })
+                    sizey:14
+				}
+               
                 // 把新增的控价对象的属性和控件容器，绑定字段等数据存入控件对象，并用oid命名对象名
                	let wi = {                     	
                 	type:t,
@@ -128,117 +133,181 @@
                 	id:vm.dragConfig.maxid,
                 	databind:'',                 
                 	style:{
-                		height:'30px',
-                		width:'200px',
+                		// 这些属性是属于修改的模拟控件的
+                		height:'100%',
+                		width:'100%',
                 		lineHeight:'30px',
                 		backgroundColor:'#FFF',
                 		fontSize:'14px',
                 		color:'#333',
                 		borderStyle:'solid',
                 		borderWidth:'1px',
-                		borderColor:'#eee',
-                		borderRadius:'0',
-                		marginTop:'0',
-                		marginLeft:'0',               	
-                		paddingTop:'0',               	
-                		paddingLeft:'0'              	
+                		borderColor:'#BBB',
+                		borderRadius:'0', 
+                		// 这些属性属于整个控件盒子的边距
+                		paddingTop:'10px',               	
+                		paddingLeft:'10px',
+                		paddingBottom:'10px',
+                		paddingRight:'10px'
                 	}
                 }
                 // 这里是根据不同的控件，添加不同的控件需要的属性，还有属性的过滤
 				switch (t){
 					case 'select':
-						wi.option = "选项一,选项二,选项三"
-						wi.style.width = '150px';
+						wi.option = "选项一,选项二,选项三";
+						newBoxSize.sizex = 100 ;
+						newBoxSize.sizey = 14 ;
 						wi.description = '下拉选择框';
 						break;
 					case 'input_checkbox':
 						wi.option = "选项一,选项二,选项三"
 						wi.description = '复选框';
+						newBoxSize.sizex = 100 ;
+						newBoxSize.sizey = 14 ;
 						break;
 					case 'input_radio':
 						wi.option ="选项一,选项二,选项三"
 						wi.description = '单选框';
+						newBoxSize.sizex = 100 ;
+						newBoxSize.sizey = 14 ;
 						break;
 					case 'textarea':
-						wi.style.height = '70px';
+						newBoxSize.sizex = 150 ;
+						newBoxSize.sizey = 40 ;
 						wi.description = '文本域';
 						break;	
 					case 'button':
-						wi.style.width = '70px';
+						newBoxSize.sizex = 30 ;
+						newBoxSize.sizey = 14 ;
 						wi.description = '按钮';
+						wi.label = null;
 						break;
 					case 'input_text':
-						wi.style.width = '150px';	
-						wi.description = '文本框';
+						newBoxSize.sizex = 100 ;
+						newBoxSize.sizey = 14 ;
+						wi.description = '输入框';
 						break;	
 					case 'input_password':
-						wi.style.width = '150px';
+						newBoxSize.sizex = 100 ;
+						newBoxSize.sizey = 14 ;
 						wi.description = '密码框';
 						break;	
 					case 'input_file':
-						wi.style.width = '150px';	
+						newBoxSize.sizex = 100 ;
+						newBoxSize.sizey = 14 ;
 						wi.description = '文件上传';
 						break;
 					case 'h1':
-						wi.style.width = '250px';
+						newBoxSize.sizex = 200 ;
+						newBoxSize.sizey = 16 ;
 						wi.description = '标题';
+						wi.label = null;
 						break;	
 					case 'p':
-						wi.style.width = '200px';
-						wi.style.height = '70px';
+						newBoxSize.sizex = 150 ;
+						newBoxSize.sizey = 40 ;
 						wi.description = '段落';
+						wi.label = null;
 						break;
 					case 'img':
-						wi.style.width = '150px';
-						wi.style.height = '200px';
+						newBoxSize.sizex = 50 ;
+						newBoxSize.sizey = 45 ;
 						wi.description = '图片';
+						wi.label = null;
 						break;					
 					default:
 						break;
 				}
 				
+				gridster.addItemBox(newBoxSize);  // 添加一个控件容器
 				vm._addWidget(wi);  // 最后把该控件的数据，添加到vuex中。
 				
             	gridster.$nextTick(function () {
                    	// 添加对应得控件
                    	var widget = vm.$refs['widget' + (vm.myList.length - 1)][0];
                    	let ostyle = vm.getForm.widgetList['widget'+ vm.dragConfig.maxid].style;
-
+					let nolabel = ['h1','p','img','button'];
+					let i = vm.ow;
+					let ohtml = null;
                    	// 为控件容器中添加内容                  
-                   	widget.innerHTML= `
-							<i class='icon'></i>
-							<span class='label'></span> 
-                   			<span class='type'>`+wi.description+'-'+vm.dragConfig.maxid+`</span>            			
+                   
+           			if( nolabel.indexOf(t) >=0 ){
+           			
+						ohtml = `
+							<div class='box'><span class='type'>`+ vm.dragConfig.maxid+'-'+wi.description+`</span></div>            			
                 		`
+					
+           			}else{
+						ohtml = `
+							<div class='box'><i class='icon'></i><span class='label'>the_label</span><span class='type'>`+ vm.dragConfig.maxid+'-'+wi.description+`</span></div>            			
+                		`
+					}
+					
+                   	widget.innerHTML= ohtml;
+                   	let box = widget.getElementsByClassName('box')[0];
+                   	let icon = box.getElementsByClassName('icon')[0];                  	               	
+                   	let type = box.getElementsByClassName('type')[0];
+                   	let label = box.getElementsByClassName('label')[0];
+                   	
+                   	
                    	for(var key in ostyle){
-                   		widget.style[key] = ostyle[key];
+                   		
+                   		if(i.indexOf(key) >= 0){
+	      					type.style[key] = ostyle[key];
+		      			}else{
+		      				widget.style[key] = ostyle[key];
+		      			}
                    		widget.setAttribute('class','widget'+ vm.dragConfig.maxid+' widget')
                    	}
                    	
-                   	let icon = widget.getElementsByClassName('icon')[0];
+                   
+                   	$(widget).css({
+                   		'height':'100%',
+                   		'widget':'100%'
+                   	})
+                   	$(box).css({
+                   		'box-sizing': 'border-box',
+                   		'vertical-align': 'middle',
+                   		'width': '100%',
+                   		'height': '100%',
+                   		'white-space': 'nowrap',
+                   		'overflow': 'hidden'
+                   	})
                    	$(icon).css({
                    		'display':'inline-block',
+                   		'vertical-align': 'middle',
                    		'width':'14px',
-                   		'height':'14px'                 		
-                   	})
-               /*    	
-                   	let type = widget.getElementsByClassName('type')[0];
-                   	$(type).css({
-                   		'width' : 'calc(100% - 90px)',
-                   		'display' : 'inline-block',
-                   		'box-sizing': 'border-box',
-                   	})
+                   		'height':'14px',
+                   		'overflow': 'hidden'
+                   	}) 
                    	$(label).css({
                    		'display':'inline-block',
-                   		'width': '90px',
                    		'box-sizing': 'border-box',
-                   		'border':'1px solid #bbb',
-                   		'height':'28px'
+                   		'vertical-align': 'middle',
+                   		'width': '86px',                  		
+                   		'height':'100%',
+                   		'overflow': 'hidden'
+//                 		'border':'1px solid #BBB',
                    	})
-                */
+                   	
+                   	$(type).css({
+                   		'width' : 'calc(100% - 100px)',
+                   		'vertical-align': 'middle',
+                   		'display' : 'inline-block',
+                   		'box-sizing': 'border-box',
+                   		'height':'100%',
+                   		'padding-left':'14px',
+                   		'overflow': 'hidden'
+                   	})
+                   	if( nolabel.indexOf(t) >=0 ){
+                   		$(type).css({
+                   		'width' : '100%'})
+                   	}
+                   	
+               
 					$('.dragHandle').hover(function(){
 		            	$(this).children('.tool').css({'display':'inline-block'});
-		           },function(){
+		           	},function(){
 		            	$(this).children('.tool').css({'display':'none'});
 		            })
                    	
@@ -255,8 +324,7 @@
                 gridster.removeItem(index); //此时会在this.myList的index位置将item置为{}，目的是为了不让vue重新渲染整个v-for。
                 //注意，这里删除布局框并不会删除里面的组件，组件需要自己用v-if来控制销毁，如果是highchart，必须手动调用chartInstance.$destroy()
             },
-            
-            
+                       
             /**
                 e:事件对象
                 item：拖动对象
@@ -280,18 +348,7 @@
             resizeEnd(e, item, index) {
                 console.log('resizeEnd');
             },
-//          
-//          showTool($event){
-//         		var el = $event.target;
-//          	el.style.borderColor = '#66ccff';
-//          	el.style.borderStyle = 'solid';
-//          	el.getElementsByClassName('tool')[0].style.display = 'inline-block';
-//          },
-//          hideTool($event){
-//          	var el = $event.target;
-//          	el.style.borderColor = '#bbb';
-//          	$event.target.getElementsByClassName('tool')[0].style.display = 'none';
-//          },
+
             // 初始化组件通讯总线中的事件         
             initEvent(){             	
             	let that = this ;          	
@@ -300,14 +357,30 @@
             		that.addwidget(type);
             	})
         		_Bus_.$on('change-style',function(id,attr,value){
+        			
         			let w = that.$refs['cyGridster'].$el.getElementsByClassName('widget'+id)[0];
-        			console.log(w.getElementsByClassName('type')[0])
-        			w.style[attr] = value;
+        			let box = w.getElementsByClassName('box')[0];
+        			let type = box.getElementsByClassName('type')[0];
+//      			console.log(t)
+        			let i = that.ow;
+	      			
+	      			if(i.indexOf(attr) >= 0 ){
+	      				type.style[attr] = value;
+	      			}else{
+	      				w.style[attr] = value;
+	      			}
+        			
         		});
         		_Bus_.$on('change-set',function(id,attr,value){
         			let icon = that.$refs['cyGridster'].$el.getElementsByClassName('widget'+id)[0].getElementsByClassName('icon')[0];	
         			if(attr == 'label'){
-        				that.$refs['cyGridster'].$el.getElementsByClassName('widget'+id)[0].getElementsByClassName('label')[0].innerText = value ;
+        				let label = that.$refs['cyGridster'].$el.getElementsByClassName('widget'+id)[0].getElementsByClassName('label')[0];
+        				if(value === ''){
+        					label.style.display = 'none';
+        				}else{
+        					label.innerText = value ;
+        				}
+        				
         			}else if(attr == 'databind'){
         				if(value == ''){
         					icon.setAttribute('class','icon');
@@ -335,7 +408,7 @@
 		            	},100)
 					}
 				}else{
-					console.log(document.getElementById('drag-area'));
+//					console.log(document.getElementById('drag-area'));
 					document.getElementById('drag-area').style[attr] = value;
 				}
 						
@@ -427,6 +500,7 @@
         	
         	
         	}else{
+        	
         		console.log(this.oid,'数据二次编辑');
         		//      获取的数据需要存入vuex中 并使得其他控件能够操作
         	
@@ -484,14 +558,14 @@
 	margin: 0 auto;	
 	/*padding: 20px 15px 10px !important;*/
 	height: 100%;
-	border: 1px #FFFFFF dashed;
-	border-bottom: 1px dashed #C0C0C0;	
+	/*border: 1px #FFFFFF dashed;*/
+	border: 1px dashed #C0C0C0;	
 	&:hover{
 		border: 1px dashed chartreuse;	
 	}
 	.widget{
 		// 控件的盒子
-		border: 1px solid #BBBBBB;
+		/*border: 1px solid #BBBBBB;*/
 		display: inline-block;
 		overflow: hidden;
 		cursor: default;	
@@ -504,7 +578,7 @@
 		right: 0;
 		top: 0;
 		clear:both;
-		/*display: none;*/
+		display: none;
 		.tool-icon{
 			float: right;
 			height: 16px;

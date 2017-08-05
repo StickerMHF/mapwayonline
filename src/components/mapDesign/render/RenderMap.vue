@@ -4,7 +4,7 @@
 <script>
   import Leaflet from 'leaflet'
   import { mapActions, mapGetters, mapMutations } from 'vuex'
-  import Tool from './tool.vue'
+  import Tool from '@/components/tool.vue'
   require('../../../../node_modules/leaflet/dist/leaflet.css');
   // TODO  以后MAP_IMAGE_PATH这个图片地址要改成node_modules中的地址
   const MAP_IMAGE_PATH = "http://cdn.bootcss.com/leaflet/1.0.3/images/";

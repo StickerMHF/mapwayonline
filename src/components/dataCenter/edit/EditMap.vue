@@ -7,6 +7,8 @@
   //import Leaflet_draw from 'leaflet-draw'
   import Leaflet_draw from '../../../../static/mapDesign/js/leaflet-draw/leaflet.draw-src.js'
   import { mapGetters, mapActions } from 'vuex'
+  import Tool from '@/components/tool.vue'
+
   var Terraformer = require('terraformer-arcgis-parser');
 
   require('../../../../node_modules/leaflet-draw/dist/leaflet.draw-src.css');
@@ -44,28 +46,28 @@
         'edit'
       ])
     },
+    created () {
+      this.initEvent();
+    },
     mounted () {
       this.initMap();
       this.addMapLayer();
       this.fetchData();
-      this.initListener();
-      //console.log(this.edit);
+      this.fetSchema();
     },
     methods: {
       ...mapActions([
-        'setIsSave', 'setMViewProperties', 'setEditLog', 'setSubmitFeature'
+        'setIsSave', 'setMViewProperties', 'setEditLog', 'setSubmitFeature', 'setSchema'
       ]),
-      initListener: function () {
-        var _this = this;
-        this.$bus.on('reset-edit-state', function () {
-          console.log('重置前', _this.now_layer);
-          _this.cancelEditState();
+      initEvent: function () {
+        this.$bus.on('reset-edit-state', () => {
+          console.log('重置前', this.now_layer);
+          this.cancelEditState();
         });
 
-        this.$bus.on('delete-feature', function () {
-            debugger
-          _this.geoJsonLayer.removeLayer(_this.now_layer);
-          //_this.cancelEditState();
+        this.$bus.on('delete-feature', () => {
+          this.geoJsonLayer.removeLayer(this.now_layer);
+          this.cancelEditState();
         });
       },
 
@@ -90,15 +92,22 @@
       fetchData: function () {
         var dataid = this.$route.params.dataid;
         //console.log(dataid);
-        var url = 'rest/service/ags/FeatureService/s000341/343/query?returnGeometry=true&outSr=4326&f=geojson';
-        var url = 'TBUSER000001/mapdesign/map/layers/'+ dataid + '/query?f=geojson&outSr=4326&returnGeometry=true'
+        var url = 'TBUSER000001/mapdesign/map/layers/'+ dataid + '/query?f=geojson&outSr=4326&returnGeometry=true';
+        //var url = 'static/mapDesign/data/polygondata.json';
 
         this.$http.get(url).then((res) => {
           let features = res.data.features;
           console.info(features)
-          debugger
           this.addDrawPlugin(features);
-        });
+        })
+      },
+
+      fetSchema () {
+        var url = 'TBUSER000001/datacenter/datas/TBDATA000018/feild';
+        this.$http.get(url).then((res) => {
+          let field = res.data.data;
+          this.setSchema(field);
+        })
       },
 
       toobarConfig: function (type) {
@@ -168,13 +177,12 @@
         return drawConfig;
       },
 
-      /**
-       * initEditState: 图层feature点击的clicMapToSave
-       */
+      /* 图层feature点击的clicMapToSave */
       initEditState: function  (layer) {
+        //this.setMViewProperties(layer.feature.properties);
+        this.$bus.emit('m-v-property', layer.feature.properties);
         this.now_layer = layer;
         this.now_layer.editing.enable();
-        this.setMViewProperties(layer.feature.properties);
         this.setEditLog(true);
         //显示editlog
         this.setIsSave(false);
@@ -184,6 +192,8 @@
        * cancelEditState：取消feature编辑状态
        */
       cancelEditState: function  () {
+        console.log(this.now_layer);
+        //debugger
         this.now_layer.editing.disable();
         this.now_layer = null;
         this.setMViewProperties(null);
@@ -192,6 +202,8 @@
         //隐藏editlog
         this.now_feature = null;
         this.setSubmitFeature(null);
+        console.log(this.edit.showEditLog)
+        debugger
       },
 
       onEachFeature: function (feature, layer) {
@@ -274,8 +286,7 @@
           },
           onEachFeature: _this.onEachFeature
         });
-        console.log(_this.geoJsonLayer)
-        debugger
+        console.log(_this.geoJsonLayer);
         drawItem.addLayer(_this.geoJsonLayer);
 
         // 添加draw插件
@@ -353,7 +364,7 @@
               drawItem.removeLayer(_this.geoJsonLayer);
             });
           } else {
-            _this.initEditState(drawGeoJsonLayer.getLayers()[0]);
+            _this.initEditState(_this.geoJsonLayer.getLayers()[0]);
           }
 
         });

@@ -1,27 +1,38 @@
 <template>
   <div class="container">
-    <el-button type="primary" @click="createNewMap">创建新地图</el-button>
-    <ul style="width: 1000px;margin: 0 auto;">
-      <li :class="[ item.checked ? 'data-checked' : '', 'data-item' ]"  v-for="item in data_list" :key="item.name"  @click="dataClick(item)">
-        <i class="datatype" :class="item.layertype"></i>
-        <span>{{item.name}}</span>
-        <span>{{item.description}}</span>
-        <span>{{item.pubdate}}</span>
-      </li>
-    </ul>
+    <!-- 地图列表 -->
+    <div class="map-list" v-if="!dataList">
+      <div class="btn-container">
+        <el-button type="primary" @click="showDataList">创建新地图</el-button>
+      </div>
 
-    <el-pagination
-      @current-change="currentMapChange"
-      :current-page.sync="mapCurrentPage"
-      :page-size="10"
-      layout="total,  prev, pager, next, jumper"
-      :total="mapTotal" style="text-align: center">
-    </el-pagination>
+      <ul>
+        <li :class="[ item.checked ? 'data-checked' : '', 'data-item' ]"  v-for="item in map_list" :key="item.name"  @click="mapClick(item)">
+          <i class="datatype" :class="item.layertype"></i>
+          <span>{{item.name}}</span>
+          <span>{{item.description}}</span>
+          <span>{{item.pubdate}}</span>
+        </li>
+      </ul>
 
-    <!--创建新地图-->
-    <div >
-      <div><el-button type='text' @click="toRender">创建</el-button></div>
-      <ul style="width: 1000px;margin: 0 auto;">
+      <el-pagination
+        @current-change="currentMapChange"
+        :current-page.sync="mapCurrentPage"
+        :page-size="10"
+        layout="total,  prev, pager, next, jumper"
+        :total="mapTotal" style="text-align: center">
+      </el-pagination>
+    </div>
+    <!-- 地图列表结束 -->
+
+    <!-- 数据列表 -->
+    <div class="data-list" v-if="dataList">
+      <div class="btn-container">
+        <el-button type='primary' @click="toMapList"><i class="fa fa-arrow-left"></i></el-button>
+        <el-button type='primary' @click="toRender" style="float: right;">创建</el-button>
+      </div>
+
+      <ul >
         <li :class="[ item.checked ? 'data-checked' : '', 'data-item' ]"  v-for="item in data_list" :key="item.name"  @click="dataClick(item)">
           <i class="datatype" :class="item.layertype"></i>
           <span>{{item.name}}</span>
@@ -38,11 +49,12 @@
         :total="dataTotal" style="text-align: center">
       </el-pagination>
     </div>
+    <!-- 数据列表结束 -->
   </div>
 </template>
 
 <script>
-  import Tool from './render/tool.vue'
+  import Tool from '@/components/tool.vue'
   import { mapActions, mapGetters } from 'vuex'
 
   export default {
@@ -57,6 +69,8 @@
         dataCurrentPage: 1,
         mapTotal: null,
         dataTotal: null,
+        // 控制地图列表和数据列表切换
+        dataList: false,
       };
     },
     watch: {
@@ -79,50 +93,76 @@
       ...mapActions([
         'addDataIDChecked', 'removeDataIDChecked'
       ]),
-      fetchData () {
-        // 获取用户数据集
-        //var url = this.getLogin.userName + this.data_url;
-        var url = 'TBUSER000001' + this.data_url;
-        this.$http.get(url)
-          .then((res) => {
-            var list = [];
-            res.data.data.forEach((item) => {
-              item.checked = false;
-              list.push(item);
-            });
-            this.data_list = list;
-            this.dataTotal = this.data_list.length;
-          });
-      },
 
+      /* 获取用户地图集 */
       fetchMap () {
-        // 获取用户地图集
-        //var url = this.getLogin.userName + this.map_url;
+        // var url = this.getLogin.userName + this.map_url; TODO
         var url = 'TBUSER000001' + this.map_url;
-        this.$http.get(url)
-          .then((res) => {
-            var list = [];
-            res.data.data.forEach((item) => {
-              item.checked = false;
-              list.push(item);
-            });
-            this.map_list = list;
-            this.mapTotal = this.map_list.length;
+        this.$http.get(url).then((res) => {
+          var list = [];
+          if (!res.data.data) {
+            console.log('获取用户地图集: ' + res.data.data);
+            return;
+          }
+          res.data.data.forEach((item) => {
+            item.checked = false;
+            list.push(item);
           });
+          this.map_list = list;
+          this.mapTotal = this.map_list.length;
+        }).catch((err) => { console.log(err) });
       },
 
-      currentDataChange(val){
-        this.dataCurrentPage = val;
-        this.fetchData(this.data_url, this.dataCurrentPage);
+      /* 获取用户数据集 */
+      fetchData () {
+        // var url = this.getLogin.userName + this.data_url; TODO
+        var url = 'TBUSER000001' + this.data_url;
+        this.$http.get(url).then((res) => {
+          if (!res.data.data) {
+            console.log('获取用户数据集: ' + res.data.data);
+            return;
+          }
+
+          var list = [];
+          res.data.data.forEach((item) => {
+            item.checked = false;
+            list.push(item);
+          });
+          this.data_list = list;
+          this.dataTotal = this.data_list.length;
+        }).catch((err) => { console.log(err) });
       },
 
+      /* 地图列表当前页数改变 */
       currentMapChange(val){
         this.mapCurrentPage = val;
         this.fetchData(this.data_url, this.mapCurrentPage);
       },
 
+      /* 数据列表当前页数改变 */
+      currentDataChange(val){
+        this.dataCurrentPage = val;
+        this.fetchData(this.data_url, this.dataCurrentPage);
+      },
+
+      /* 页面跳到地图列表页面 */
+      toMapList () {
+        this.dataList = !this.dataList;
+      },
+
+      /* 带着选择好的数据跳转到制作地图页面 */
       toRender () {
         this.$router.push('/mapdesign/new');
+      },
+
+      mapClick (item) {
+        // TODO
+        /*item.checked = !item.checked;
+         if (item.checked) {
+         this.addDataIDChecked(item.layerid);
+         } else {
+         this.removeDataIDChecked(item.layerid);
+         }*/
       },
 
       dataClick (item) {
@@ -135,8 +175,8 @@
       },
 
       /* 新建地图 */
-      createNewMap () {
-
+      showDataList () {
+        this.dataList = !this.dataList;
       },
     },
   }
@@ -154,6 +194,7 @@
   .container{
     width: 1200px;
     margin: 0 auto;
+    overflow-y: auto;
   }
 
   .datatype{
@@ -166,6 +207,14 @@
     vertical-align: bottom;
     border: 1px solid #66CCFF;
   }
+
+  .btn-container {
+    display: flex;
+    justify-content:space-between;
+    height: 50px;
+    align-items: center;
+  }
+
   .LineString,
   .MultiLineString
   {
@@ -195,13 +244,14 @@
     justify-content: space-between;
     align-items: center;
     height: 60px;
-    width: 90%;
+    width: 100%;
     padding: 10px 30px;
     line-height: 60px;
     margin-bottom: 10px;
     cursor: pointer;
     border: 1px solid #ECECEC;
     border-radius: 5px;
+    box-sizing: border-box;
   }
 
   .data-checked{
@@ -209,13 +259,14 @@
     justify-content: space-between;
     align-items: center;
     height: 60px;
-    width: 90%;
+    width: 100%;
     padding: 10px 30px;
     line-height: 60px;
     margin-bottom: 10px;
     cursor: pointer;
     border: 1px solid #66CCFF;
     border-radius: 5px;
+    box-sizing: border-box;
   }
 
 

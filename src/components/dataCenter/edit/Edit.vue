@@ -7,7 +7,7 @@
       </el-button-group>
     </div>
     <div class="edit-main">
-      <div id="mapView" class="mapView"  v-if="mapViewShow">
+      <div id="mapView" class="map-view"  v-show="mapViewShow">
         <div :class="[animate, edit.showEditLog ? edit_map_showlog : edit_map_noshowlog ]">
           <edit-map></edit-map>
         </div>
@@ -15,8 +15,8 @@
           <edit-set></edit-set>
         </div>
       </div>
-      <div id="dataView" class="dataView" v-if="dataViewShow">
-        <div style="width: 100%;">
+      <div id="dataView" class="data-view" v-show="dataViewShow">
+        <div class="data-view-container">
           <data-grid ></data-grid>
         </div>
       </div>
@@ -35,10 +35,10 @@
     components: { EditMap, EditSet, DataGrid },
     data: function () {
       return {
-        //视图切换初始值
+        // 视图切换初始值
         mapViewShow: true,
         dataViewShow: false,
-        // .class变量
+        // class类名变量
         animate: 'animate',
         edit_map_noshowlog: 'edit-map-noshowlog',
         edit_map_showlog: 'edit-map-showlog',
@@ -70,12 +70,15 @@
 
 <style scoped>
   .view-change {
-    margin: 5px 0;
+    padding: 5px 0;
+    text-align: center;
+    background: #181f24;
   }
 
   .animate {
     float: left;
     height: 100%;
+    overflow-y: auto;
     -webkit-transition: width 0.5s;
     -moz-transition: width 0.5s;
     -ms-transition: width 0.5s;
@@ -88,14 +91,18 @@
     width: 100%;
     position: absolute;
     bottom: 0;
-    top: 106px;
+    top: 45px;
   }
 
-  .mapView {
+  .map-view {
     width: 100%;
   }
 
-  .dataView {
+  .data-view {
+    width: 100%;
+  }
+
+  .data-view-container {
     width: 100%;
   }
 

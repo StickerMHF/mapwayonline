@@ -5,8 +5,8 @@ export default {
 			name:'',
 	  		description:'',
 	  		isApp:true,
-	  		bindData:'4',
-	  		dataId:'',
+	  		bindData:null,
+	  		dataId:null,
 	  		layout:'wide',
 	  		style:{
 	  			backgroundColor:'#FFFFFF',

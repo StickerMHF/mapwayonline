@@ -25,17 +25,6 @@
         </el-pagination>
 
 
-
-        <!--
-                      <el-row :gutter="10">
-                        <el-col :xs="6" :sm="6" :md="4" :lg="8" v-for="item in data_list" :key="item.name">
-                          <div style="cursor: pointer; margin: 15px 0; height: 100px;" @click.prevent="getName(item.id)">
-                            <img :src="item.img" alt="" style="height: 100px; width: 100px;">
-                            <div>{{ item.name }}</div>
-                          </div>
-                        </el-col>
-                      </el-row>
-                                        -->
       </el-tab-pane>
       <el-tab-pane label='获取数据' name='getDataSets' class='getDataSets'>
 
