@@ -1,142 +1,109 @@
 <template>
 	<div class="folder_list" id="tree-folder">
-				<div class="sub_ui_title">
-					<h3>分类目录</h3></div>
-				<el-tree style="" :data="treedata" node-key="id" default-expand-all :expand-on-click-node="false" :render-content="renderContent">
+		<div class="sub_ui_title">
+			<h3>分类目录</h3></div>
+		<el-tree style="" :data="treedata" node-key="id" default-expand-all :expand-on-click-node="false" :render-content="renderContent">
 
-				</el-tree>
+		</el-tree>
+
+		<!--//新建文件夹-->
+		<el-dialog title="新建子目录" size="tiny" :visible.sync="dialogTreeNameVisible">
+			<el-form :model="form">
+				<el-form-item label="目录名称：" :label-width="formLabelWidth" style="margin:0;">
+					<el-input v-model="form.treename" auto-complete="off"></el-input>
+				</el-form-item>
+			</el-form>
+			<div slot="footer" class="dialog-footer">
+				<el-button @click="dialogTreeNameVisible = false">取 消</el-button>
+				<el-button type="primary" @click="createtree">确 定</el-button>
 			</div>
+		</el-dialog>
+	</div>
 </template>
+<script>
+	let id = 1000;
+	export default {
+		name: 'tree-folder',
+		data() {
+			return {
+				treedata: [{
+					id: 999,
+					name: '文件夹',
+				}],
+				form: {
+					treename: '',
+					store: null,
+					data: null
+				},
 
-<script>let id = 1000;
-export default {
-	name: 'tree-folder',
-	data() {
-		return {
-			treedata: [{
-				id: 999,
-				name: '文件夹',
-			}],
-			isleaveul: false,
-			isleaveli: false,
-		}
-	},
-	methods: {
-
-		createname(callback) {
-			const h = this.$createElement;
-			this.$msgbox({
-						title:'消息',
-				customClass: 'messagestyle',
-				message: h('p', {
-					style: 'height:32px;padding: 0 50px;'
-				}, [
-					h('div', {
-						style: 'line-hight:32px;display: inline-block;color: #999;'
-					}, '目录名称： '),
-					h('div', {
-						style: 'color: teal;display: inline-block;width:265px;'
-					}, [
-						h('input', {
-							style: 'width: 100%;line-height: 28px;border: 1px solid #ddd;'
-						}, '22')
-					])
-				]),
-				showCancelButton: true,
-				confirmButtonText: '确定',
-				cancelButtonText: '取消',
-        beforeClose: (action, instance, done) => {
-          if (action === 'confirm') {
-            instance.confirmButtonLoading = true;
-            instance.confirmButtonText = '执行中...';
-            debugger
-            setTimeout(() => {
-              done();
-              setTimeout(() => {
-                instance.confirmButtonLoading = false;
-              }, 300);
-            }, 3000);
-          } else {
-            done();
-          }
-        }
-      })
-			.then(action => {
-
-        console.log('sssss');
-        if(typeof callback === "function") {
-
-					callback("是");
-
-
-				}
-			}).catch(() => {
-				if(typeof callback === "function") {
-					callback("是");
-				}
-			});
+				dialogTreeNameVisible: false,
+				formLabelWidth: '100px',
+				isleaveul: false,
+				isleaveli: false,
+			}
 		},
-		showmenu(store, data, evt) {
-			var evtTargetThis = evt.target.parentElement.parentElement.children[2];
-			if(evtTargetThis.style.display =="block") {
-			evtTargetThis.style.display = "none";
-		} else {
-			evtTargetThis.style.display = "block";
-		}
+		methods: {
 
-	},
-	add(store, data, evt) {
-		this.createname(function(name) {
-		      console.log(name)
-					store.append({
-								id: id++,
-								label:'文件夹' + id,
-						children: []
-					}, data);
+			showmenu(store, data, evt) {
+				var evtTargetThis = evt.target.parentElement.parentElement.children[2];
+				if(evtTargetThis.style.display == "block") {
+					evtTargetThis.style.display = "none";
+				} else {
+					evtTargetThis.style.display = "block";
+				}
 
-					debugger;
-
-				})
-
-
+			},
+			add(store, data) {
+				this.dialogTreeNameVisible = true;
+				this.form.store = store;
+				this.form.data = data;
+			},
+			createtree() {
+				this.dialogTreeNameVisible = false;
+				this.updateTreeData(this.form.store.currentNode.data.id,id,this.form.treename,"add");
+				this.form.store.append({
+					id: id++,
+					name: this.form.treename,
+					children: []
+				}, this.form.data);
 			},
 			remove(store, data) {
 				store.remove(data);
 			},
-			mouseOver(store, data, evt){
+			mouseOver(store, data, evt) {
 
-				evt.target.children[1].style.display='block';
+				evt.target.children[1].style.display = 'block';
 			},
-			mouseOutLi(store, data, evt){
-				this.isleaveli=true;
-				evt.target.children[1].style.display='none';
-				if(this.isleaveli==true&this.isleaveul==true){
+			mouseOutLi(store, data, evt) {
+				this.isleaveli = true;
+				evt.target.children[1].style.display = 'none';
+				if(this.isleaveli == true & this.isleaveul == true) {
 					debugger
-					evt.target.children[1].style.display='none';
-					evt.target.children[2].style.display='none';
-					this.isleaveli=false;
-				}else {
-          evt.target.children[1].style.display='none';
-          evt.target.children[2].style.display='none';
-        }
+					evt.target.children[1].style.display = 'none';
+					evt.target.children[2].style.display = 'none';
+					this.isleaveli = false;
+				} else {
+					evt.target.children[1].style.display = 'none';
+					evt.target.children[2].style.display = 'none';
+				}
 
 			},
-			mouseOutUl(store, data, evt){
-				this.isleaveul=true;
-//				evt.target.children[1].style.display='none';
-//				if(evt.target.targetName=="ul"){
-//					console.log("22")
-//				}
-//debugger
-        evt.target.parentElement.children[1].style.display='none';
-				if(this.isleaveli=this.isleaveul){
-//					debugger
+			mouseOutUl(store, data, evt) {
+				this.isleaveul = true;
+				//				evt.target.children[1].style.display='none';
+				//				if(evt.target.targetName=="ul"){
+				//					console.log("22")
+				//				}
+				//debugger
+				evt.target.parentElement.children[1].style.display = 'none';
+				if(this.isleaveli = this.isleaveul) {
+					//					debugger
 
-					evt.target.style.display='none';
-					this.isleaveul=false;
-								}
+					evt.target.style.display = 'none';
+					this.isleaveul = false;
+				}
 				console.log(evt.target)
-				evt.target.style.display='none';
+				evt.target.style.display = 'none';
 			},
 			renderContent(h, {
 				node,
@@ -144,10 +111,10 @@ export default {
 				store
 			}) {
 				return(
-					<ul class="tree_folder">
+                     <ul class="tree_folder">
 					 <li style=" box-sizing:border-box;" on-mouseenter={ (evt) => this.mouseOver(store, data,evt) } on-mouseleave={ (evt) => this.mouseOutLi(store, data,evt) }>
                         <span>
-                             <span class="treename">未命名文件夹啊啊撒打发阿发撒发福阿斯顿发送到给阿达发生按个</span>
+                             <span class="treename">{node.data.name}</span>
                         </span>
                          <span style="float: right; display:none; margin-right:20px; position:absolute; top:0;right:0;" class="icon_bar">
                              <i class="fa fa-bars"  on-click={ (evt) => this.showmenu(store, data,evt) }></i>
@@ -161,14 +128,30 @@ export default {
                       </ul>
 				);
 
-			}
-		},
-		updateTreeData(){
+			},
+			updateTreeData(pid,id,name,type) {
+				switch(type){
+					case "add":
+					
+					break;
+					case "update":
+					break;
+					case "del":
+					break;
+					default:
+					break;
+				}
+				for(var item in this.treedata){
+					this.treedata[item]
+					debugger;
+				}
 
 		},
-		addTreeData(){
+		addTreeData() {
 
 		},
+		},
+		
 		created() {
 
 		},
@@ -178,48 +161,53 @@ export default {
 	}
 </script>
 
-<style >
+<style>
 	.el-tree {
 		cursor: default;
 		background: #f9f9f9;
 		border: 0px;
 		font-size: 12px;
-
 	}
-	.treename{
+	
+	.treename {
 		font-size: 12px;
-    display: block;
-    width: 100px;
-    overflow: hidden;
-    text-overflow: ellipsis;
+		display: block;
+		width: 100px;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
-  .treename{
-
-  }
+	
+	.treename {}
+	
 	.el-tree-node>.el-tree-node__children {
 		overflow: visible;
 	}
+	
 	.sub_ui_title {
 		border-bottom: 1px solid #e5e9ed;
 		height: 35px;
 		padding: 0 15px;
 		margin-bottom: 10px;
 	}
-	.tree_folder{
+	
+	.tree_folder {
 		float: left;
-		width:80%;
+		width: 80%;
 		box-sizing: border-box;
 	}
-	.el-tree-node__content{
+	
+	.el-tree-node__content {
 		position: relative;
 	}
-	.el-tree-node__expand-icon{
+	
+	.el-tree-node__expand-icon {
 		float: left;
-		margin:0;
-		margin-top:10px;
+		margin: 0;
+		margin-top: 10px;
 		margin-right: 8px;
-		margin-left:12px;
+		margin-left: 12px;
 	}
+	
 	.sub_ui_title h3 {
 		display: inline-block;
 		line-height: 33px;
@@ -229,22 +217,26 @@ export default {
 		color: #333;
 		margin: 0;
 	}
-	.tree_menu li:hover{
+	
+	.tree_menu li:hover {
 		background: #ccc;
 	}
-	.el-tree-node__expand-icon{
-		border:none;
+	
+	.el-tree-node__expand-icon {
+		border: none;
 	}
 	/*替换下三角*/
-	.el-tree-node__expand-icon{
+	
+	.el-tree-node__expand-icon {
 		display: block;
-		width:16px;
-		height:16px;
-		background: url("/static/Login/img/login_ico.png") no-repeat ;
+		width: 16px;
+		height: 16px;
+		background: url("/static/Login/img/login_ico.png") no-repeat;
 		background-size: 250px 160px;
 		background-position: -148px -6px;
 	}
-	.expanded{
+	
+	.expanded {
 		background-position: -181px -6px;
 		transform: rotate(0deg) !important;
 	}

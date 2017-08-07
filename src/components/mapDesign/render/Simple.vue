@@ -175,6 +175,8 @@
           }
         });
 
+        console.log(currentData)
+        debugger
         var geometryType = currentData.features[0].geometry.type;
         Tool.initIsType(geometryType, this.renderSet);
 

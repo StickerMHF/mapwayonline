@@ -10,7 +10,7 @@
       <div class="fieldSetList">
         <el-form label-position="left" label-width="80px">
           <el-form-item :label="key" v-for="val, key, index in mViewProperties" :key="key">
-            <el-input :value="val | isNull" :disabled="editable(key)"></el-input>
+            <el-input v-model="val"  :disabled="key === 'mapwayid'" @blur="valChange(key, val, mViewProperties)"></el-input>
           </el-form-item>
           <!--<el-form-item :label="(val.name)" v-for="val in edit.schema" :key="val.name">
             <el-input v-model="mViewProperties[val.name]"></el-input>
@@ -41,6 +41,9 @@
     data: function () {
       return {
         mViewProperties: null,
+        update_url: 'TBUSER000001/mapdesign/map/layers/{layerid}/features/update',
+        add_url: '',
+        remove_url: '',
       }
     },
     computed: {
@@ -68,8 +71,16 @@
       //debugger
     },
     methods: {
+      ...mapActions([
+        'resetCurrentDataId'
+      ]),
       initEvent () {
-        this.$bus.on('m-v-property', (obj) => {
+        this.$bus.on('m-v-update-property', (obj) => {
+          //debugger
+          this.mViewProperties = obj;
+        });
+
+        this.$bus.on('m-v-add-property', (obj) => {
           //debugger
           this.mViewProperties = obj;
         });
@@ -80,16 +91,43 @@
         this.$bus.emit('reset-edit-state');
         //console.log('重置后this.edit',this.edit);
         // TODO 将用户编辑好的属性信息上传至服务器
+        console.log(this.mViewProperties.mapwayid);
+        var layerid = this.edit.currentDataId, editType = this.edit.editType, url;
+        switch (editType) {
+          case 'add': url = 'TBUSER000001/mapdesign/map/layers/' + layerid + '/features/add'; break;
+          case 'update': url = 'TBUSER000001/mapdesign/map/layers/' + layerid + '/features/update'; break;
+        }
 
+        var params = "data=" + JSON.stringify({
+            features: [{
+              geometry:{x:104, y:54},
+              attributes: Tool.clone(this.mViewProperties),
+            }],
+            f: 'json',
+            wkid: 4326
+          });
+        console.log(params)
+        debugger
+
+        this.$http.post(url, params).then(res => {
+          if (!res.data) {
+            console.log('更新错误');
+            return;
+          }
+          this.$message({
+            showClose: true,
+            message: '成功保存至数据库',
+            type: 'success',
+          });
+          this.resetCurrentDataId();
+        }).catch(err => {
+          console.log(err)
+        });
       },
 
-      editable (key) {
-        var schema = this.edit.schema;
-        schema.some((item) => {
-          if (key === item.mapwayid) {
-            return true;
-          }
-        });
+      valChange (key, val) {
+        this.mViewProperties[key] = val
+        console.log(key, '变为:' + this.mViewProperties[key])
       },
 
       canNull (key) {

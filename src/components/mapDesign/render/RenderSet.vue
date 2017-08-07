@@ -82,43 +82,51 @@
           isAdded: null,
         },
         currentLayerId: null,
-        _geoJson: null
       }
     },
     mounted () {
       this.initEvent();
       var _this = this;
-      var _geoJson = [];
-      var url = ['TBUSER000001/mapdesign/map/layers/TBDATA000119/query?f=geojson&returnGeometry=true', 'TBUSER000001/mapdesign/map/layers/TBDATA000120/query?f=geojson&returnGeometry=true'];
-      var dataIdChecked = Tool.clone(this.render.dataIdChecked);
+      var _geoJson = null;
+      var dataIdChecked = this.render.dataIdChecked;
 
+      dataIdChecked.forEach((id) => {
+        //var url = 'TBUSER000001/mapdesign/map/layers/TBDATA000004/query?f=geojson&returnGeometry=true';
+        var url = 'TBUSER000001/mapdesign/map/layers/' + id + '/query?f=geojson&returnGeometry=true&OutSr=4326';
+        _this.$http.get(url).then(function(res){
+          if (!res.data) {
+            console.log('layerid： ' +id + '的geojson数据： ' + res.data);
+            return;
+          }
+          _geoJson = {
+            id,
+            data: res.data,
+          };
+          _this.addGeoJsons( Tool.clone(_geoJson) );
+          _this.$bus.emit('init-render');
 
-      /*console.log(dataIdChecked)
-      debugger*/
-      _this.$http.get(url[1]).then(function(res){
-        _geoJson.push({
-          id: 0,
-          data: res.data
-        });
-        //_this.$http.get(url[1]).then(function(res){
-        /*_geoJson.push({
-         id: 1,
-         data: res.data
-         });*/
-        _this._geoJson = _geoJson;
-        _this.setGeoJsons(_geoJson);
-
-        _this.$bus.emit('init-render');
-
-        console.log('_this.render.geoJsons', _this.render.geoJsons);
-        //});
-      }).catch(function (error) {
-        console.log(error);
+          console.log('_this.render.geoJsons', _this.render.geoJsons);
+        }).catch((err) => { console.log(err); });
       });
+
+      /*var url = 'TBUSER000001/mapdesign/map/layers/TBDATA000004/query?f=geojson&returnGeometry=true';
+
+       _this.$http.get(url).then(function(res){
+       _geoJson.push({
+       id: 0,
+       data: res.data
+       });
+       _this._geoJson = _geoJson;
+       _this.setGeoJsons(_geoJson);
+
+       _this.$bus.emit('init-render');
+
+       console.log('_this.render.geoJsons', _this.render.geoJsons);
+       }).catch((error) => { console.log(error); });*/
     },
     methods: {
       ...mapActions([
-        'setRenderType','setGeoJsons', 'setCurrentLayer',
+        'setRenderType','addGeoJsons', 'setCurrentLayer', 'setDataIdChecked'
       ]),
       initEvent () {
         this.$bus.on('grade-render',() => {
@@ -279,6 +287,7 @@
             this.$bus.emit('save-current-type-render');
             break;
         }
+        this.setDataIdChecked();
       },
 
       /* 对当前图层渲染样式的不保存 */

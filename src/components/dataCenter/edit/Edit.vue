@@ -91,7 +91,7 @@
     width: 100%;
     position: absolute;
     bottom: 0;
-    top: 45px;
+    top: 40px;
   }
 
   .map-view {

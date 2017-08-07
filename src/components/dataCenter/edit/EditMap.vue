@@ -16,7 +16,6 @@
   // TODO  以后MAP_IMAGE_PATH这个图片地址要改成node_modules中的地址
   const MAP_IMAGE_PATH = "http://cdn.bootcss.com/leaflet/1.0.3/images/";
 
-
   export default {
     name: 'editmap',
     data () {
@@ -38,7 +37,9 @@
 
         // 编辑状态的feature属性
         now_layer: null,
-        now_feature: null
+        now_feature: null,
+
+        mViewProperties: {},
       }
     },
     computed: {
@@ -57,7 +58,7 @@
     },
     methods: {
       ...mapActions([
-        'setIsSave', 'setMViewProperties', 'setEditLog', 'setSubmitFeature', 'setSchema'
+        'setIsSave', 'setMViewProperties', 'setEditLog', 'setSubmitFeature', 'setSchema', 'setEditType',
       ]),
       initEvent: function () {
         this.$bus.on('reset-edit-state', () => {
@@ -96,9 +97,9 @@
         //var url = 'static/mapDesign/data/polygondata.json';
 
         this.$http.get(url).then((res) => {
-          let features = res.data.features;
-          console.info(features)
-          this.addDrawPlugin(features);
+          let data = res.data;
+          console.info(data)
+          this.addDrawPlugin(data);
         })
       },
 
@@ -180,7 +181,23 @@
       /* 图层feature点击的clicMapToSave */
       initEditState: function  (layer) {
         //this.setMViewProperties(layer.feature.properties);
-        this.$bus.emit('m-v-property', layer.feature.properties);
+        /*console.log(layer)
+        debugger
+        if (layer.feature) {
+          this.$bus.emit('m-v-update-property', layer.feature.properties);
+        } else {
+          this.$bus.emit('m-v-add-property', Tool.clone(this.mViewProperties));
+        }*/
+
+
+
+        var editType = this.edit.editType;
+        console.log(editType)
+        switch (editType) {
+          case 'add': this.$bus.emit('m-v-add-property', Tool.clone(this.mViewProperties)); break;
+          case 'update': this.$bus.emit('m-v-update-property', Tool.clone(layer.feature.properties)); break;
+        }
+
         this.now_layer = layer;
         this.now_layer.editing.enable();
         this.setEditLog(true);
@@ -194,7 +211,10 @@
       cancelEditState: function  () {
         console.log(this.now_layer);
         //debugger
-        this.now_layer.editing.disable();
+        if (!!this.now_layer.editing) {
+          this.now_layer.editing.disable();
+        }
+
         this.now_layer = null;
         this.setMViewProperties(null);
         this.setIsSave(true);
@@ -203,7 +223,7 @@
         this.now_feature = null;
         this.setSubmitFeature(null);
         console.log(this.edit.showEditLog)
-        debugger
+        //debugger
       },
 
       onEachFeature: function (feature, layer) {
@@ -244,6 +264,7 @@
         });
 
         layer.on('click', function  (e) {
+          _this.setEditType('update');
           var _layer = e.target;
           if ( !_this.now_layer ) {
             console.log(layer);
@@ -255,7 +276,6 @@
                 _this.$confirm('当前有未保存的数据', '提示', {
                   type: 'warning'
                 }).then(() => {
-                  //saveToDb(_this.edit.now_layer);
                   _this.cancelEditState();
                   _this.initEditState(_layer);
                   console.log('点击别的feature', _this.now_layer)
@@ -268,14 +288,27 @@
         });
       },
 
-      addDrawPlugin: function (features) {
+      createMViewProperties (data) {
+        var keys = Tool.getField(data);
+        keys.forEach((item) => {
+          if (item === 'mapwayid') {
+            return;
+          }
+          this.mViewProperties[item] = '';
+        });
+      },
+
+      addDrawPlugin: function (data) {
         let map = this.map;
         let _this = this;
         let drawItem = _this.mapViewEditGroup;
-        let type = features[0].geometry.type;
+        let type = data.features[0].geometry.type;
+
+        this.createMViewProperties(data);
+
 
         // 添加从后台传过来的geojson数据
-        _this.geoJsonLayer = L.geoJson(features, {
+        _this.geoJsonLayer = L.geoJson(data.features, {
           style: {
             color: '#ff7800',
             weight: 5,
@@ -331,11 +364,6 @@
           }
         }
 
-
-        function saveToDb (obj) {
-          console.log('保存到数据库')
-        }
-
         /**
          * featureClick: 图层feature点击的处理函数
          */
@@ -343,6 +371,7 @@
 
         // 添加手动画的geojson数据
         map.on(L.Draw.Event.CREATED, function (e) {
+          _this.setEditType('add');
           let layer = e.layer;
           let type = e.layerType;
           _this.geoJsonLayer = L.geoJson(layer.toGeoJSON(), {
@@ -350,13 +379,11 @@
             onEachFeature: _this.onEachFeature
           });
           drawItem.addLayer(_this.geoJsonLayer);
-          debugger
           console.log(_this.now_layer);
           if (_this.now_layer) { //如果有正在编辑的feature
             _this.$confirm('当前有未保存的数据?', '提示', {
               type: 'warning'
             }).then(() => {
-              //saveToDb(_this.edit.now_layer);
               _this.cancelEditState();
               _this.initEditState(_this.geoJsonLayer.getLayers()[0]);
               console.log('添加新的feature', _this.now_layer)

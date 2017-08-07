@@ -1,5 +1,6 @@
 export default {
   state: {
+    // 存储用户添加的数据  geoJsons: [{  id: 1, data: {}, }]
     geoJsons: [],
     layer: [],
     currentLayerId:　null,
@@ -59,6 +60,7 @@ export default {
     currentStyle: null,
     // 创建地图选择的数据id集合
     dataIdChecked: []
+
   },
 
   mutations: {
@@ -75,8 +77,20 @@ export default {
     },
 
 
-    SET_GEO_JSON (state, geoJsons) {
-      state.geoJsons = geoJsons;
+    ADD_GEO_JSON (state, obj) {
+      var exit = false;
+      state.geoJsons.some((item) => {
+        if (obj.id === item.id) {
+          exit = true;
+          return;
+        }
+      });
+
+      if (!exit) {
+        state.geoJsons.push(obj);
+      }
+      /*console.log(state.geoJsons)
+      debugger*/
     },
 
 
@@ -138,11 +152,15 @@ export default {
       });
     },
 
+    RESET_DATA_ID_CHECKED (state) {
+      state.dataIdChecked = [];
+    },
+
   },
 
   actions: {
-    setGeoJsons ({commit}, geoJsons) {
-      commit('SET_GEO_JSON', geoJsons);
+    addGeoJsons ({commit}, geoJsons) {
+      commit('ADD_GEO_JSON', geoJsons);
     },
 
     setRenderType ({commit}, type) {
@@ -177,12 +195,16 @@ export default {
       commit('SET_CURRENT_STYLE', style);
     },
 
-    addDataIDChecked ({commit}, id) {
+    addDataIdChecked ({commit}, id) {
       commit('ADD_DATA_ID_CHECKED', id);
     },
 
-    removeDataIDChecked ({commit}, id) {
+    removeDataIdChecked({commit}, id) {
       commit('REMOVE_DATA_ID_CHECKED', id);
+    },
+
+    resetDataIdChecked ( {commit} ) {
+      commit('RESET_DATA_ID_CHECKED');
     },
   }
 }

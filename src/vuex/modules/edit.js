@@ -19,6 +19,10 @@ export default {
     isSave: false,
     submitFeature: null,
     schema: null,
+    currentDataId: null,
+
+    // 记录是更新还是添加
+    editType: ''
   },
 
   mutations: {
@@ -48,6 +52,18 @@ export default {
     SET_SCHEMA (state, field) {
       state.schema = field;
       console.log('Huoqu de schema', state.schema)
+    },
+
+    SET_CURRENT_DATA_ID (state, id) {
+      state.currentDataId = id;
+    },
+
+    RESET_CURRENT_DATA_ID (state) {
+      state.currentDataId = null;
+    },
+
+    SET_EDIT_TYPE (state, type) {
+      state.editType = type;
     },
   },
 
@@ -85,6 +101,18 @@ export default {
 
     setSchema ({commit}, field) {
       commit('SET_SCHEMA', field);
-    }
+    },
+
+    setCurrentDataId ({commit}, id) {
+      commit('SET_CURRENT_DATA_ID', id);
+    },
+
+    resetCurrentDataId ({commit}) {
+      commit('RESET_CURRENT_DATA_ID');
+    },
+
+    setEditType ({commit}, type) {
+      commit('SET_EDIT_TYPE', type)
+    },
   }
 }

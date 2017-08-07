@@ -9,9 +9,10 @@
       <ul>
         <li :class="[ item.checked ? 'data-checked' : '', 'data-item' ]"  v-for="item in map_list" :key="item.name"  @click="mapClick(item)">
           <i class="datatype" :class="item.layertype"></i>
-          <span>{{item.name}}</span>
+          <span>{{item.tag}}</span>
+          <span>{{item.mark}}</span>
           <span>{{item.description}}</span>
-          <span>{{item.pubdate}}</span>
+          <span>{{item.createdate}}</span>
         </li>
       </ul>
 
@@ -37,7 +38,6 @@
           <i class="datatype" :class="item.layertype"></i>
           <span>{{item.name}}</span>
           <span>{{item.description}}</span>
-          <span>{{item.pubdate}}</span>
         </li>
       </ul>
 
@@ -63,7 +63,7 @@
       return {
         map_list: null,
         data_list: null,
-        map_url: '/mapdesign/map/get',
+        map_url: '/mapdesign/map',
         data_url: '/mapdesign/map/layers',
         mapCurrentPage: 1,
         dataCurrentPage: 1,
@@ -91,7 +91,8 @@
     },
     methods: {
       ...mapActions([
-        'addDataIDChecked', 'removeDataIDChecked'
+        // 数据列表页，对用户勾选的数据进行id记录    添加， 删除， 重置
+        'addDataIdChecked', 'removeDataIdChecked', 'resetDataIdChecked'
       ]),
 
       /* 获取用户地图集 */
@@ -145,6 +146,12 @@
         this.fetchData(this.data_url, this.dataCurrentPage);
       },
 
+      /* 页面跳转到数据列表页面 */
+      showDataList () {
+        this.dataList = !this.dataList;
+        this.resetDataIdChecked();
+      },
+
       /* 页面跳到地图列表页面 */
       toMapList () {
         this.dataList = !this.dataList;
@@ -168,15 +175,12 @@
       dataClick (item) {
         item.checked = !item.checked;
         if (item.checked) {
-          this.addDataIDChecked(item.layerid);
+          this.addDataIdChecked(item.layerid);
         } else {
-          this.removeDataIDChecked(item.layerid);
+          this.removeDataIdChecked(item.layerid);
         }
-      },
-
-      /* 新建地图 */
-      showDataList () {
-        this.dataList = !this.dataList;
+        /*console.log(this.render.dataIdChecked)
+        debugger*/
       },
     },
   }

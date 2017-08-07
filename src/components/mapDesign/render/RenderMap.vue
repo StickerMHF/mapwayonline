@@ -58,6 +58,7 @@
         'setLayers', 'setBaseLayer', 'addOverlayer', 'setCurrentStyle', 'updateOverLayer', 'updateOverLayerLabel'
       ]),
       initEvent () {
+
         this.$bus.on('run-init-simple', (obj) => {
           this.changeToRenderSimple(obj);
         });
@@ -232,8 +233,11 @@
           return;
         }
 
-        data.forEach((item, index) => {
+        console.log("data.length" ,data.length);
 
+        //debugger  TODO 循环次数多
+
+        data.forEach((item, index) => {
           var geometryType = item.data.features[0].geometry.type, layer; // TODO 需要后台传过来
           var style = Tool.createInitStyle(geometryType);
           console.log(style)
@@ -266,6 +270,7 @@
           }
 
           this.renderLayer.addLayer(layer);
+
           this.datas.push({
             id: index,
             layer,

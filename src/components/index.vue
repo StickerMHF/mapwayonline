@@ -34,27 +34,7 @@
   	left: 60px;
     overflow-y: auto;
   }
-  .el-message-box__header {
-    		padding: 0px !important;
-    	}
-    	
-    	.el-message-box__title {
-    		padding: 16px !important;
-    		font-size: 14px !important;
-    color: #555 !important;
-    	}
-    	
-    	.el-message-box__content {
-    		border: 1px solid #eee;
-    		padding: 20px 10px;
-    	}
-    	
-    	.el-message-box {
-    		width: 480px !important;
-    	}
-    	.el-message-box__btns {
-    text-align: center;
-}
+  
 .el-button {
     padding: 7px 24px;
 }

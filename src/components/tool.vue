@@ -1,7 +1,10 @@
 <script>
   import Vue from 'vue'
 
-  var initColors = ["#D8A80E", "#6B841C", "#54B7D1", "#AB75EF", "#E25252"];
+  var initColors = ['	#778899', '#696969', '#00FFFF', '#AFEEEE', '#008B8B', '#4682B4',
+   '#87CEFA', '#6495ED', '#1E90FF', '#0000CD', '#483D8B', '#F0FFF0', '#7FFFD4', '#90EE90',
+    '#00FF7F', '#7FFF00', '#3CB371', '#20B2AA', '#228B22', '#006400', '#808000', '2F4F4F'
+  ];
   var colorIndex = 0;
 
   export default {
@@ -85,10 +88,6 @@
     },
 
     getUniqueInitColor () {
-      if (colorIndex === 5) {
-        alert('当前最多允许同时添加5个图层')
-      }
-      colorIndex++;
       return initColors[colorIndex];
     },
 

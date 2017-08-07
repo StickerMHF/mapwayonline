@@ -5,8 +5,8 @@
 import axios from 'axios'
 
 // axios 配置
-axios.defaults.timeout = 5000;
-//axios.defaults.baseURL = 'http://192.168.0.222:8082/mapwayonline/';
+//axios.defaults.timeout = 5000;
+axios.defaults.baseURL = 'http://192.168.0.222:8082/mapwayonline/';
 axios.defaults.headers.get['Content-Type'] = 'application/json;charset=utf-8';
 axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded';
 

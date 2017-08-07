@@ -1,6 +1,5 @@
 <template>
   <div class="userdatasets">
-
     <el-tabs class='tabs' v-model='activeName' type='card' >
       <el-tab-pane label='我的数据集' name='myDataSets'>
         <!--<h2>我的数据集</h2>-->
@@ -11,7 +10,7 @@
             <span>{{item.dataname}}</span>
             <span>{{item.datadescribe}}</span>
             <span>{{item.pubdate}}</span>
-            <el-button type='text' @click.prevent="getName(item.id)">编辑</el-button>
+            <el-button type='text' @click.prevent="toEdit(item.id)">编辑</el-button>
             <el-button type='text'>删除</el-button>
           </li>
         </ul>
@@ -44,11 +43,9 @@
             <shapefile-box v-on:refreshdata = 'gotab'></shapefile-box>
           </el-tab-pane>
           <!--数据库方式正在开发中。。。-->
-          <!--
-                  <el-tab-pane label='数据库' name='w4'>
-                      <datalibrary-box></datalibrary-box>
-                  </el-tab-pane>
-                  -->
+          <!-- <el-tab-pane label='数据库' name='w4'>
+              <datalibrary-box></datalibrary-box>
+          </el-tab-pane> -->
           <el-tab-pane label='自定义数据' name='w5'>
             <customdata-box v-on:refreshdata = 'gotab'></customdata-box>
           </el-tab-pane>
@@ -70,7 +67,7 @@
   import customdataBox from './dataset/customdataBox.vue'
   import datalibraryBox from './dataset/datalibrarybox.vue'
   import mwsBox from './dataset/mwsdatabox.vue'
-  import { mapGetters } from 'vuex'
+  import { mapGetters, mapActions } from 'vuex'
 
 
   export default {
@@ -95,30 +92,37 @@
       this.fetchData();
     },
     methods:{
+      ...mapActions([
+        'setCurrentDataId', 'setEditLog',
+      ]),
       handleCurrentChange(val){
         this.currentPage = val;
       },
+
       gotab(tabname){
         this.activeName = tabname
       },
+
       fetchData () {
         // 获取用户数据集
         //var url = this.login.userName + this.data_url;
         var url = 'TBUSER000001' + this.data_url;
         this.$http.get(url).then((res) => {
           if (!res.data.data) {
-            console.log('后台返回数据为null');
+            console.log('获取用户数据集: ' + res.data.data);
             return;
           }
           this.data_list = res.data.data;
           this.pagetotal = this.data_list.length;
-          console.log(1)
-          //debugger
         });
       },
-      getName (id) {
+
+      /* 跳转至geo数据编辑界面 */
+      toEdit (id) {
+        this.setCurrentDataId(id); // 重置用户选择的数据id
+        this.setEditLog(false); // 重置编辑界面右侧条的伸缩
         this.$router.push('/datacenter/' + id + '/edit');
-      }
+      },
     }
   }
 </script>
