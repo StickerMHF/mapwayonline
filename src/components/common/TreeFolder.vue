@@ -7,7 +7,8 @@
 		</el-tree>
 
 		<!--//新建文件夹-->
-		<el-dialog title="新建子目录" size="tiny" :visible.sync="dialogTreeNameVisible">
+		<el-dialog  v-bind:title="form.title" size="tiny" :visible.sync="dialogTreeNameVisible">
+			<span slot="element-name">slot</span>
 			<el-form :model="form">
 				<el-form-item label="目录名称：" :label-width="formLabelWidth" style="margin:0;">
 					<el-input v-model="form.treename" auto-complete="off"></el-input>
@@ -28,14 +29,16 @@
 			return {
 				treedata: [{
 					id: 999,
-					name: '文件夹',
+					name: '未命名文件夹',
+					children:[]
 				}],
 				form: {
+					title:"新建子目录",
 					treename: '',
 					store: null,
-					data: null
+					data: null,
+					type:null
 				},
-
 				dialogTreeNameVisible: false,
 				formLabelWidth: '100px',
 				isleaveul: false,
@@ -53,22 +56,43 @@
 				}
 
 			},
-			add(store, data) {
+			update(store, data,type) {
 				this.dialogTreeNameVisible = true;
 				this.form.store = store;
 				this.form.data = data;
+				this.form.type=type;
+				debugger
+				if(type=="update"){
+					this.form.treename=data.name;
+					this.form.title="重命名";
+				}
 			},
 			createtree() {
 				this.dialogTreeNameVisible = false;
-				this.updateTreeData(this.form.store.currentNode.data.id,id,this.form.treename,"add");
-				this.form.store.append({
-					id: id++,
-					name: this.form.treename,
-					children: []
-				}, this.form.data);
+				if(this.form.type=="add"){
+					if(this.form.store.currentNode.level>2){
+					this.form.store.append({ id: id++, name: this.form.treename, children: [] }, this.form.store.currentNode.parent.data);
+				}else{
+					this.form.store.append({ id: id++, name: this.form.treename, children: [] }, this.form.data);
+				
+				}
+				}else if(this.form.type=="update"){
+					this.form.store.currentNode.data.name=this.form.treename;
+				}
+				
 			},
+			
 			remove(store, data) {
-				store.remove(data);
+				this.form.store=store;
+				if(this.form.store.currentNode.level==1){
+					 this.$message({
+          showClose: true,
+          message: '主人，留一个目录吧！'
+        });
+				}else{
+					store.remove(data);
+					this.form.store = store;
+				}
 			},
 			mouseOver(store, data, evt) {
 
@@ -90,19 +114,11 @@
 			},
 			mouseOutUl(store, data, evt) {
 				this.isleaveul = true;
-				//				evt.target.children[1].style.display='none';
-				//				if(evt.target.targetName=="ul"){
-				//					console.log("22")
-				//				}
-				//debugger
 				evt.target.parentElement.children[1].style.display = 'none';
 				if(this.isleaveli = this.isleaveul) {
-					//					debugger
-
 					evt.target.style.display = 'none';
 					this.isleaveul = false;
 				}
-				console.log(evt.target)
 				evt.target.style.display = 'none';
 			},
 			renderContent(h, {
@@ -120,8 +136,8 @@
                              <i class="fa fa-bars"  on-click={ (evt) => this.showmenu(store, data,evt) }></i>
                          </span>
                             <ul class="tree_menu" on-mouseleave={ (evt) => this.mouseOutUl(store, data,evt) } style="position: absolute;right: 15px;top: 30px;font-size: 12px;line-height: 16px; z-index:9; display:none; border:1px solid #ccc;background:#fff;">
-                                <li style="line-height: 32px;" on-click={ () => this.add(store, data) }><div  style="padding:3px 8px;"><i class="fa fa-plus"></i><span>创建子目录</span></div></li>
-                                <li style="line-height: 32px;" on-click={ () => this.remove(store, data) }><div  style="padding:3px 8px;"><i class="el-icon-edit"></i><span>重命名</span></div></li>
+                                <li style="line-height: 32px;" on-click={ () => this.update(store, data,"add") }><div  style="padding:3px 8px;"><i class="fa fa-plus"></i><span>创建目录</span></div></li>
+                                <li style="line-height: 32px;" on-click={ () => this.update(store, data,"update") }><div  style="padding:3px 8px;"><i class="el-icon-edit"></i><span>重命名</span></div></li>
                                 <li style="line-height: 32px;" on-click={ () => this.remove(store, data) }><div  style="padding:3px 8px;"><i class="el-icon-delete"></i><span>删除</span></div></li>
                              </ul>
                       </li>
@@ -129,24 +145,7 @@
 				);
 
 			},
-			updateTreeData(pid,id,name,type) {
-				switch(type){
-					case "add":
-					
-					break;
-					case "update":
-					break;
-					case "del":
-					break;
-					default:
-					break;
-				}
-				for(var item in this.treedata){
-					this.treedata[item]
-					debugger;
-				}
-
-		},
+		
 		addTreeData() {
 
 		},
@@ -188,11 +187,12 @@
 		height: 35px;
 		padding: 0 15px;
 		margin-bottom: 10px;
+		text-align: left;
 	}
 	
 	.tree_folder {
 		float: left;
-		width: 80%;
+		width: 79%;
 		box-sizing: border-box;
 	}
 	

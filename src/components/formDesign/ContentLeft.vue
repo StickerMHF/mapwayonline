@@ -104,7 +104,9 @@ import TreeFolder from '../common/TreeFolder.vue';
 	.cl_header_menu i:hover {
 		cursor: pointer;
 	}
-	
+	.view_allform{
+		text-align: left;
+	}
 	.tree {
 		background: transparent;
 		border: none;

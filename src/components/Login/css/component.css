@@ -55,7 +55,7 @@
 	width: 25px;
 	height: 25px;
 	background: url(/static/Login/img/login_ico.png);
-	background-position:  -125px 0;
+	background-position:  -140px -13px;
 	position: absolute;
 	margin: 10px 13px;
 }
@@ -63,7 +63,7 @@
 	width: 25px;
 	height: 25px;
 	background-image: url(/static/Login/img/login_ico.png);
-	background-position: -125px -34px;
+	background-position: -140px -47px;
 	position: absolute;
 	margin: 10px 13px;
 }
