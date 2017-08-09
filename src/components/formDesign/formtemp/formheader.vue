@@ -11,7 +11,7 @@
 		
 	
 		<div class="header-tool" >
-			<el-button :plain="true" type="success">预览</el-button>
+			<el-button :plain="true" type="success" @click = "previewForm">预览</el-button>
 			<el-button :plain="true" type="success">保存</el-button>
 			<el-button :plain="true" type="success">发布</el-button>
 			<el-button :plain="true" type="success">分享</el-button>
@@ -20,15 +20,12 @@
 		
 		
 		
-		
-		
-		
 	</div>
 </template>
 
 <script>
 	import _Bus_ from './formcontral.js';  
-	
+	import {mapGetters, mapActions } from 'vuex'
 	
 	export default {
 		name:'formheader',
@@ -41,10 +38,15 @@
 			}
 		},
 		computed: {
-			
+			...mapGetters([
+				'getForm'
+			])
 		},
 		methods:{
-			
+			previewForm(){
+				// 预览数据	
+				this.$router.replace({name: 'formpreview', params: {id:'new'}});
+			}
 		},
 		created(){
 			

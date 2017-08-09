@@ -2,35 +2,37 @@
 	<div id="formside">
 		
 		<h3 style="text-align: center;">布局控件</h3>
-		<el-collapse accordion v-model='boxActive'>
-		  <el-collapse-item name='box1'>
-		    <template slot="title">
-		      From表单控件<i class="header-icon el-icon-document"></i>
-		    </template>
-		    <ul class="widget-box">
-		    	<li class="widget-item" @click="addWidget('input_text')">文本输入框</li>
-		    	<li class="widget-item" @click="addWidget('textarea')">文本域</li>		    	
-		    	<li class="widget-item" @click="addWidget('select')">下拉选择框</li>
-		    	<li class="widget-item" @click="addWidget('input_checkbox')">复选框</li>
-		    	<li class="widget-item" @click="addWidget('input_radio')">单选框</li>
-		    	<li class="widget-item" @click="addWidget('input_password')">密码输入框</li>
-		    	<li class="widget-item" @click="addWidget('input_file')">文件上传</li>
-		    	<li class="widget-item" @click="addWidget('button')">按钮</li>
-		    </ul>
-		  </el-collapse-item>
-		  <el-collapse-item name='box2'>
-		  	<template slot="title">
-		      	常用组件<i class="header-icon el-icon-date"></i>
-		    </template>
-		    <ul class="widget-box">
-		    	<li class="widget-item"  @click="addWidget('h1')">标题</li>
-		    	<li class="widget-item" @click="addWidget('p')">段落</li>
-		    	<li class="widget-item" @click="addWidget('img')">图片</li>	
-		    </ul>
-		  </el-collapse-item>
-		  
-		</el-collapse>
-	
+		
+			<ul class="widget-class">
+				<li class="list-item" 
+					@mouseover="widget = true"
+					@mouseout="widget = false">
+					<!--表单控件列表 -->
+					<div>表单控件</div>
+					<transition name='el-zoom-in-top'>
+						<ul class="widget-box" v-show="widget">
+					    	<li class="widget-item" v-for="item in List.widgetList" @click="addWidget({type:item.type,tagname:item.tagname})"><span>{{item.label}}</span></li>
+					    </ul>
+					</transition>
+				</li>
+				<li class="list-item"
+					@mouseover="common = true"
+					@mouseout="common = false">
+					<!--常用控件列表 -->	
+					<div>常用控件</div>
+					<transition name='el-zoom-in-top'>
+						<ul class="widget-box" v-show="common">
+					    	<li class="widget-item" v-for="item in List.commonList" @click="addWidget({type:item.type,tagname:item.tagname})"><span>{{item.label}}</span></li>
+					   </ul>	
+					</transition>  
+				</li>
+				
+			</ul>
+		
+		
+			
+		    
+		
 		
 	</div>
 </template>
@@ -43,14 +45,36 @@
 		components:{},
 		data(){
 			return {
-				boxActive:'box1'
-				
+				boxActive:'box1',
+				widget:false,
+				common:false,
+				List:{
+					// 表单控件列表
+					widgetList:[
+						{tagname:'input',type:'text',label:"文本输入框"},
+						{tagname:'textarea',type:'',label:"文本域"},
+						{tagname:'select',type:'',label:"下拉选择框"},
+						{tagname:'input',type:'checkbox',label:"复选框"},
+						{tagname:'input',type:'radio',label:"单选框"},
+						{tagname:'input',type:'password',label:"密码输入框"},
+						{tagname:'input',type:'file',label:"文件上传"},
+						{tagname:'button',type:'',label:"按钮"},
+					],
+					// 常用控件列表
+					commonList:[
+						{tagname:'h1',type:'',label:"一级标题"},
+						{tagname:'p',type:'',label:"段落"},
+						{tagname:'img',type:'',label:"图片"},
+						
+					]
+				}
 				
 			}
 		},
 		methods:{
 			addWidget(type){
-				 var type = type || 'none'
+				 var type = type || {};
+				 
 				// 触发组件content中的添加组件的事件
 				_Bus_.$emit('add-widget',type);
 			}
@@ -63,7 +87,12 @@
 		},
 		mounted(){
 			
-		}
+		},
+		beforeDestory(){
+			
+			_Bus_.$off("add-widget");
+		
+		} 
 	}
 </script>
 
@@ -76,25 +105,62 @@
 		margin: 0;
 		padding: 0;
 	}
+	
 	text-align: left;
 	.header-icon{
 		margin-left: 30px;
 	}
-	.widget-box{
-		width:100%;
-		.widget-item{
-			height: 35px;
-			line-height: 35px;
-			text-align: center;
-			margin-bottom: 5px;
-			border: 1px solid #BBBBBB;
-			border-radius: 6px;
-			cursor: pointer;
+	.widget-class{
+		
+		.list-item{
+			position: relative;
+			width:70px;
+			height:50px;
+			border: 1px solid #DFDFDF;
+			margin: 20px auto;
+			.widget-box{
+			
+				border: 1px solid #DFDFDF;
+				width:250px;
+				height: 200px;
+				box-sizing: border-box;
+				position: absolute;
+				right:-250px;
+				
+				padding: 20px;
+				top:0;
+				z-index: 999999999;
+				background-color: #fff;
+				border-radius: 5px;
+				.widget-item{
+					margin-bottom: 10px;
+					margin-left: 10px;
+					width: 45px;
+					height: 45px;
+					display: inline-block;
+					line-height: 45px;
+					text-align: center;
+					margin-bottom: 5px;
+					border: 1px solid #BBBBBB;
+					border-radius: 6px;
+					cursor: pointer;
+					overflow: hidden;
+				}
+				.widget-item:hover{
+					background-color: azure;
+				}
+			}
+			
+			
+			
+			
 		}
-		.widget-item:hover{
-			background-color: azure;
-		}
+		
+		
+		
+		
 	}
+	
 	
 	
 }

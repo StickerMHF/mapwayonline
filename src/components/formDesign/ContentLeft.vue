@@ -19,31 +19,57 @@
 				</ul>
 			</div>
 			<div class="folder_list">
-				<TreeFolder></TreeFolder>
+				<TreeFolder @getByTreeId="getByTreeId"></TreeFolder>
 			</div>
 		</div>
 	</div>
 </template>
 
 <script>
-import TreeFolder from '../common/TreeFolder.vue';
+	import TreeFolder from '../common/TreeFolder.vue';
+	import {
+		mapGetters,
+		mapActions
+	} from 'vuex'
 	let id = 1000;
 	export default {
 		name: 'content-left',
-		components:{TreeFolder},
+		components: {
+			TreeFolder
+		},
 		data() {
 			return {
 				formPath: '/formDesign/init/'
 			}
 		},
+		computed: {
+			...mapGetters([
+				'getFormList'
+			])
+		},
 		methods: {
-			
-			updatetreedata(){
-				
+			...mapActions([
+				'_setTreeData'
+			]),
+			getByTreeId(store){
+				debugger
+				console.log(store.currentNode.data);
+			},
+			gettreedata() {
+				let arr=[{
+					id: 999,
+					name: '未命名文件夹',
+					children: [{
+						id: 1000,
+						name: '未命名文件夹1',
+						children: []
+					}]
+				}];
+				this._setTreeData(arr);
 			}
 		},
 		created() {
-
+			this.gettreedata();
 		},
 		mounted() {
 
@@ -54,7 +80,7 @@ import TreeFolder from '../common/TreeFolder.vue';
 <style scoped>
 	#content-left {
 		position: absolute;
-		width: 220px;
+		width: 260px;
 		left: 0;
 		top: 0;
 		bottom: 0;
@@ -104,9 +130,11 @@ import TreeFolder from '../common/TreeFolder.vue';
 	.cl_header_menu i:hover {
 		cursor: pointer;
 	}
-	.view_allform{
+	
+	.view_allform {
 		text-align: left;
 	}
+	
 	.tree {
 		background: transparent;
 		border: none;
@@ -114,8 +142,6 @@ import TreeFolder from '../common/TreeFolder.vue';
 		box-shadow: none;
 		-webkit-box-shadow: none;
 	}
-	
-	
 	
 	.tree li {
 		list-style-type: none;
@@ -142,7 +168,4 @@ import TreeFolder from '../common/TreeFolder.vue';
 		text-overflow: ellipsis;
 		font-size: 12px;
 	}
-	
-	
-	
 </style>

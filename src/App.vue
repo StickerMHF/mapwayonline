@@ -44,7 +44,7 @@ a {
 }
  /*滚动条 start*/  
   ::-webkit-scrollbar {  
-    width: 10px;  
+    width: 4px;  
     height: 4px;  
     background-color: #F5F5F5;  
   }  

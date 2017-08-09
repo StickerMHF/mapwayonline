@@ -42,6 +42,7 @@ export default new Router({
         },
         {
           path:'/formdesign/init/:id',
+          name:'formdesigninit',
           component: res => require(['@/components/formDesign/FormIndex.vue'], res),
           meta: {requireAuth: false,}, // 添加该字段，表示进入这个路由是需要登录的
         },
@@ -67,6 +68,12 @@ export default new Router({
         requireAuth: false, // 添加该字段，表示进入这个路由是需要登录的
       },
       component: Index,
+    },
+    {
+      path:'/formpreview/:id',
+      name:'formpreview',
+      meta: {requireAuth: false,}, // 添加该字段，表示进入这个路由是需要登录的
+      component:res => require(['@/components/formDesign/formpreview.vue'],res)
     },
   ]
 })

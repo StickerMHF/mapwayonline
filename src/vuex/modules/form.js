@@ -1,43 +1,95 @@
 export default {
 	state:{
-		widgetList: {},
+		widgetList:[
+			{
+				tagname:'input',
+				type:'text',
+				label:'label',
+				description:'输入框',
+				bindFiled:'',
+				layout:{
+					x:150,y:150,w:300,h:40						
+				},
+				style:{
+					backgroundColor : "",
+					lineHeight: '',
+					fontSize: '16px',
+					color:'#333',
+					borderStyle : 'solid',
+					borderWidth : '1px',
+					borderColor : '#233333',
+					borderRadius : '0'
+				}
+			},
+			{
+				tagname:'input',
+				type:'password',
+				label:'label',
+				description:'密码框',
+				bindFiled:'',
+				layout:{
+					x:400,y:300,w:300,h:40						
+				},
+				style:{
+					backgroundColor : '',
+					lineHeight: '',
+					fontSize: '16px',
+					color:'#333',
+					borderStyle : 'solid',
+					borderWidth : '1px',
+					borderColor : '#233333',
+					borderRadius : '0'
+				}
+			}
+		],
 		formConfig:{
 			name:'',
-	  		description:'',
-	  		isApp:true,
-	  		bindData:null,
-	  		dataId:null,
-	  		layout:'wide',
-	  		style:{
-	  			backgroundColor:'#FFFFFF',
-	  			backgroundImage:'',
-	  			backgroundPosition:'over',
-	  			backgroundRepeat:'no-repeat',
-	  		}
-		},
+			description:'',
+			bindTable:'',
+			manner:'wide',
+			style:{
+				width:'960px',
+				minHeight:'540px',
+				backgroundColor : '#FFF',
+				backgroundImage : 'url(none)',
+				backgroundPosition : '0 0',
+				backgroundSize : "100% 100%"
+			}
+		}
 		
 	},
 	mutations:{
-		UPDATA(state,obj) {
-			state[obj.name]= obj.data;
-		},
 		ADD_WIDGET (state, widget) {
-			let oid = 'widget'+ widget.id;
-			state.widgetList[oid] = widget;
+			state.widgetList.push(widget);
 		},
 		REMOVE_WIDGET (state,oid) {
-			delete state.widgetList[oid];
+	
+			state.widgetList.splice(oid, 1);
 		},
-		CHANGE_STYLE(state,obj){	
-			state.widgetList['widget'+ obj.oid].style[obj.attr] = obj.value;
+		SET_WIDGET(state,obj){		
+			state.widgetList[obj.oid][obj.attr] = obj.value;				
 		},
-		SET_WIDGET(state,obj){	
-			state.widgetList['widget'+ obj.oid][obj.attr] = obj.value;	
+		SET_WIDGETSTYLE(state,obj){
+			console.log(obj)
+			state.widgetList[obj.oid].style[obj.attr] = obj.value;
 		},
-		SET_DRAG(state,obj){
+		SAVE_POSITION(state,obj){
+			state.widgetList[obj.oid].layout = obj.option;
+		},
+		SET_CANVAS(state,obj){
 			state.formConfig[obj.attr] = obj.value;
+			if(obj.value === 'wide'){
+				state.formConfig.style.width = '960px';
+				state.formConfig.style.minHeight = '540px';
+				state.widgetList = [];
+			}
+			if(obj.value === 'vertical'){
+				state.formConfig.style.width = '540px';
+				state.formConfig.style.minHeight = '960px';
+				state.widgetList = [];
+			}
 		},
-		SET_DRAGSTYLE(state,obj){
+		SET_CANVASSTYLE(state,obj){
 			state.formConfig.style[obj.attr] = obj.value;
 		}
 	},
@@ -48,20 +100,20 @@ export default {
 		_removeWidget({commit}, oid){
 			commit('REMOVE_WIDGET',oid);
 		},
-		_changeStyle({commit},obj){
-			commit('CHANGE_STYLE',obj);
-		},
 		_setWidget({commit},obj){
 			commit('SET_WIDGET',obj);
 		},
-		_setDrag({commit},obj){
-			commit('SET_DRAG',obj);	
+		_setWidgetStyle({commit},obj){
+			commit('SET_WIDGETSTYLE',obj);
 		},
-		_setDragStyle({commit},obj){
-			commit('SET_DRAGSTYLE',obj);	
+		_savePosition({commit},obj){
+			commit('SAVE_POSITION',obj);
 		},
-		_upData({commit},obj){
-			commit('UPDATA',obj);	
+		_setCanvas({commit},obj){
+			commit('SET_CANVAS',obj);
+		},
+		_setCanvasStyle({commit},obj){
+			commit('SET_CANVASSTYLE',obj);
 		},
 	}
 }

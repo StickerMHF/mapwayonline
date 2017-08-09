@@ -23,15 +23,12 @@
 </template>
 <script>
 	let id = 1000;
+	import {mapGetters, mapActions } from 'vuex'
 	export default {
 		name: 'tree-folder',
 		data() {
 			return {
-				treedata: [{
-					id: 999,
-					name: '未命名文件夹',
-					children:[]
-				}],
+				treedata: [],
 				form: {
 					title:"新建子目录",
 					treename: '',
@@ -45,7 +42,15 @@
 				isleaveli: false,
 			}
 		},
+		 computed: {
+			...mapGetters([
+				'getFormList'
+			])
+		},
 		methods: {
+			...mapActions([
+				'_setTreeData'
+			]),
 
 			showmenu(store, data, evt) {
 				var evtTargetThis = evt.target.parentElement.parentElement.children[2];
@@ -67,6 +72,9 @@
 					this.form.title="重命名";
 				}
 			},
+			getByTreeId(store){
+				this.$emit("getByTreeId",store);
+			},
 			createtree() {
 				this.dialogTreeNameVisible = false;
 				if(this.form.type=="add"){
@@ -79,7 +87,8 @@
 				}else if(this.form.type=="update"){
 					this.form.store.currentNode.data.name=this.form.treename;
 				}
-				
+				debugger
+				this._setTreeData(this.form.store.data);
 			},
 			
 			remove(store, data) {
@@ -93,11 +102,13 @@
 					store.remove(data);
 					this.form.store = store;
 				}
+				this._setTreeData(this.form.store.data);
 			},
 			mouseOver(store, data, evt) {
 
 				evt.target.children[1].style.display = 'block';
 			},
+			
 			mouseOutLi(store, data, evt) {
 				this.isleaveli = true;
 				evt.target.children[1].style.display = 'none';
@@ -128,9 +139,9 @@
 			}) {
 				return(
                      <ul class="tree_folder">
-					 <li style=" box-sizing:border-box;" on-mouseenter={ (evt) => this.mouseOver(store, data,evt) } on-mouseleave={ (evt) => this.mouseOutLi(store, data,evt) }>
+					 <li style=" box-sizing:border-box;"  on-mouseenter={ (evt) => this.mouseOver(store, data,evt) } on-mouseleave={ (evt) => this.mouseOutLi(store, data,evt) }>
                         <span>
-                             <span class="treename">{node.data.name}</span>
+                             <span class="treename" on-click={ () => this.getByTreeId(store) }>{node.data.name}</span>
                         </span>
                          <span style="float: right; display:none; margin-right:20px; position:absolute; top:0;right:0;" class="icon_bar">
                              <i class="fa fa-bars"  on-click={ (evt) => this.showmenu(store, data,evt) }></i>
@@ -152,7 +163,7 @@
 		},
 		
 		created() {
-
+             this.treedata=this.$Tools.cloneObj(this.getFormList.treedata);
 		},
 		mounted() {
 

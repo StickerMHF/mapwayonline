@@ -8,7 +8,7 @@
 		<div style="position: relative;">
 					
 				<div class="main-set" v-show="mainset">
-					<el-tabs v-model='mainActive' type='card' @tab-click="" >
+					<el-tabs type='card'  v-model='mainActive'>
 						<el-tab-pane label="设置" name="first">
 							<div class="set-tool">
 								<div  class="tool-item">
@@ -17,7 +17,7 @@
 										<el-input size="small" style='width: 200px;' 
 											v-model='formConfig.name' 
 											placeholder="请输入表名" 
-											@blur = "setDrag('name')"
+											@blur = "setCanvas('name')"
 											></el-input>	
 									</div>																
 								</div>
@@ -28,7 +28,7 @@
 										<el-input size="small" style='width: 200px;' 
 											v-model='formConfig.description' 
 											placeholder="请添加描述" 
-											@blur = "setDrag('description')"
+											@blur = "setCanvas('description')"
 											></el-input>	
 									</div>									
 								</div>
@@ -36,7 +36,7 @@
 								<div class="tool-item">
 									<span class="tool-lable">绑定表名：</span>
 									<div>
-										<el-select  style='width: 200px;' @change="setDrag('bindData')" v-model="formConfig.bindData"size='small' placeholder="请选择请选择" >
+										<el-select  style='width: 200px;' @change="setCanvas('bindTable')" v-model="formConfig.bindTable"size='small' placeholder="请选择请选择" >
 										    <el-option
 										      v-for="item in userDataList"
 										      :key="item.value"
@@ -46,158 +46,154 @@
 										</el-select>	
 									</div>	
 								</div>
-								<div class="tool-item">
-									<span class="tool-lable" title="应用列表导出可填写的form表单，展示则仅仅用于展示！">应用表单：</span>
-									<div>
-										<el-switch v-model="formConfig.isApp" on-text="应用" off-text="展示" :width = '70' @change = "setDrag('isApp')"></el-switch>
-									</div>									
-								</div>
-								<div class="tool-item" v-if="!formConfig.isApp">
-									<span class="tool-lable">绑定数据ID：</span>
-									<div>
-										<el-autocomplete
-									      class="inline-input"
-									      v-model="selectDataId"
-									      :fetch-suggestions="querySearch"
-									      placeholder="请输入内容"
-									      :trigger-on-focus="false"
-									      <!--@select="handleSelect"-->
-									    ></el-autocomplete>
-										<el-button size="mini" @click = "setdataId">查询</el-button>
-										
-									</div>	
-								</div>
+								
 								<div class="line"></div>
 								<div class="tool-item">
 									<span class="tool-lable">画布风格：</span>									
-									<el-radio-group v-model="formConfig.layout" @change = "setDrag('layout')">
-									    <el-radio label="wide">宽屏</el-radio>
-									    <el-radio label="vertical">竖屏</el-radio>
-									    <el-radio label="suit" >自适应</el-radio>
+									<el-radio-group v-model="formConfig.manner" @change = "setCanvas('manner')">
+									    <el-radio label="wide">宽屏(16:9)</el-radio>
+									    <el-radio label="vertical">竖屏(9:16)</el-radio>
+									    <!--<el-radio label="suit" >自适应</el-radio>-->
 									</el-radio-group>
 								</div>
 								<div class="tool-item">
-									<span class="tool-lable">画布背景色：</span>									
-									<el-color-picker v-model="formConfig.style.backgroundColor" @change = "setDrag('backgroundColor')" show-alpha></el-color-picker>						
-									
+									<span class="tool-lable">网格透明度：</span>									
+									   <el-slider style="width: 200px" v-model="grid.opacity" :format-tooltip="formatTooltip" @change = "setGrid('opacity')"></el-slider>
 								</div>
 								<div class="tool-item">
-									<span class="tool-lable">画布背景图：</span>																		
+									<span class="tool-lable">画布背景色：</span>									
+									<el-color-picker v-model="formConfig.style.backgroundColor" @change = "setCanvasStyle('backgroundColor')" show-alpha></el-color-picker>						
+									
+								</div>
+								<div class="tool-item" style="height:160px;">
+									<span class="tool-lable">画布背景图：<el-switch on-text=""  off-text="" @change = "resetBgimg" v-model="has_bg_img"></el-switch></span>
+									<div v-show="has_bg_img">
+										<div class="bg-thumbnail" style="margin-right: 10px;border: 1px solid #BFCBD9;display: inline-block;width: 94px;height: 75px;vertical-align: middle;">
+											<!--需要展示已选中背景的缩略图-->
+										</div>	
+										<el-button type="success" @click="bg_img = true">设置</el-button>
+										<!--点击出来模态框-->
+									</div>
+									
+									
 								</div>
 								
-								
-							</div>	
+							</div>
 						</el-tab-pane>
-		    			<el-tab-pane label="元素" name="two">
+		    			<el-tab-pane label="元素" name="two">	
 		    				<div class="widget-list">
-		    					<div class="widget-item" v-for="(value,key,index) in getForm.widgetList" @click="showSetbox(value.id)">
-		    						{{value.id}}-{{value.label}}-{{value.type}}
+								<div class="widget-item" v-for="(value,key,index) in getForm.widgetList" @click="showSetbox(index)">
+		    						{{index}}-{{value.label}}-{{value.type}}
 		    					</div>  
-		    				</div>
-		    														
+							</div>						
 		    			</el-tab-pane>
-		    			<el-tab-pane label="  表  " name="three">
-		    			
-	    					<div class="table-list" v-if="userDataList">
-		    					<div class="table-item" v-for="item in userDataList" >
-		    						{{item.value}} - {{item.label}}
-		    					</div>
+		    			<el-tab-pane label="  表  " name="three">	
+		    				<div class="widget-list">
+		    					<div class="widget-item" v-for="(item,index) in userDataList" :key="index">
+		    						{{index}} -- {{item.value}}
+		    					</div>	
 		    				</div>
-		    			
-		    				
+	    						
 		    			</el-tab-pane>
 					</el-tabs>
 				</div> 					
 							
 				<div class="form-set " v-show="!mainset">
-					<div class="item-title">{{widgetobj.type}} - {{widgetobj.id}}</div>					
+					
 					<div class="set-tool" v-if="getForm">						
 						 <el-tabs v-model="formSetActive" type="card">
-						 							    <el-tab-pane label="样式" name="style">
+						 	 <el-tab-pane label="样式" name="style">	
+								
 								<div  class="tool-item">
-									 <span class="tool-lable">高度(%)：</span>
-									 <el-input-number :step="5" size="small" v-model="ostyle.height" @change="drawing('height')" :min="20" :max='100'></el-input-number>
-								</div>
-								<div  class="tool-item">
-									<span class="tool-lable">宽度(%)：</span>
-									<el-input-number :step="5" size="small" v-model="ostyle.width" @change="drawing('width')" :min="20" :max='100'></el-input-number>												
-								</div>
-								<div  class="tool-item">
-									<span class="tool-lable">行高(px)：</span>
-									<el-input-number  size="small" v-model="ostyle.lineHeight" @change="drawing('lineHeight')" :min="20" :max='666'></el-input-number>						
-								</div>
-								<div  class="tool-item">
-									<span class="tool-lable">背 景 色 ：</span>
-									<el-color-picker v-model="ostyle.backgroundColor" @change="drawing('backgroundColor')"  show-alpha></el-color-picker>						
+									<span class="tool-lable">行高：</span>
+									<el-input-number  size="small" 
+										v-model="currentSet.style.lineHeight" 
+										@change="setWidgetStyle('lineHeight')" 
+										:min="20" :max='666'>
+									</el-input-number>						
 								</div>
 								<div class="tool-item">
 									<span class="tool-lable">字体大小：</span>
-									<el-input-number  size="small" v-model="ostyle.fontSize" @change="drawing('fontSize')" :min="12" :max='60'></el-input-number>	
+									<el-input-number  size="small" 
+										v-model="currentSet.style.fontSize"
+										 @change="setWidgetStyle('fontSize')" 
+										 :min="12" :max='60'>
+									</el-input-number>	
 								</div>
 								<div class="tool-item">
 									<span class="tool-lable">字体颜色：</span>
-									<el-color-picker v-model="ostyle.color" @change="drawing('color')"  show-alpha></el-color-picker>					
+									<el-color-picker 
+										v-model="currentSet.style.color" 
+										@change="setWidgetStyle('color')"  show-alpha>
+									</el-color-picker>					
 								</div>
 								<div  class="tool-item">
-									<span class="tool-lable">边框样式：</span>
-									<el-select style='width: 120px;' v-model="ostyle.borderStyle" size='small' placeholder="请选择" @change="drawing('borderStyle')"  @visible-change = 'showBorder'>
-									    <el-option
-									      v-for="item in [{'value': 'none','label': '无边框'}, {'value': 'solid','label': '实线'},{'value': 'dashed','label': '虚线'},{'value': 'dotted','label': '点线'}]"
-									      :key="item.value"
-									      :label="item.label"
-									      :value="item.value">
-									    </el-option>
-									</el-select>	
+									<span class="tool-lable">背景色：</span>
+									
+									<el-color-picker v-model="currentSet.style.backgroundColor"
+									 	@change="setWidgetStyle('backgroundColor')" show-alpha>
+									</el-color-picker>	
 								</div>
-								<div  class="tool-item" v-if="ostyle.borderStyle != 'none'">
+<!--								
+								<div class="tool-item">
+									<span class="tool-lable">边框样式： </span>
+									<el-select v-model="currentSet.style.borderStyle" placeholder="请选择" 
+										style='width: 120px;'
+										@change ="setWidgetStyle('borderStyle')"
+										>
+								     <el-option
+								      v-for="item in [{'value': 'none','label': '无边框'}, {'value': 'solid','label': '实线'},{'value': 'dashed','label': '虚线'},{'value': 'dotted','label': '点线'}]"
+								      :key="item.value"
+								      :label="item.label"
+								      :value="item.value">
+								    </el-option>    
+								    </el-select>
+								</div>
+								
+								
+								<div class="tool-item">
 									<span class="tool-lable">边框宽度：</span>
-									<el-input-number  size="small" v-model="ostyle.borderWidth" @change="drawing('borderWidth')" :min="1" :max='666'></el-input-number>		
+									<el-input-number v-model="currentSet.style.borderWidth" 
+										size="small"
+										@change = "setWidgetStyle('borderWidth')" 
+										:min='0' :max='50'>
+									</el-input-number>
 								</div>
-								<div  class="tool-item" v-if="ostyle.borderStyle != 'none'">
+								
+								<div class="tool-item">
 									<span class="tool-lable">边框颜色：</span>
-									<el-color-picker v-model="ostyle.borderColor" @change="drawing('borderColor')"  show-alpha></el-color-picker>	
-								</div>
-								<div  class="tool-item" v-if="ostyle.borderStyle != 'none'">
+									<el-color-picker v-model="currentSet.style.borderColor" 
+										@change = "setWidgetStyle('borderColor')">
+									</el-color-picker show-alpha>
+								</div>-->
+								
+								<div class="tool-item">
 									<span class="tool-lable">边框圆角：</span>
-									<el-input-number  size="small" v-model="ostyle.borderRadius" @change="drawing('borderRadius')" :min="-66" :max='666'></el-input-number>		
-								</div>
-								<!--<div  class="tool-item">
-									<span class="tool-lable">上外边距：</span>
-									<el-input-number size="small" v-model="ostyle.marginTop" @change="drawing('marginTop')" :min="-666" :max='666'></el-input-number>		
-								</div>						
-								<div  class="tool-item">
-									<span class="tool-lable">左外边距：</span>
-									<el-input-number  size="small" v-model="ostyle.marginLeft" @change="drawing('marginLeft')" :min="-666" :max='666'></el-input-number>		
-								</div>
-								-->
-								<div  class="tool-item">
-									<span class="tool-lable">上边距：</span>
-									<el-input-number  size="small" v-model="ostyle.paddingTop" @change="drawing('paddingTop')" :min="0" :max='666'></el-input-number>		
-								</div>						
+									<el-input-number v-model="currentSet.style.borderRadius" 
+										size="small"
+										:min='0' :max='5000'
+										@change = "setWidgetStyle('borderRadius')"
+										>
+									</el-input-number>
+								</div>	
 								
-								<div  class="tool-item">
-									<span class="tool-lable">左边距：</span>
-									<el-input-number  size="small" v-model="ostyle.paddingLeft" @change="drawing('paddingLeft')" :min="0" :max='666'></el-input-number>		
-								</div>
-								<div  class="tool-item">
-									<span class="tool-lable">下边距：</span>
-									<el-input-number  size="small" v-model="ostyle.paddingBottom" @change="drawing('paddingBottom')" :min="0" :max='666'></el-input-number>		
-								</div>						
-								
-								<div  class="tool-item">
-									<span class="tool-lable">右边距：</span>
-									<el-input-number  size="small" v-model="ostyle.paddingRight" @change="drawing('paddingRight')" :min="0" :max='666'></el-input-number>		
-								</div>		    	
 						    </el-tab-pane>
 	
 						 	<el-tab-pane label="配置" name="config">
-						    	<div  class="" style="padding-left: 20px;" v-if="widgetobj.label">
-									<span class="tool-lable">绑定标签：</span><br />
-									<el-input type='text' v-model = 'widgetobj.label' @blur = 'setWidget("label")'></el-input>
+								<div  class="" style="padding-left: 20px;" >
+									<span class="tool-lable">添加描述：</span><br />
+									<el-input v-model="currentSet.description" 
+										@blur = "setWidget('description')">
+									</el-input>
 								</div>
-						    	<div  class="" style="padding-left: 20px;" v-if='formConfig.bindData'>
+								
+								<div  class="" style="padding-left: 20px;">
+									<span class="tool-lable">绑定标签：</span><br />
+									<el-input type='text' v-model = 'currentSet.label' @blur = 'setWidget("label")'></el-input>
+								</div>
+						    	<div  class="" style="padding-left: 20px;" v-if='formConfig.bindTable'>
 									<span class="tool-lable">绑定字段：</span><br />
-									<el-select style='width: 120px;' v-model="widgetobj.databind" clearable size='small' @change="setWidget('databind')" @visible-change = 'showBindField'>
+									<el-select style='width: 120px;' v-model="currentSet.bindFiled" clearable size='small' @change="setWidget('bindFiled')">
 									    <el-option
 									      v-for="item in fieldList"
 									      :key="item.value"
@@ -205,23 +201,35 @@
 									      :value="item.value">
 									    </el-option>
 									</el-select>
-								</div> 	
-								<div  class="" style="padding-left: 20px;" v-if='widgetobj.option'>
-									<span class="tool-lable">选项列表：</span><br />
-									<el-input type='text' v-model = 'widgetobj.option' @blur = 'setWidget("option")'></el-input>
-								</div>
-						    </el-tab-pane>
-					   
-						 </el-tabs>
-						
-						
-					
+								</div> 								
+						   </el-tab-pane>					   
+						 </el-tabs>			
 					</div>
 							
-				</div>
-			
+				</div>			
 		</div>
-	
+		
+		
+		
+		<!--背景设置的模态框 -->
+		<transition name='el-zoom-in-center'>
+			<div class="model-box" v-show ='bg_img' >
+				<div class="bg-img-set">
+					<div class="model-header">
+						<span> 画布背景图 </span> 
+						<el-button @click="bg_img = false" type="text"> × </el-button>
+					</div>
+					<div class="model-content">
+						上传方式和默认提供的图片	
+						<el-button @click="setCanvasStyle('backgroundImage')">这是一张图片</el-button>
+					</div>
+					<div class="model-footer">
+						<el-button type="success">确定</el-button>
+						<el-button @click="bg_img = false"	 >取消</el-button>
+					</div>
+				</div>
+			</div>
+		</transition> 
 		
 	</div>
 </template>
@@ -236,23 +244,36 @@
 		components:{},
 		data(){
 			return {
+				formConfig:{},  // 画布的设置
 				formSetActive:'style',
-				haspx:['lineHeight','fontSize','borderRadius','borderWidth','marginTop','marginLeft','marginBottom','marginRight','paddingTop','paddingBottom','paddingLeft','paddingRight'],				
 				mainActive:'first',
+				grid:{opacity:60},
+				bg_img:false,
+				has_bg_img:false,
 				mainset:true,
-				widgetobj:{ },
-              	ostyle:{},
-              	// 获取用户已有的数据表
-              	// {'value': '4','label': '4'}, {'value': '3','label': '3'},{'value': '2','label': '2'},{'value': '1','label': '1'}
-              	userDataList:[],
-              	// 获取到的对应表的字段列表 {'value':'f1','label':'字段一'}
-              	fieldList:[],
-              	formConfig:{},
-              	// 选择框控制
-              	_showBindField: false,
-              	_showBorder:false,
-              	dataIdList:[],
-              	selectDataId:''
+				fieldList:[],
+				hasPx:['lineHeight','fontSize','borderWidth','borderRadius','height','width'],
+              	userDataList:[], // 获取用户已有的数据表
+              	currentOid: null, // 当前编辑的控件id 从1开始
+				currentSet : {
+					type:'input',
+					description:'input',
+					lebel:'label',
+					layout:{
+						x:0,y:0,w:150,h:150
+					},
+					style:{
+						backgroundColor:'#eee',
+						lineHeight: 20,
+						fontSize: 16,
+						color:'#333',
+						borderStyle : 'solid',
+						borderWidth : 1,
+						borderColor : '#fff',
+						borderRadius : 0
+					}				
+				}, // 寄存当前控件的属性对象
+				
 			}
 		},
 		computed: {
@@ -262,123 +283,58 @@
 		},
 		methods:{
 			...mapActions([
-				'_changeStyle',
-				'_setWidget',
-				'_setDrag',
-				'_setDragStyle'
-				
+        		'_setWidget',
+        		'_setWidgetStyle',
+        		'_setCanvas',
+        		'_setCanvasStyle'
 			]),
-			initEvent(){
-				var that = this;
-				_Bus_.$on('set-widget',function(obj){
-					that.showSetbox(obj);
-				})
-				
+			formatTooltip(val){
+				 return val / 100;
 			},
 			showSetbox(oid){
-				this.mainset = false;			
-//				console.log(this.getForm.widgetList);			
-				this.widgetobj = this.getForm.widgetList['widget'+oid];	
+				this.mainset = false;	
+				this.currentOid = oid;				
+        		this.currentSet = this.cloneObj(this.getForm.widgetList[oid]);
+        		for(var attr in this.currentSet.style){
+        			if(this.hasPx.indexOf(attr) >= 0){
+        				this.currentSet.style[attr] = parseInt(this.currentSet.style[attr]);
+        			}
+        		}
+        		
+			},
+			setGrid(attr){
+				var value = this.grid[attr] / 100;
+				_Bus_.$emit('setGrid',{attr,value});
+			},
+			setWidgetStyle(oattr){
+				//设置的样式 
+				console.log(oattr);
+				var value = this.currentSet.style[oattr];
+				if(this.hasPx.indexOf(oattr) >= 0){
+        			value = this.currentSet.style[oattr] + 'px'
+        		}
 				
-				var bindData = this.getForm.formConfig.bindData || '';
-				
-				console.log(this.getForm.formConfig.bindData);
-				console.log(bindData);
-				// 处理样式
-				var ostyle = this.widgetobj.style;
-				for(let key in ostyle){
-					if(this.haspx.includes(key)){
-						ostyle[key] = parseInt(ostyle[key]);
-					}					
-					if(key === 'width' || key === 'height'){
-						ostyle[key] = parseInt(ostyle[key]);
-					}
-				}
-				this.ostyle = ostyle;				
+				this._setWidgetStyle({
+					oid: this.currentOid,
+					attr: oattr,
+					value 
+				})
 			},
-			drawing(attr){
-				if(attr == 'borderStyle' && !this._showBorder){
-					return;
-				}
-				let value=this.ostyle[attr] || '';
-				let oid = this.widgetobj.id || '';
-				if(this.haspx.includes(attr)){
-					value = this.ostyle[attr] +'px';
-				}
-				if(attr === 'width' || attr === 'height'){
-					value = this.ostyle[attr] +'%';
-				}
-//				console.log(this.widgetobj.id,attr,value);				
-				this._changeStyle({oid,attr,value});				
-				_Bus_.$emit('change-style',oid,attr,value);
+			
+			setWidget(oattr){
+				// 修改widget的属性（不是style）
+			
+				this._setWidget({
+					oid: this.currentOid,
+					attr:oattr,
+					value: this.currentSet[oattr]
+				})
 			},
-			setWidget(attr){		
-				// 这里的value有个错误 
-				let oid = this.widgetobj.id || '';
-				let value = this.widgetobj[attr] || '';
-//				console.log(attr,value);
-				if(attr === 'databind'){
-//					if (!this._showBindField) {
-//						return;
-//					}
-					this._setWidget({oid,attr,value});	
-					_Bus_.$emit('change-set',oid,attr,value);					
-				}else{
-					this._setWidget({oid,attr,value});	
-					_Bus_.$emit('change-set',oid,attr,value);					
-				}
-							
-			},
-			showBindField(isShow){
-				this._showBindField = isShow;
-			},
-			showBorder(isShow){
-				this._showBorder = isShow;
-			},
-			setdataId(attr){
-				// 设置展示表单的绑定数据id
-				
+			setCanvas(attr){
 				var that = this;
-				if(that.formConfig.bindData){ // 只有数据表已经绑定了表，才能获取对应的展示列表的信息，模糊查找
+				let value = that.formConfig[attr];
+				if(attr === 'bindTable' && this.formConfig[attr] !== ''){
 					
-					that.$http.get('TBUSER000001/formdesign/form/'+that.formConfig.bindData+'/like',{
-						type:that.selectDataId
-					})
-					.then((res)=>{
-			        	console.log('dataId',res);       		
-			     		that.dataIdList = res.data[0];
-			        }).catch((err)=>{
-			        	console.log(err);
-			        });
-					
-				}
-					
-				
-				
-			},
-			setDrag(attr){
-				var that = this;
-				// 过滤不需要修改样式的表单配置项 
-				if(['bindData','isApp'].indexOf(attr) < 0){
-				
-					if(attr === 'backgroundImage'){
-						console.log('背景图片');
-						// ...
-						return;
-					}
-					let value = that.formConfig.style[attr];
-					if(attr === 'layout'){
-						value = that.formConfig[attr]
-					}
-					that._setDragStyle({attr,value});
-					_Bus_.$emit('set-drag',attr,value);
-					
-				}else{
-					// 如果在修改表单绑定的表时，会获取到对应表中的字段 
-					if(attr === 'bindData' && that.formConfig.bindData){
-						
-						console.log('查找表字段',that.getForm.formConfig.bindData)
-						
 						that.$http.get('http://localhost/fz/json.php?f=filed',{})
 						.then((res)=>{
 				        	console.log('字段',res);       		
@@ -387,27 +343,54 @@
 				        	console.log(err);
 				        });	 
 				        
-					}
-					
-					let value = that.formConfig[attr];
-					that._setDrag({attr,value});
-				}			
-			},
-			querySearch(queryString, cb){ // 展示列表获取到的id列表
+				}
+				that._setCanvas({attr,value});
 				
-				// 请求dataIdList
-							
-				var list = this.dataIdList || []; 
-		        var results = queryString ? list.filter(this.createFilter(queryString)) : list;
-		        // 调用 callback 返回建议列表的数据
-		        cb(results);
+				
 			},
-			  createFilter(queryString) {
-		        return (data) => {
-		          return (data.value.indexOf(queryString.toLowerCase()) === 0);
-		        };
-		      },
-			cloneObj(obj){  // 深拷贝
+			setCanvasStyle(attr){		
+				var that = this;
+				let value = that.formConfig.style[attr];
+				
+				let url = 'https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1502079319083&di=004eef4a1a3e5019252a576ed5d52f42&imgtype=0&src=http%3A%2F%2Fpic49.nipic.com%2Ffile%2F20140927%2F19617624_230415502002_2.jpg'
+				
+				if(attr === 'backgroundImage'){
+					value = 'url('+url+ ')';
+				}
+				
+				that._setCanvasStyle({attr,value});
+				
+			},
+			resetBgimg(){ // 关闭背景图 重置为无背景
+			
+				if(this.has_bg_img === true){
+					this._setCanvasStyle({attr:'backgroundImage',value:'url(none)'})
+				}
+			},
+			initEvent(){
+				// 初始化你的所有总线事件
+				var that = this;
+				_Bus_.$on('show-setbox',function(oid){
+					that.showSetbox(oid);
+					
+				})
+				
+				
+				
+				
+				
+			},
+			initData(){		
+				 // 初始化你的数据
+	  			this.$http.get('http://localhost/fz/json.php?f=form').then((res)=>{
+		        	console.log('表',res);       		
+		     		this.userDataList = res.data[0];
+		        }).catch((err)=>{
+		        	console.log(err)
+		        });	 
+		        
+	  		},
+	  		cloneObj(obj){  // 深拷贝
 			    var str, newobj = obj.constructor === Array ? [] : {};
 			    if(typeof obj !== 'object'){
 			        return;
@@ -422,59 +405,30 @@
 			    }
 			    return newobj;
 			},
-			initData(){				
-	  			this.$http.get('http://localhost/fz/json.php?f=form').then((res)=>{
-		        	console.log('表',res);       		
-		     		this.userDataList = res.data[0];
-		        }).catch((err)=>{
-		        	console.log(err)
-		        });	       
-	  		},
 		},
 		created(){
 			this.initEvent();
 			this.initData(); // 获取到的用户列表
-			this.formConfig =this.cloneObj(this.getForm.formConfig);
-			console.log(this.formConfig)
+			this.formConfig = this.cloneObj(this.getForm.formConfig);	
 		},
 		mounted(){			
 			
+		},
+		beforeDestory(){
+			_Bus_.$off("show-setbox");
 		}
 	}
 </script>
 
 <style lang="less" scoped>
-.line{
-	width: 100%;
-	height: 0;
-	border-bottom: 1px solid #BFCBD9;
-	padding-top: 5px;
-	padding-bottom: 5px;
-	background-color: transparent;
-}
+
 #formset{
 	position: relative;
 	height: 700px;
 	overflow-y: scroll;
-	overflow-x: hidden;
-	margin-right: -20px;
-	width:257px;
+	overflow-x: hidden;	
+	width:250px;
 	background-color: #FFFFFF;
-	padding-bottom: 40px;
-	.back{
-		position: absolute;
-		top: 0;
-		left: 0;
-		display: inline-block;
-		transform: rotateY(180deg);
-	}
-	.front{
-		top: 0;
-		left: 0;
-		position: absolute;
-		display: inline-block;
-		transform: rotateY(0deg);
-	}
 	.main-set{
 		width: 100%;
 		min-height: 500px;
@@ -504,10 +458,34 @@
 		}
 		
 	}
-	
-	
-}
-.widget-list{
+	.form-set {
+		.item-title{
+			background-color: #eee;
+			margin-bottom: 10px;
+			font-size: 16px;
+			padding: 5px 0;			
+		}
+		.set-tool{	
+			text-align: left;				
+			.tool-item{
+				margin-bottom: 8px;
+				text-align: left;
+				height: 40px;
+				padding-left: 20px;
+				vertical-align: middle;	
+				overflow: hidden;		
+			}
+			.tool-lable{
+				text-align: left;
+				display: inline-block;
+				vertical-align: middle;
+				height: 40px;
+				width: 70px;
+				line-height: 40px;
+			}
+		}
+	}
+	.widget-list{
 		width: 100%;
 		overflow: hidden;
 		.widget-item{
@@ -526,32 +504,57 @@
 			cursor: pointer;
 		}
 	}
-.form-set {
-	.item-title{
-		background-color: #eee;
-		margin-bottom: 10px;
-		font-size: 16px;
-		padding: 5px 0;
+	
+.model-box{
+	position: fixed;
+	top: 0;
+	left: 0;
+	height: 100%;
+	width: 100%;
+	background-color: rgba(0,0,0,0.4);
+	z-index: 99999999999;
+	.bg-img-set{
+		position: absolute;
+		width: 800px;
+		height: 500px;
+		top: 200px;
+		margin-left: -400px;
+		left: 50%;
+		border-radius: 5px;
+		background-color: #FFFFFF;
+		overflow:hidden;
+		.model-header{
+			height: 50px;
+			padding-left: 30px;
+			font-size: 16px;
+			border-bottom: 1px solid #BFCBD9;
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+		}
+		.model-content{
+			height: 350px;
+			overflow: hidden;
+		}
+		.model-footer{
+			height: 50px;
+			padding-bottom: 50px;
+		}
 		
 	}
-	.set-tool{	
-		text-align: left;				
-		.tool-item{
-			margin-bottom: 8px;
-			text-align: left;
-			height: 40px;
-			padding-left: 20px;
-			vertical-align: middle;			
-		}
-		.tool-lable{
-			text-align: left;
-			display: inline-block;
-			vertical-align: middle;
-			height: 40px;
-			width: 70px;
-			line-height: 40px;
-		}
-	}
+}	
+	
+
+	
+	
+}
+.line{
+	width: 100%;
+	height: 0;
+	border-bottom: 1px solid #BFCBD9;
+	padding-top: 5px;
+	margin-bottom: 5px;
+	background-color: transparent;
 }
 
 </style>

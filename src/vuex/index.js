@@ -5,6 +5,7 @@ import * as getters from './getters'
 import login from './modules/login'
 import render from './modules/render'
 import edit from './modules/edit'
+import formlist from './modules/formlist'
 
 Vue.use(Vuex)
 
@@ -14,8 +15,9 @@ export default new Vuex.Store({
 	modules: {
 		form,
 		login,
-    render,
-    edit,
+		render,
+		edit,
+		formlist,
 	},
 	strict: process.env.NODE_ENV !== 'production', //在非生产环境下，使用严格模式
 })

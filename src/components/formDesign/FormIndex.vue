@@ -98,14 +98,14 @@ export default {
 				flex-grow: 1;
 				overflow-y: scroll;	
 				overflow-x: hidden;	
-				margin-right: -18px;
 				height: 700px;	
 				padding-bottom: 40px;
 				background-color: rgba(128,128,128,0.3);		
 				box-sizing: border-box;		
+				min-height: 800px;
 			}
 			.form-set{
-					min-width: 240px;
+					min-width: 240px;					
 					border: 1px solid #66ccff;
 					min-height: 700px;
 					position: relative;
