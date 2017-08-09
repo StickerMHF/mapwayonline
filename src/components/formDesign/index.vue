@@ -14,7 +14,7 @@
 		<div class="form_content form_content1">
 			<el-tabs class="fc_tabs" v-model="activeName" @tab-click="handleClick">
 				<el-tab-pane class="fc_tab" label="新建表单" name="first">
-					<NewForm v-for="item in formdata" :child-data="item"></NewForm>
+					<FormItem v-for="item in formdata" :child-data="item"></FormItem>
 				</el-tab-pane>
 				<el-tab-pane label="最近编辑" name="second">
 					
@@ -29,12 +29,12 @@
 
 <script>
 	import ContentLeft from './ContentLeft.vue';
-	import NewForm from './formlist/NewForm.vue';
+	import FormItem from './formlist/FormItem.vue';
 	export default {
 		name: 'form-index',
 		components: {
 			ContentLeft,
-			NewForm
+			FormItem
 		},
 		data() {
 			return {
@@ -42,14 +42,17 @@
 				title: "文件夹",
 				activeName: 'first',
 				formdata:[{
+				    
 					name:"空白表单",
 					img:"",
-					url:"/formDesign/init/new"
+					url:"/formDesign/init/new",
+					status:27
 				},
 				{
 					name:"使用已有表单",
 					img:"",
-					url:"/mapdesign/new"
+					url:"/mapdesign/new",
+					status:29
 				}
 				]
 
