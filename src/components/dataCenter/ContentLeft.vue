@@ -1,7 +1,7 @@
 <template>
 	<div id="content-left">
 		<div class="cl_head clearfix" >
-			<h2 @click="backToFormList">表单</h2>
+			<h2 @click="backToDataList">数据</h2>
 			<div class="cl_header_menu dropdown">
 				<i class="fa fa-plus-circle"></i>
 			</div>
@@ -12,7 +12,7 @@
 					<li>
 						<span class="view_allform">
 							<div></div>
-							<p>我的表单</p>
+							<p>我的数据</p>
 							<font class="form_count">(0)</font>
 						</span>
 					</li>
@@ -26,7 +26,7 @@
 					<li>
 						<span class="view_allform">
 							<div></div>
-							<p>已购买的表单</p>
+							<p>公共数据</p>
 						</span>
 					</li>
 				</ul>
@@ -36,7 +36,17 @@
 					<li>
 						<span class="view_allform">
 							<div></div>
-							<p>已分享的表单</p>
+							<p>已购买的数据</p>
+						</span>
+					</li>
+				</ul>
+			</div>
+			<div class="tree">
+				<ul>
+					<li>
+						<span class="view_allform">
+							<div></div>
+							<p>已分享的数据</p>
 						</span>
 					</li>
 				</ul>
@@ -74,8 +84,8 @@
 			getByTree(node,store,data){
 				this.$emit("getByTree", node,store,data);
 			},
-			backToFormList(evt){
-				this.$emit("backToFormList", evt);
+			backToDataList(evt){
+				this.$emit("backToDataList", evt);
 			},
 			gettreedata() {
 				let arr=[{

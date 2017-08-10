@@ -7,7 +7,7 @@
 		</el-tree>
 
 		<!--//新建文件夹-->
-		<el-dialog  v-bind:title="form.title" size="tiny" :visible.sync="dialogTreeNameVisible">
+		<el-dialog v-bind:title="form.title" size="tiny" :visible.sync="dialogTreeNameVisible">
 			<span slot="element-name">slot</span>
 			<el-form :model="form">
 				<el-form-item label="目录名称：" :label-width="formLabelWidth" style="margin:0;">
@@ -23,18 +23,21 @@
 </template>
 <script>
 	let id = 1000;
-	import {mapGetters, mapActions } from 'vuex'
+	import {
+		mapGetters,
+		mapActions
+	} from 'vuex'
 	export default {
 		name: 'tree-folder',
 		data() {
 			return {
 				treedata: [],
 				form: {
-					title:"新建子目录",
+					title: "新建子目录",
 					treename: '',
 					store: null,
 					data: null,
-					type:null
+					type: null
 				},
 				dialogTreeNameVisible: false,
 				formLabelWidth: '100px',
@@ -42,7 +45,7 @@
 				isleaveli: false,
 			}
 		},
-		 computed: {
+		computed: {
 			...mapGetters([
 				'getFormList'
 			])
@@ -61,44 +64,52 @@
 				}
 
 			},
-			update(store, data,type) {
+			update(store, data, type) {
 				this.dialogTreeNameVisible = true;
 				this.form.store = store;
 				this.form.data = data;
-				this.form.type=type;
+				this.form.type = type;
 				debugger
-				if(type=="update"){
-					this.form.treename=data.name;
-					this.form.title="重命名";
+				if(type == "update") {
+					this.form.treename = data.name;
+					this.form.title = "重命名";
 				}
 			},
-			getByTreeId(store){
-				this.$emit("getByTreeId",store);
+			getByTreeId(node,store,data) {
+				this.$emit("getByTreeId", node,store,data);
 			},
 			createtree() {
 				this.dialogTreeNameVisible = false;
-				if(this.form.type=="add"){
-					if(this.form.store.currentNode.level>2){
-					this.form.store.append({ id: id++, name: this.form.treename, children: [] }, this.form.store.currentNode.parent.data);
-				}else{
-					this.form.store.append({ id: id++, name: this.form.treename, children: [] }, this.form.data);
-				
-				}
-				}else if(this.form.type=="update"){
-					this.form.store.currentNode.data.name=this.form.treename;
+				if(this.form.type == "add") {
+					if(this.form.store.currentNode.level > 2) {
+						this.form.store.append({
+							id: id++,
+							name: this.form.treename,
+							children: []
+						}, this.form.store.currentNode.parent.data);
+					} else {
+						this.form.store.append({
+							id: id++,
+							name: this.form.treename,
+							children: []
+						}, this.form.data);
+
+					}
+				} else if(this.form.type == "update") {
+					this.form.store.currentNode.data.name = this.form.treename;
 				}
 				debugger
 				this._setTreeData(this.form.store.data);
 			},
-			
+
 			remove(store, data) {
-				this.form.store=store;
-				if(this.form.store.currentNode.level==1){
-					 this.$message({
-          showClose: true,
-          message: '主人，留一个目录吧！'
-        });
-				}else{
+				this.form.store = store;
+				if(this.form.store.currentNode.level == 1) {
+					this.$message({
+						showClose: true,
+						message: '主人，留一个目录吧！'
+					});
+				} else {
 					store.remove(data);
 					this.form.store = store;
 				}
@@ -108,7 +119,7 @@
 
 				evt.target.children[1].style.display = 'block';
 			},
-			
+
 			mouseOutLi(store, data, evt) {
 				this.isleaveli = true;
 				evt.target.children[1].style.display = 'none';
@@ -138,32 +149,32 @@
 				store
 			}) {
 				return(
-                     <ul class="tree_folder">
+					 <ul class="tree_folder">
 					 <li style=" box-sizing:border-box;"  on-mouseenter={ (evt) => this.mouseOver(store, data,evt) } on-mouseleave={ (evt) => this.mouseOutLi(store, data,evt) }>
                         <span>
-                             <span class="treename" on-click={ () => this.getByTreeId(store) }>{node.data.name}</span>
+                             <span class="treename" on-click={ () => this.getByTreeId(node,store,data) }>{node.data.name}</span>
                         </span>
                          <span style="float: right; display:none; margin-right:20px; position:absolute; top:0;right:0;" class="icon_bar">
                              <i class="fa fa-bars"  on-click={ (evt) => this.showmenu(store, data,evt) }></i>
                          </span>
-                            <ul class="tree_menu" on-mouseleave={ (evt) => this.mouseOutUl(store, data,evt) } style="position: absolute;right: 15px;top: 30px;font-size: 12px;line-height: 16px; z-index:9; display:none; border:1px solid #ccc;background:#fff;">
-                                <li style="line-height: 32px;" on-click={ () => this.update(store, data,"add") }><div  style="padding:3px 8px;"><i class="fa fa-plus"></i><span>创建目录</span></div></li>
-                                <li style="line-height: 32px;" on-click={ () => this.update(store, data,"update") }><div  style="padding:3px 8px;"><i class="el-icon-edit"></i><span>重命名</span></div></li>
-                                <li style="line-height: 32px;" on-click={ () => this.remove(store, data) }><div  style="padding:3px 8px;"><i class="el-icon-delete"></i><span>删除</span></div></li>
+                            <ul class="tree_menu" on-mouseleave={ (evt) => this.mouseOutUl(store, data,evt) } style="position: absolute;right: 15px;top: 30px;font-size: 12px;line-height: 16px; z-index:9; display:none;width: 100px; border:1px solid #ccc;background:#fff;">
+                                <li style="line-height: 25px;" on-click={ () => this.update(store, data,"add") }><div  style="padding:3px 8px;"><i class="fa fa-plus"></i><span>创建目录</span></div></li>
+                                <li style="line-height: 25px;" on-click={ () => this.update(store, data,"update") }><div  style="padding:3px 8px;"><i class="el-icon-edit"></i><span>重命名</span></div></li>
+                                <li style="line-height: 25px;" on-click={ () => this.remove(store, data) }><div  style="padding:3px 8px;"><i class="el-icon-delete"></i><span>删除</span></div></li>
                              </ul>
                       </li>
                       </ul>
 				);
 
 			},
-		
-		addTreeData() {
 
+			addTreeData() {
+
+			},
 		},
-		},
-		
+
 		created() {
-             this.treedata=this.$Tools.cloneObj(this.getFormList.treedata);
+			this.treedata = this.$Tools.cloneObj(this.getFormList.treedata);
 		},
 		mounted() {
 
@@ -228,9 +239,11 @@
 		color: #333;
 		margin: 0;
 	}
-	
+	.tree_menu li i{
+		margin-right: 8px;
+	}
 	.tree_menu li:hover {
-		background: #ccc;
+		background: #E4E8F1;
 	}
 	
 	.el-tree-node__expand-icon {

@@ -1,26 +1,28 @@
 <template>
 
 	<div id="form-index">
-		<ContentLeft></ContentLeft>
+		<ContentLeft @getByTree="getByTreepid" @backToFormList="backToFormList"></ContentLeft>
 
-		<div class="form_content form_content2">
+		<div id="form_content2" class="form_content form_content2">
 			<div class="fc_title">
-				<h3>{{title}}</h3>
+				<h3>{{classifydata.title}}</h3>
 			</div>
-			<div>
-
+			<div class="fc_content">
+				<DataShowModel v-for="item in classifydata.data" :child-data="item"></DataShowModel>
 			</div>
 		</div>
-		<div class="form_content form_content1">
+		<div id="form_content1" class="form_content form_content1">
 			<el-tabs class="fc_tabs" v-model="activeName" @tab-click="handleClick">
 				<el-tab-pane class="fc_tab" label="新建表单" name="first">
-					<NewForm v-for="item in formdata" :child-data="item"></NewForm>
+					<DataShowModel v-for="item in formdata.create" :child-data="item"></DataShowModel>
+					<div class="fct1_title">从共享中心新建表单</div>
+					<DataShowModel v-for="(item,index) in formdata.exchange" v-if="index<10" :child-data="item"></DataShowModel>
 				</el-tab-pane>
 				<el-tab-pane label="最近编辑" name="second">
-					
+					<DataShowModel v-for="item in formdata.recently" :child-data="item"></DataShowModel>
 				</el-tab-pane>
-				<el-tab-pane label="表单共享" name="third">
-					
+				<el-tab-pane label="共享中心" name="third">
+					<DataShowModel v-for="item in formdata.exchange" :child-data="item"></DataShowModel>
 				</el-tab-pane>
 			</el-tabs>
 		</div>
@@ -29,40 +31,243 @@
 
 <script>
 	import ContentLeft from './ContentLeft.vue';
-	import NewForm from './formlist/NewForm.vue';
+	import DataShowModel from '../common/DataShowModel.vue';
 	export default {
 		name: 'form-index',
 		components: {
 			ContentLeft,
-			NewForm
+			DataShowModel
 		},
 		data() {
 			return {
 				formPath: '/formDesign/init/',
 				title: "文件夹",
 				activeName: 'first',
-				formdata:[{
-					name:"空白表单",
-					img:"",
-					url:"/formDesign/init/new"
+				classifydata: {
+					title: "未命名文件夹",
+					data: [{
+						formid: 1,
+						name: "空白表单",
+						img: "/static/Index/img/newform.png",
+						url: "/formDesign/init/new",
+						type: 26,
+						usable: true,
+						price: 0,
+						author: "管理员",
+						createdate: "2017-08-08"
+					}, {
+						formid: 1,
+						name: "录入表单",
+						img: "/static/Index/canvas_5977_tpl.png",
+						url: "/formDesign/init/new",
+						type: 27,
+						usable: true,
+						price: 0,
+						author: "管理员",
+						createdate: "2017-08-08"
+					}, {
+						formid: 1,
+						name: "共享表单",
+						img: "/static/Index/canvas_5977_tpl.png",
+						url: "/mapdesign/new",
+						type: 27,
+						usable: true,
+						price: 0,
+						author: "管理员",
+						createdate: "2017-08-08"
+					}]
 				},
-				{
-					name:"使用已有表单",
-					img:"",
-					url:"/mapdesign/new"
+				formdata: {
+					create: [{
+						formid: 1,
+						name: "空白表单",
+						img: "/static/Index/img/newform.png",
+						url: "/formDesign/init/new",
+						type: 26,
+						usable: true,
+						price: 0,
+						author: "管理员",
+						createdate: "2017-08-08"
+					}, {
+						formid: 1,
+						name: "从已有表单创建",
+						img: "/static/Index/img/newform.png",
+						url: "/formDesign/init/new",
+						type: 26,
+						usable: true,
+						price: 0,
+						author: "管理员",
+						createdate: "2017-08-08"
+					}],
+					recently: [{
+						formid: 1,
+						name: "录入表单",
+						img: "/static/Index/canvas_5977_tpl.png",
+						url: "/formDesign/init/new",
+						type: 27,
+						usable: true,
+						price: 0,
+						author: "管理员",
+						createdate: "2017-08-08"
+					}, {
+						formid: 1,
+						name: "共享表单",
+						img: "/static/Index/canvas_5977_tpl.png",
+						url: "/mapdesign/new",
+						type: 27,
+						usable: true,
+						price: 0,
+						author: "管理员",
+						createdate: "2017-08-08"
+					}],
+					exchange: [{
+						formid: 1,
+						name: "报销表单",
+						img: "/static/Index/canvas_5977_tpl.png",
+						url: "/formDesign/init/new",
+						type: 28,
+						usable: true,
+						price: 2,
+						author: "管理员",
+						createdate: "2017-08-08"
+					}, {
+						formid: 1,
+						name: "报销表单",
+						img: "/static/Index/canvas_5977_tpl.png",
+						url: "/formDesign/init/new",
+						type: 28,
+						usable: true,
+						price: 2,
+						author: "管理员",
+						createdate: "2017-08-08"
+					}, {
+						formid: 1,
+						name: "报销表单",
+						img: "/static/Index/canvas_5977_tpl.png",
+						url: "/formDesign/init/new",
+						type: 28,
+						usable: true,
+						price: 2,
+						author: "管理员",
+						createdate: "2017-08-08"
+					}, {
+						formid: 1,
+						name: "报销表单",
+						img: "/static/Index/canvas_5977_tpl.png",
+						url: "/formDesign/init/new",
+						type: 28,
+						usable: true,
+						price: 2,
+						author: "管理员",
+						createdate: "2017-08-08"
+					}, {
+						formid: 1,
+						name: "报销表单",
+						img: "/static/Index/canvas_5977_tpl.png",
+						url: "/formDesign/init/new",
+						type: 28,
+						usable: true,
+						price: 1,
+						author: "管理员",
+						createdate: "2017-08-08"
+					}, {
+						formid: 1,
+						name: "报销表单",
+						img: "/static/Index/canvas_5977_tpl.png",
+						url: "/formDesign/init/new",
+						type: 28,
+						usable: true,
+						price: 1,
+						author: "管理员",
+						createdate: "2017-08-08"
+					}, {
+						formid: 1,
+						name: "报销表单",
+						img: "/static/Index/canvas_5977_tpl.png",
+						url: "/formDesign/init/new",
+						type: 28,
+						usable: true,
+						price: 1,
+						author: "管理员",
+						createdate: "2017-08-08"
+					}, {
+						formid: 1,
+						name: "报销表单",
+						img: "/static/Index/canvas_5977_tpl.png",
+						url: "/formDesign/init/new",
+						type: 28,
+						usable: true,
+						price: 1,
+						author: "管理员",
+						createdate: "2017-08-08"
+					}, {
+						formid: 1,
+						name: "报销表单",
+						img: "/static/Index/canvas_5977_tpl.png",
+						url: "/formDesign/init/new",
+						type: 28,
+						usable: false,
+						price: 0,
+						author: "管理员",
+						createdate: "2017-08-08"
+					}, {
+						formid: 1,
+						name: "报销表单",
+						img: "/static/Index/canvas_5977_tpl.png",
+						url: "/formDesign/init/new",
+						type: 28,
+						usable: false,
+						price: 2,
+						author: "管理员",
+						createdate: "2017-08-08"
+					}, {
+						formid: 1,
+						name: "报销表单",
+						img: "/static/Index/canvas_5977_tpl.png",
+						url: "/formDesign/init/new",
+						type: 28,
+						usable: true,
+						price: 2,
+						author: "管理员",
+						createdate: "2017-08-08"
+					}, {
+						formid: 1,
+						name: "财务报表",
+						img: "/static/Index/canvas_5977_tpl.png",
+						url: "/mapdesign/new",
+						type: 28,
+						usable: true,
+						price: 0,
+						author: "管理员",
+						createdate: "2017-08-08"
+					}]
 				}
-				]
 
 			}
 		},
 		methods: {
 			editForm(oid) {
 				this.$router.push(this.formPath + oid);
-				console.log(this.formPath + oid)
+				console.log(this.formPath + oid);
 
 			},
 			handleClick(tab, event) {
 				console.log(tab, event);
+			},
+			
+			getByTreepid(node, store, data) {
+				document.getElementById("form_content1").style.display = "none";
+				document.getElementById("form_content2").style.display = "block";
+				this.classifydata.title=data.name;
+				console.log(node.data.id);
+
+				console.log(node.data.name + ";");
+				console.log(data.id);
+				console.log(data.name + ";");
+			},
+			backToFormList(evt){
+				document.getElementById("form_content2").style.display = "none";
+				document.getElementById("form_content1").style.display = "block";
 			}
 		},
 		created() {
@@ -76,7 +281,7 @@
 	}
 </script>
 
-<style >
+<style>
 	#form-index {
 		height: 100%;
 		padding-left: 260px;
@@ -105,24 +310,39 @@
 		color: #333;
 		margin: 0;
 	}
-	.fc_tabs{
+	
+	.fc_tabs {
 		padding: 40px 0 0 0;
-    margin: 0 35px;
+		margin: 0 35px;
 	}
-	.el-tabs__active-bar{
-	}
-	.el-tabs__item{
+	
+	.form_content .el-tabs__active-bar {}
+	
+	.form_content .el-tabs__item {
 		background: #eee;
 	}
-	.el-tabs__item.is-active {
-    color: #fbfdff;
-    background: #232c32 !important;
-}
-
-	.form_content1{
-		
+	
+	.form_content .el-tabs__item.is-active {
+		color: #fbfdff;
+		background: #232c32 !important;
 	}
-	.form_content2{
+	
+	.form_content1 {}
+	
+	.form_content2 {
 		display: none;
+	}
+	
+	.fct1_title {
+		font-size: 14px;
+		line-height: 30px;
+		padding: 0 20px;
+		font-weight: bold;
+		width: 100%;
+		float: left;
+		color: #758697;
+	}
+	.fc_content{
+		margin-top: 20px;
 	}
 </style>
