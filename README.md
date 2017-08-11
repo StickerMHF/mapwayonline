@@ -1,6 +1,6 @@
-# mapwayonline
+# StickerOnline
 
-> mapwayonline
+> StickerOnline
 
 ## Build Setup
 
