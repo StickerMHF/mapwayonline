@@ -1,13 +1,13 @@
 <template>
 	<div id="content-left">
-		<div class="cl_head clearfix" >
+		<div class="cl_head clearfix">
 			<h2 @click="backToFormList">表单</h2>
 			<div class="cl_header_menu dropdown">
 				<i class="fa fa-plus-circle"></i>
 			</div>
 		</div>
 		<div class="folder_box">
-			<div class="tree">
+			<div class="tree" @click="getFormByCondition(0,'我的表单')">
 				<ul>
 					<li>
 						<span class="view_allform">
@@ -21,7 +21,7 @@
 			<div class="folder_list">
 				<TreeFolder @getByTreeId="getByTree"></TreeFolder>
 			</div>
-			<div class="tree">
+			<div class="tree" @click="getFormByCondition(1,'已购买的表单')">
 				<ul>
 					<li>
 						<span class="view_allform">
@@ -31,7 +31,7 @@
 					</li>
 				</ul>
 			</div>
-			<div class="tree">
+			<div class="tree" @click="getFormByCondition(2,'已分享的表单')">
 				<ul>
 					<li>
 						<span class="view_allform">
@@ -71,25 +71,44 @@
 			...mapActions([
 				'_setTreeData'
 			]),
-			getByTree(node,store,data){
-				this.$emit("getByTree", node,store,data);
+			getByTree(node, store, data, childids) {
+				this.$emit("getByTree", node, store, data, childids);
 			},
-			backToFormList(evt){
+			backToFormList(evt) {
 				this.$emit("backToFormList", evt);
 			},
 			gettreedata() {
-				let arr=[{
-					id: 999,
-					name: '未命名文件夹',
-					children: [{
-						id: 1000,
-						name: '未命名文件夹1',
-						children: []
-					}]
-				}];
-				this._setTreeData(arr);
+//				let arr = [{
+//					id: 999,
+//					name: '未命名文件夹',
+//					children: [{
+//						id: 1000,
+//						name: '未命名文件夹1',
+//						children: []
+//					}]
+//					
+//				}];
+				var that = this;
+				var url = this.$http.defaults.baseURL + 'TBUSER000001/formdesign/treefolder';
+				that.$http.get(url).then((r) => {
+					if(r.data.length == 0) {
+						let arr = [{
+							id: 999,
+							name: '未命名文件夹',
+							children: []
+						}];
+						this.$bus.$emit("initTreeList", arr);
+					} else {
+						var tree = JSON.parse(r.data[0].subitem);
+					this.$bus.$emit("initTreeList", tree);
+					}
+				});
+			},
+			getFormByCondition(type, name) {
+				this.$emit("getFormByCondition", type, name);
 			}
 		},
+		
 		created() {
 			this.gettreedata();
 		},
@@ -136,7 +155,7 @@
 		margin: 0;
 		padding: 0;
 		cursor: pointer;
-    min-width: 100px;
+		min-width: 100px;
 	}
 	
 	.cl_header_menu {
@@ -192,30 +211,31 @@
 		text-overflow: ellipsis;
 		font-size: 12px;
 	}
-	.tree:hover{
+	
+	.tree:hover {
 		background: #E4E8F1;
 		cursor: pointer;
-		
-		
 	}
-	.folder_list{
+	
+	.folder_list {
 		color: #5a5a5a;
 	}
-	.view_allform div{
-		
-    width: 16px;
-    height: 16px;
-    background: url(/static/Login/img/login_ico.png) no-repeat;
-    background-size: 250px 160px;
-    background-position: -181px -6px;
-    float: left;
-    box-sizing: border-box;
-    margin-top: 8px;
+	
+	.view_allform div {
+		width: 16px;
+		height: 16px;
+		background: url(/static/Login/img/login_ico.png) no-repeat;
+		background-size: 250px 160px;
+		background-position: -181px -6px;
+		float: left;
+		box-sizing: border-box;
+		margin-top: 8px;
 	}
-	.view_allform p{
+	
+	.view_allform p {
 		margin: 0;
-    padding: 0;
-    float: left;
-    margin-left: 8px;
+		padding: 0;
+		float: left;
+		margin-left: 8px;
 	}
 </style>

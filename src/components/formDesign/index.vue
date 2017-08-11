@@ -1,28 +1,28 @@
 <template>
 
 	<div id="form-index">
-		<ContentLeft @getByTree="getByTreepid" @backToFormList="backToFormList"></ContentLeft>
+		<ContentLeft @getByTree="getByTreepid" @backToFormList="backToFormList" @getFormByCondition="getFormByCondition"></ContentLeft>
 
 		<div id="form_content2" class="form_content form_content2">
 			<div class="fc_title">
 				<h3>{{classifydata.title}}</h3>
 			</div>
 			<div class="fc_content">
-				<DataShowModel v-for="item in classifydata.data" :child-data="item"></DataShowModel>
+				<DataShowModel v-for="item in classifydata.data" :key="item.id" :child-data="item"></DataShowModel>
 			</div>
 		</div>
 		<div id="form_content1" class="form_content form_content1">
 			<el-tabs class="fc_tabs" v-model="activeName" @tab-click="handleClick">
 				<el-tab-pane class="fc_tab" label="新建表单" name="first">
-					<DataShowModel v-for="item in formdata.create" :child-data="item"></DataShowModel>
+					<DataShowModel v-for="item in formdata.create" :key="item.id" :child-data="item"></DataShowModel>
 					<div class="fct1_title">从共享中心新建表单</div>
-					<DataShowModel v-for="(item,index) in formdata.exchange" v-if="index<10" :child-data="item"></DataShowModel>
+					<DataShowModel v-for="(item,index) in formdata.exchange" :key="index" v-if="index<10" :child-data="item"></DataShowModel>
 				</el-tab-pane>
 				<el-tab-pane label="最近编辑" name="second">
-					<DataShowModel v-for="item in formdata.recently" :child-data="item"></DataShowModel>
+					<DataShowModel v-for="item in formdata.recently" :key="item.id" :child-data="item"></DataShowModel>
 				</el-tab-pane>
 				<el-tab-pane label="共享中心" name="third">
-					<DataShowModel v-for="item in formdata.exchange" :child-data="item"></DataShowModel>
+					<DataShowModel v-for="item in formdata.exchange" :key="item.id" :child-data="item"></DataShowModel>
 				</el-tab-pane>
 			</el-tabs>
 		</div>
@@ -51,26 +51,6 @@
 						img: "/static/Index/img/newform.png",
 						url: "/formDesign/init/new",
 						type: 26,
-						usable: true,
-						price: 0,
-						author: "管理员",
-						createdate: "2017-08-08"
-					}, {
-						formid: 1,
-						name: "录入表单",
-						img: "/static/Index/canvas_5977_tpl.png",
-						url: "/formDesign/init/new",
-						type: 27,
-						usable: true,
-						price: 0,
-						author: "管理员",
-						createdate: "2017-08-08"
-					}, {
-						formid: 1,
-						name: "共享表单",
-						img: "/static/Index/canvas_5977_tpl.png",
-						url: "/mapdesign/new",
-						type: 27,
 						usable: true,
 						price: 0,
 						author: "管理员",
@@ -254,26 +234,54 @@
 			handleClick(tab, event) {
 				console.log(tab, event);
 			},
-			
-			getByTreepid(node, store, data) {
+
+			getByTreepid(node, store, data, childids) {
 				document.getElementById("form_content1").style.display = "none";
 				document.getElementById("form_content2").style.display = "block";
-				this.classifydata.title=data.name;
+				this.classifydata.title = data.name;
 				console.log(node.data.id);
-
+				console.log(childids);
 				console.log(node.data.name + ";");
 				console.log(data.id);
 				console.log(data.name + ";");
 			},
-			backToFormList(evt){
+			getFormByCondition(type, name) {
+				var that = this;
+				this.classifydata.title = name;
+				document.getElementById("form_content1").style.display = "none";
+				document.getElementById("form_content2").style.display = "block";
+				var url = this.$http.defaults.baseURL + 'TBUSER000001/formdesign/forms';
+				that.$http.get(url).then((res) => {
+					if(res.data.result) {
+						var data = [{
+							formid: 1,
+							name: "空白表单",
+							img: "/static/Index/img/newform.png",
+							url: "/formDesign/init/new",
+							type: 26,
+							usable: true,
+							price: 0,
+							author: "管理员",
+							createdate: "2017-08-08"
+						}];
+						for(var item in res.data.data) {
+							data.push(res.data.data[item]);
+						}
+						that.classifydata.data = data;
+					}
+				});
+
+			},
+			backToFormList(evt) {
 				document.getElementById("form_content2").style.display = "none";
 				document.getElementById("form_content1").style.display = "block";
 			}
 		},
 		created() {
-
+			
 		},
 		mounted() {
+
 			this.$Tools.html2images(document.getElementById("nav-bar"), function(canvas) {
 				var imageData = canvas.toDataURL(1);
 			});
@@ -342,7 +350,8 @@
 		float: left;
 		color: #758697;
 	}
-	.fc_content{
+	
+	.fc_content {
 		margin-top: 20px;
 	}
 </style>

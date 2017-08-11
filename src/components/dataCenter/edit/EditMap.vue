@@ -199,6 +199,8 @@
         }
 
         this.now_layer = layer;
+        console.log(this.now_layer)
+        debugger
         this.now_layer.editing.enable();
         this.setEditLog(true);
         //显示editlog
@@ -265,9 +267,13 @@
 
         layer.on('click', function  (e) {
           _this.setEditType('update');
-          var _layer = e.target;
+          //var _layer = e.target;
+          //var _layer = e.layer;
+          var _layer = layer;
+          debugger
           if ( !_this.now_layer ) {
             console.log(layer);
+            debugger
             _this.initEditState(_layer);
             console.log('点击之后_this.now_layer', _this.now_layer)
           } else {
@@ -317,12 +323,44 @@
             fillOpacity: 1,
             dashArray: '1, 2'
           },
-          onEachFeature: _this.onEachFeature
+          //onEachFeature: _this.onEachFeature
         });
         console.log(_this.geoJsonLayer);
         drawItem.addLayer(_this.geoJsonLayer);
 
-        // 添加draw插件
+        drawItem.eachLayer(function(layer) {
+          layer.on('click', function(){
+            alert(_this._leaflet_id);
+            _this.setEditType('update');
+            //var _layer = e.target;
+            //var _layer = e.layer;
+            var _layer = layer;
+            debugger
+            if ( !_this.now_layer ) {
+              console.log(layer);
+              debugger
+              _this.initEditState(_layer);
+              console.log('点击之后_this.now_layer', _this.now_layer)
+            } else {
+              if (_this.now_layer != _layer) {  // 当前点击的feature和上次的不一样
+                if ( _this.edit.isSave === false) {
+                  _this.$confirm('当前有未保存的数据', '提示', {
+                    type: 'warning'
+                  }).then(() => {
+                    _this.cancelEditState();
+                    _this.initEditState(_layer);
+                    console.log('点击别的feature', _this.now_layer)
+                  }).catch(() => {
+
+                  });
+                }
+              }
+            }
+          });
+        });
+
+
+          // 添加draw插件
         map.addControl(new L.Control.Draw({
           position: 'topright',
           edit: {
@@ -376,7 +414,7 @@
           let type = e.layerType;
           _this.geoJsonLayer = L.geoJson(layer.toGeoJSON(), {
             style: getStyle.bind(this, type),
-            onEachFeature: _this.onEachFeature
+            //onEachFeature: _this.onEachFeature
           });
           drawItem.addLayer(_this.geoJsonLayer);
           console.log(_this.now_layer);

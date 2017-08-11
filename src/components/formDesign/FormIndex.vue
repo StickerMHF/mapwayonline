@@ -29,7 +29,6 @@
 	import formContent from './formtemp/formcontent.vue';
 	import formSide from './formtemp/formside.vue';
 	import formSet from './formtemp/formset.vue';
-	import _Bus_ from './formtemp/formcontral.js';  
 
 	
 export default {

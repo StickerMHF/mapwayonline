@@ -21,14 +21,10 @@ export default new Router({
         },
         {
           path:'/datacenter',
-          component: res => require(['@/components/dataCenter/DataCenter.vue'], res),
-          meta: {requireAuth: false,}, // 添加该字段，表示进入这个路由是需要登录的
-        },
-        {
-           path:'/datacenter/index',
           component: res => require(['@/components/dataCenter/index.vue'], res),
           meta: {requireAuth: false,}, // 添加该字段，表示进入这个路由是需要登录的
         },
+       
         {
           path:'/datacenter/:dataid/edit',
           component: res => require(['@/components/dataCenter/edit/Edit.vue'], res),

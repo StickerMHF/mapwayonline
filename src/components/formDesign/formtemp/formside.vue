@@ -38,7 +38,6 @@
 </template>
 
 <script>
-	import _Bus_ from './formcontral.js';  
 	
 	export default {
 		name:'formside',
@@ -58,7 +57,9 @@
 						{tagname:'input',type:'radio',label:"单选框"},
 						{tagname:'input',type:'password',label:"密码输入框"},
 						{tagname:'input',type:'file',label:"文件上传"},
-						{tagname:'button',type:'',label:"按钮"},
+						{tagname:'button',type:'submit',label:"提交按钮"},
+						{tagname:'button',type:'reset',label:"重置按钮"},
+						{tagname:'button',type:'button',label:"普通按钮"},
 					],
 					// 常用控件列表
 					commonList:[
@@ -76,7 +77,9 @@
 				 var type = type || {};
 				 
 				// 触发组件content中的添加组件的事件
-				_Bus_.$emit('add-widget',type);
+				
+				this.$bus.emit('add-widget',type);
+				
 			}
 			
 		
@@ -87,12 +90,7 @@
 		},
 		mounted(){
 			
-		},
-		beforeDestory(){
-			
-			_Bus_.$off("add-widget");
-		
-		} 
+		}
 	}
 </script>
 
@@ -122,7 +120,6 @@
 			
 				border: 1px solid #DFDFDF;
 				width:250px;
-				height: 200px;
 				box-sizing: border-box;
 				position: absolute;
 				right:-250px;

@@ -19,7 +19,7 @@
 		   	  		<div class="drag-icon"><i class="point"></i><i class="point"></i><i class="point"></i><i class="point"></i><i class="point"></i></div> 		
 		   	  	</div>
 		   	  
-		   	  <div :is = "'vue-draggable-resizable'"
+		   	  	<div :is = "'vue-draggable-resizable'"
 		   	  	v-for="(item,index) in getForm.widgetList" 
 		   	  	:key = 'index'
 		   	  	:x='item.layout.x' 
@@ -27,8 +27,6 @@
 		   	  	:w = 'item.layout.w' 
 		   	  	:h = 'item.layout.h'
 		   	  	:oid = 'index'
-		   	  	:parent = 'item.layout.parent'
-		   	  	:style = 'item.style'
 		   	  	@removeBox = 'removeBox'
 		   	  	@resizestop="onResizeStop" 
 		   	  	@dragstop="onDragStop"
@@ -41,9 +39,12 @@
 		   	  	:class="'widget'+index"
 		   	  	
 		   	  	>
-			   	  	<div class="label deactivated">{{item.description}}</div><div 
-			   	  		:style="{backgroundColor: item.style.backgroundColor}" 
-			   	  		class="type deactivated"> {{index}} {{item.tagname}}</div>	   	 	
+			   	  	<div :style = 'item.style' style="width: 100%;height: 100%;overflow: hidden;display: flex;">
+			   	  		<div class="label deactivated"  v-show= "hasLabel(item.tagname)">{{item.label}}</div><div 
+				   	  		:style="{backgroundColor: item.style.backgroundColor}" 
+				   	  		class="type deactivated"> {{index}} {{item.tagname}}</div>	 
+			   	  	</div>
+			   	  	  	 	
 		   	  </div>
 	   	  
 			</div>
@@ -59,7 +60,6 @@
 
 <script>
 	import VueDraggableResizable from '../drag/vue-draggable-resizable.vue'
-	import _Bus_ from './formcontral.js';  
 	import {mapGetters, mapActions } from 'vuex'
 	
 	export default {		
@@ -97,8 +97,7 @@
             activated(i){
         		console.log('容器被选中',i.oid);  
         		this.currentOid = i.oid;
-        		_Bus_.$emit('show-setbox',i.oid);   
-        		
+        		this.$bus.emit('show-setbox',i.oid);
         	},
         	deactivated(i){
         		console.log("容器失去选中",i.oid);          		       		
@@ -135,10 +134,19 @@
 				this._removeWidget(id);				
 			},
 			dragCanvas($event){
+				// 拖拽增加画布长度
 				console.log($event);
 			},
+			hasLabel(tagname){
+				let noLabel = ['button','h1','p','img'];
+				if(noLabel.indexOf(tagname) >= 0 ){
+					return false ;
+				}else{
+					return true;
+				}
+			},
 			addBox(t){
-				console.log(t);
+				console.log("添加了一个");
 				// 添加一个盒子 并设置默认属性
 				var type = t.type || '',
 					tagname = t.tagname || '';
@@ -172,61 +180,71 @@
 					case 'inputtext':
 						oneWidget.layout.w = 300;
 						oneWidget.layout.h = 40;
-						oneWidget.description = '输入框';
+						oneWidget.label = oneWidget.description = '输入框';
 						break;
 					case 'textarea':
 						oneWidget.layout.w = 300;
 						oneWidget.layout.h = 150;
-						oneWidget.description = '文本域';
+						oneWidget.label = oneWidget.description = '文本域';
 						break;
 					case 'inputcheckbox':
 						oneWidget.layout.w = 300;
 						oneWidget.layout.h = 80;
-						oneWidget.description = '复选框';
+						oneWidget.label = oneWidget.description = '复选框';
 						oneWidget.option = '选项1,选项2,选项3';
 						break;
 					case 'inputradio':
 						oneWidget.layout.w = 300;
 						oneWidget.layout.h = 80;
-						oneWidget.description = '单选框';
+						oneWidget.label = oneWidget.description = '单选框';
 						oneWidget.option = '选项1,选项2,选项3';
 						break;
 					case 'inputpassword':
 						oneWidget.layout.w = 300;
 						oneWidget.layout.h = 40;
-						oneWidget.description = '密码框';
+						oneWidget.label = oneWidget.description = '密码框';
 						break;
 					case 'inputfile':
 						oneWidget.layout.w = 300;
 						oneWidget.layout.h = 40;
-						oneWidget.description = '文件上传';
+						oneWidget.label = oneWidget.description = '文件上传';
 						break;
 					case 'select':
 						oneWidget.layout.w = 250;
 						oneWidget.layout.h = 40;
-						oneWidget.description = '下拉选择框';
+						oneWidget.label = oneWidget.description = '下拉选择框';
 						oneWidget.option = '选项1,选项2,选项3';
 						break;
-					case 'button':
+					case 'buttonsubmit':
 						oneWidget.layout.w = 120;
 						oneWidget.layout.h = 50;
-						oneWidget.description = '按钮';
+						oneWidget.label = oneWidget.description = '提交';
+						break;
+					case 'buttonreset':
+						oneWidget.layout.w = 120;
+						oneWidget.layout.h = 50;
+						oneWidget.label = oneWidget.description = '重置';
+						break;
+					case 'buttonbutton':
+						oneWidget.layout.w = 120;
+						oneWidget.layout.h = 50;
+						oneWidget.label = oneWidget.description = '按钮';
 						break;
 					case 'h1':
 						oneWidget.layout.w = 400;
 						oneWidget.layout.h = 40;
-						oneWidget.description = '标题';
+						oneWidget.label = oneWidget.description = '标题';
 						break;
 					case 'img':
 						oneWidget.layout.w = 200;
 						oneWidget.layout.h = 250;
-						oneWidget.description = '图片';
+						oneWidget.label = oneWidget.description = '图片';
 						oneWidget.src = "";
 						break;
 					case 'p':
 						oneWidget.layout.w = 300;
 						oneWidget.layout.h = 250;
-						oneWidget.description = '段落';
+						ooneWidget.label = neWidget.description = '段落';
 						break;	
 					default:
 						break;
@@ -241,28 +259,25 @@
 			
 			showList(){
 				var x = this.getForm.widgetList;
+//				console.log(this.getForm);
 				console.log(JSON.stringify(this.getForm));
 				for(var i=0 ; i < x.length;i++){
 					console.log( JSON.stringify(x[i].layout));
 				}
 				
 			},
-			
+			setGrid(obj){
+				this.grid[obj.attr] = obj.value;
+			},
             initEvent(){
             	var that = this ;
-				_Bus_.$on('add-widget',function(type){
-					that.addBox(type);
-					console.log(1111111)
-				});
-				_Bus_.$on('setGrid',function(obj){					
-					that.grid[obj.attr] = obj.value;
-				})
-				
+            	that.$bus.on('add-widget',that.addBox);
+            	that.$bus.on('set-grid',that.setGrid);
 				
 			},
            	initData(){
            		var that = this ;
-           	
+           		
            		
            		
            	}
@@ -274,12 +289,16 @@
         mounted() {
         	
             
-        },
+        },		
 		beforeDestory(){
-			var that = this;
-			_Bus_.$off("add-widget");
-			_Bus_.$off("setGrid");
-		} 
+			console.log("beforeDestory");
+			this.$bus.off('add-widget');
+			this.$bus.off('set-grid');
+		},
+		destoryed(){
+			console.log("destoryed");
+			console.log('this.currentOid', this.currentOid)
+		}
 	}
 	
 </script>
@@ -350,6 +369,7 @@
 	.label{
 		display: inline-block;
 		height: 100%;
+		width: 80px;
 		padding: 0 10px;
 		box-sizing: border-box;
 		background-color: #D9D9D9;
@@ -363,7 +383,6 @@
 		height: 100%;
 		flex-grow: 1;
 		background-color: white;
-		width: calc(80% - 4px);
 		box-sizing: border-box;
 		vertical-align: middle;
 		font-size: 12px;

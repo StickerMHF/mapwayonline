@@ -8,16 +8,16 @@
 				<h3>{{classifydata.title}}</h3>
 			</div>
 			<div class="dc_content">
-				<DataShowModel v-for="item in classifydata.data" :child-data="item"></DataShowModel>
+				<DataShowModel v-for="item in classifydata.data" :key="item.id"  :child-data="item"></DataShowModel>
 			</div>
 		</div>
 		<div id="data_content1" class="data_content data_content1">
 			<el-tabs class="dc_tabs" v-model="activeName" @tab-click="handleClick">
 				<el-tab-pane class="dc_tab" label="数据列表" name="first">
-					<DataShowModel v-for="item in datadata.create" :child-data="item"></DataShowModel>
+					<DataShowModel v-for="item in datadata.create" :key="item.id"  :child-data="item"></DataShowModel>
 				</el-tab-pane>
 				<el-tab-pane label="最近编辑" name="second">
-					<DataShowModel v-for="item in datadata.recently" :child-data="item"></DataShowModel>
+					<DataShowModel v-for="item in datadata.recently" :key="item.id"  :child-data="item"></DataShowModel>
 				</el-tab-pane>
 				<el-tab-pane label="新建数据" name="third">
 					<div class="dc_createdata">
@@ -33,8 +33,8 @@
 						</el-tab-pane>
 						<!--数据库方式正在开发中。。。-->
 						<!-- <el-tab-pane label='数据库' name='w4'>
-              <datalibrary-box></datalibrary-box>
-          </el-tab-pane> -->
+				              <datalibrary-box></datalibrary-box>
+				        </el-tab-pane> -->
 						<el-tab-pane label='自定义数据' name='w5'>
 							<customdata-box v-on:refreshdata='gotab'></customdata-box>
 						</el-tab-pane>
@@ -88,26 +88,6 @@
 				datadata: {
 					create: [{
 						dataid: 1,
-						name: "空白表单",
-						img: "/static/Index/img/newform.png",
-						url: "/dataDesign/init/new",
-						type: 26,
-						usable: true,
-						price: 0,
-						author: "管理员",
-						createdate: "2017-08-08"
-					}, {
-						dataid: 1,
-						name: "从已有表单创建",
-						img: "/static/Index/img/newform.png",
-						url: "/dataDesign/init/new",
-						type: 26,
-						usable: true,
-						price: 0,
-						author: "管理员",
-						createdate: "2017-08-08"
-					},{
-						dataid: 1,
 						name: "点",
 						url: "/dataDesign/init/new",
 						type: 2,
@@ -155,9 +135,8 @@
 					recently: [{
 						dataid: 1,
 						name: "录入表单",
-						img: "/static/Index/canvas_5977_tpl.png",
 						url: "/dataDesign/init/new",
-						type: 27,
+						type: 9,
 						usable: true,
 						price: 0,
 						author: "管理员",
@@ -165,9 +144,8 @@
 					}, {
 						dataid: 1,
 						name: "共享表单",
-						img: "/static/Index/canvas_5977_tpl.png",
 						url: "/mapdesign/new",
-						type: 27,
+						type: 3,
 						usable: true,
 						price: 0,
 						author: "管理员",
@@ -208,13 +186,14 @@
 				console.log(tab, event);
 			},
 
-			getByTreepid(node, store, data) {
+			getByTreepid(node, store, data,childids) {
+				debugger
 				document.getElementById("data_content1").style.display = "none";
 				document.getElementById("data_content2").style.display = "block";
 				this.classifydata.title = data.name;
 				console.log(node.data.id);
 
-				console.log(node.data.name + ";");
+				console.log(childids);
 				console.log(data.id);
 				console.log(data.name + ";");
 			},

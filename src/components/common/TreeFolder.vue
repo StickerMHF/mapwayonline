@@ -54,7 +54,11 @@
 			...mapActions([
 				'_setTreeData'
 			]),
-
+			initEvent() {
+				 this.$bus.on('initTreeList', (obj) => {
+				 	this.treedata = obj;
+                 });
+			},
 			showmenu(store, data, evt) {
 				var evtTargetThis = evt.target.parentElement.parentElement.children[2];
 				if(evtTargetThis.style.display == "block") {
@@ -69,14 +73,40 @@
 				this.form.store = store;
 				this.form.data = data;
 				this.form.type = type;
-				debugger
+				this.getMaxIDs(store.data[0]);
 				if(type == "update") {
 					this.form.treename = data.name;
 					this.form.title = "重命名";
 				}
 			},
-			getByTreeId(node,store,data) {
-				this.$emit("getByTreeId", node,store,data);
+			getByTreeId(node, store, data) {
+				var childids = [];
+				this.getChildIDs(node, childids);
+				this.$emit("getByTreeId", node, store, data, childids);
+			},
+			getChildIDs(node, arr) {
+				if(node.childNodes.length == 0) {
+					if(arr != null) arr.push(node.data.id);
+				} else {
+					arr.push(node.data.id);
+					for(var i = 0; i < node.childNodes.length; i++) {
+						this.getChildIDs(node.childNodes[i], arr);
+					}
+				}
+
+			},
+			getMaxIDs(node) {
+				if(node.id > id) {
+					id = node.id + 1;
+				}
+				if(node.children.length > 0) {
+					for(var i = 0; i < node.children.length; i++) {
+						console.log(i);
+						this.getMaxIDs(node.children[i], id);
+					}
+
+				}
+
 			},
 			createtree() {
 				this.dialogTreeNameVisible = false;
@@ -172,9 +202,9 @@
 
 			},
 		},
-
+		
 		created() {
-			this.treedata = this.$Tools.cloneObj(this.getFormList.treedata);
+			this.initEvent();
 		},
 		mounted() {
 
@@ -239,9 +269,11 @@
 		color: #333;
 		margin: 0;
 	}
-	.tree_menu li i{
+	
+	.tree_menu li i {
 		margin-right: 8px;
 	}
+	
 	.tree_menu li:hover {
 		background: #E4E8F1;
 	}

@@ -12,7 +12,7 @@
 	
 		<div class="header-tool" >
 			<el-button :plain="true" type="success" @click = "previewForm">预览</el-button>
-			<el-button :plain="true" type="success">保存</el-button>
+			<el-button :plain="true" type="success" @click = "saveForm">保存</el-button>
 			<el-button :plain="true" type="success">发布</el-button>
 			<el-button :plain="true" type="success">分享</el-button>
 		
@@ -24,7 +24,7 @@
 </template>
 
 <script>
-	import _Bus_ from './formcontral.js';  
+	
 	import {mapGetters, mapActions } from 'vuex'
 	
 	export default {
@@ -46,6 +46,40 @@
 			previewForm(){
 				// 预览数据	
 				this.$router.replace({name: 'formpreview', params: {id:'new'}});
+			},
+			saveForm(){
+				// 保存数据 
+				
+				// 过滤一部分数据  比如：一些字段不为空之类的
+				let prams = 'data='+JSON.stringify(this.getForm);      
+		      	this.$http.post( 'TBUSER000002/formdesign/form/add',prams)
+		      	.then(
+		      		(res) => {
+		      			console.log(res);
+		      			if(res.data.result == true){
+		      				// 上传成功
+		      				// 跳转到。。。。
+		      				this.$notify.success({
+					          title: '成功！',
+					          message: '提交数据成功！！！',
+					          offset: 300
+					        });
+		      				
+		      			}else{
+		      				this.$notify.error({
+					          title: '请求失败！',
+					          message: '请求失败！ 请填写正确的地址格式或者检查您的地址是否正确！！！',
+					          offset: 300
+					        });
+		      			}
+		      			
+		      		}     		
+		      	).catch((error) => {
+		      		console.log(error);	
+		      	});
+		      	
+				
+				
 			}
 		},
 		created(){

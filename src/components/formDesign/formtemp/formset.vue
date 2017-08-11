@@ -236,7 +236,7 @@
 
 <script>
 	
-	import _Bus_ from './formcontral.js';  
+
 	import {mapGetters,mapActions} from 'vuex'
 
 	export default {
@@ -304,14 +304,14 @@
 			},
 			setGrid(attr){
 				var value = this.grid[attr] / 100;
-				_Bus_.$emit('setGrid',{attr,value});
+				this.$bus.emit("set-grid",{attr,value});
 			},
 			setWidgetStyle(oattr){
 				//设置的样式 
 				console.log(oattr);
 				var value = this.currentSet.style[oattr];
 				if(this.hasPx.indexOf(oattr) >= 0){
-        			value = this.currentSet.style[oattr] + 'px'
+        			value = value + 'px'
         		}
 				
 				this._setWidgetStyle({
@@ -335,10 +335,10 @@
 				let value = that.formConfig[attr];
 				if(attr === 'bindTable' && this.formConfig[attr] !== ''){
 					
-						that.$http.get('http://localhost/fz/json.php?f=filed',{})
+						that.$http.get('TBUSER000001/datacenter/form/field?dataname=' + value,{})
 						.then((res)=>{
 				        	console.log('字段',res);       		
-				     		that.fieldList = res.data[0];
+				     		that.fieldList = res.data.data;
 				        }).catch((err)=>{
 				        	console.log(err);
 				        });	 
@@ -370,21 +370,14 @@
 			initEvent(){
 				// 初始化你的所有总线事件
 				var that = this;
-				_Bus_.$on('show-setbox',function(oid){
-					that.showSetbox(oid);
-					
-				})
-				
-				
-				
-				
+				that.$bus.on('show-setbox',that.showSetbox);
 				
 			},
 			initData(){		
 				 // 初始化你的数据
-	  			this.$http.get('http://localhost/fz/json.php?f=form').then((res)=>{
+	  			this.$http.get('TBUSER000001/datacenter/form/formname').then((res)=>{
 		        	console.log('表',res);       		
-		     		this.userDataList = res.data[0];
+		     		this.userDataList = res.data.data;
 		        }).catch((err)=>{
 		        	console.log(err)
 		        });	 
@@ -415,8 +408,9 @@
 			
 		},
 		beforeDestory(){
-			_Bus_.$off("show-setbox");
+			this.$bus.off('show-setbox');
 		}
+		
 	}
 </script>
 

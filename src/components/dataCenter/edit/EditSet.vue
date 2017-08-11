@@ -8,9 +8,11 @@
     <hr style="margin-bottom: 22px;">
     <el-row>
       <div class="fieldSetList">
-        <el-form label-position="left" label-width="80px">
-          <el-form-item :label="key" v-for="val, key, index in mViewProperties" :key="key">
-            <el-input v-model="val"  :disabled="key === 'mapwayid'" @blur="valChange(key, val, mViewProperties)"></el-input>
+        <el-form label-position="left"  ref="editForm" label-width="80px">
+          <el-form-item :label="key" :prop="key" v-for="val, key, index in mViewProperties" :key="key" :rules="[
+            { type: 'number', message: '年龄必须为数字值'}
+          ]">
+            <el-input v-model="val" :disabled="key === 'mapwayid'" @blur="valChange(key, val, mViewProperties)"></el-input>
           </el-form-item>
           <!--<el-form-item :label="(val.name)" v-for="val in edit.schema" :key="val.name">
             <el-input v-model="mViewProperties[val.name]"></el-input>

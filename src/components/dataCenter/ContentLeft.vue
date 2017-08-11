@@ -1,6 +1,6 @@
 <template>
 	<div id="content-left">
-		<div class="cl_head clearfix" >
+		<div class="cl_head clearfix">
 			<h2 @click="backToDataList">数据</h2>
 			<div class="cl_header_menu dropdown">
 				<i class="fa fa-plus-circle"></i>
@@ -81,23 +81,42 @@
 			...mapActions([
 				'_setTreeData'
 			]),
-			getByTree(node,store,data){
-				this.$emit("getByTree", node,store,data);
+			getByTree(node, store, data, childids) {
+				this.$emit("getByTree", node, store, data, childids);
 			},
-			backToDataList(evt){
+			backToDataList(evt) {
 				this.$emit("backToDataList", evt);
 			},
 			gettreedata() {
-				let arr=[{
+				let arr = [{
 					id: 999,
 					name: '未命名文件夹',
 					children: [{
 						id: 1000,
 						name: '未命名文件夹1',
-						children: []
+						children: [{
+							id: 1001,
+							name: '未命名文件夹11',
+							children: []
+						}]
 					}]
 				}];
-				this._setTreeData(arr);
+				var that = this;
+				var url = this.$http.defaults.baseURL + 'TBUSER000001/datacenter/treefolder';
+				that.$http.get(url).then((r) => {
+					if(r.data.length == 0) {
+						let arr = [{
+							id: 999,
+							name: '未命名文件夹',
+							children: []
+						}];
+						this.$bus.$emit("initTreeList", arr);
+					} else {
+						var tree = JSON.parse(r.data[0].subitem);
+					this.$bus.$emit("initTreeList", tree);
+					}
+					
+				});
 			}
 		},
 		created() {
@@ -146,7 +165,7 @@
 		margin: 0;
 		padding: 0;
 		cursor: pointer;
-    min-width: 100px;
+		min-width: 100px;
 	}
 	
 	.cl_header_menu {
@@ -202,30 +221,31 @@
 		text-overflow: ellipsis;
 		font-size: 12px;
 	}
-	.tree:hover{
+	
+	.tree:hover {
 		background: #E4E8F1;
 		cursor: pointer;
-		
-		
 	}
-	.folder_list{
+	
+	.folder_list {
 		color: #5a5a5a;
 	}
-	.view_allform div{
-		
-    width: 16px;
-    height: 16px;
-    background: url(/static/Login/img/login_ico.png) no-repeat;
-    background-size: 250px 160px;
-    background-position: -181px -6px;
-    float: left;
-    box-sizing: border-box;
-    margin-top: 8px;
+	
+	.view_allform div {
+		width: 16px;
+		height: 16px;
+		background: url(/static/Login/img/login_ico.png) no-repeat;
+		background-size: 250px 160px;
+		background-position: -181px -6px;
+		float: left;
+		box-sizing: border-box;
+		margin-top: 8px;
 	}
-	.view_allform p{
+	
+	.view_allform p {
 		margin: 0;
-    padding: 0;
-    float: left;
-    margin-left: 8px;
+		padding: 0;
+		float: left;
+		margin-left: 8px;
 	}
 </style>

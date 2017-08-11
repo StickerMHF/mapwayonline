@@ -2,129 +2,143 @@
 	<div id="formpreview">
 		
 		<div class="nav" >
-			<el-button> <router-link :to="{name:'formdesigninit'}">编辑</router-link></el-button>
+			<router-link :to="{name:'formdesigninit'}"><el-button>编辑 </el-button></router-link>
 		</div>
 		<div class="myform ">
 			<div class="form-header">
 				<h1>{{formConfig.name}}</h1>
 				<p>{{formConfig.description}}</p>
 			</div>
-			<div class="form-main " :style="formConfig.style">
-				<div class="widget-item" 
-					v-for="(item,index) in widgetList"
-					:key = "item.tagname"
-					:style="{'width':item.layout.w,'height':item.layout.h,'top':item.layout.y,'left':item.layout.x}"
-					style="position: absolute;overflow: hidden;"
-					>
+			<div class="form-main" :style="formConfig.style">
+				<form :action="toUrl" method="post">
 					
-					<!--<div :is="item.tagname" 
-						:type='item.type ? item.src : ""' 
-						:style="item.style" 
-						:src="item.src ? item.src : ''"
-						style="width: 100%;height: 100%;box-sizing: border-box;	">
-						<option v-for="o in item.option" v-if="item.option" :key="o" :value="o">{{o}}</option>
+					
+				
+					<div class="widget-item" 
+						v-for="(item,index) in widgetList"
+						:key = "item.tagname"
+						:style="{'width':item.layout.w,'height':item.layout.h,'top':item.layout.y,'left':item.layout.x}"
+						style="position: absolute;overflow: hidden;"
+						>
 						
-					</div>-->
-					<!--根据类型渲染不同的控件-->	
-					<!--输入框-->
-					<label  v-if="item.tagname === 'input' && item.type === 'text'" style="display: flex;height: 100%;">
-						<span style="display: inline-block;margin-right:5px;vertical-align: middle;box-sizing: border-box;">{{item.label}}</span>
-						<div
-							:is="item.tagname" type='text'
-							:style="item.style"		
-							style="flex-grow: 1;height: 100%;box-sizing: border-box;"
-							>
-						</div>					
-					</label>
-					<!--密码框-->
-					<label  v-if="item.tagname === 'input' && item.type === 'password'"  style="display: flex;height: 100%;">
-						<span style="display: inline-block;margin-right:5px;vertical-align: middle;box-sizing: border-box;">{{item.label}}</span>
-						<div
-							:is="item.tagname" type='password'
-							:style="item.style"		
-							style="flex-grow: 1;height: 100%;box-sizing: border-box;"
-							>
-						</div>						
-					</label>
-					<!--文件上传-->
-					<label  v-if="item.tagname === 'input' && item.type === 'file'" style="display: flex;height: 100%;">
-						<span style="display: inline-block;margin-right:5px;vertical-align: middle;box-sizing: border-box;">{{item.label}}</span>
-						<div
-							:is="item.tagname" type='file'
-							:style="item.style"		
-							style="flex-grow: 1;height: 100%;box-sizing: border-box;"
-							>
-						</div>						
-					</label>
-					<!--文本域-->
-					<label  v-if="item.tagname === 'textarea'" style="display: flex;height: 100%;">
-						<span style="display: inline-block;margin-right:5px;vertical-align: middle;box-sizing: border-box;">{{item.label}}</span>
-						<div
-							:is="item.tagname"
-							:style="item.style"		
-							style="flex-grow: 1;height: 100%;box-sizing: border-box;"
-							>
-						</div>						
-					</label>
-					<!--下拉选择框-->
-					<label  v-if="item.tagname === 'select'" style="display: flex;height: 100%;">
-						<span style="display: inline-block;margin-right:5px;vertical-align: middle;box-sizing: border-box;">{{item.label}}</span>
-						<div
-							:is="item.tagname"
-							:style="item.style"		
-							style="flex-grow: 1;height: 100%;box-sizing: border-box;"
-							>
-							<option v-for="o in item.option" :key = "o" >{{o}}</option>
-						</div>						
-					</label>	
-					<!--复选框-->
-					<div v-if="item.tagname === 'input' && item.type === 'checkbox'"
-						 style="height: 100%;width: 100%; display: flex;box-sizing: border-box;">	
-						<span style="display: inline-block;margin-right:5px;">{{item.label}}</span>
-						<div :style="item.style" style="flex-grow: 1;height: 100%;box-sizing: border-box;">
-							<label  v-for="o in item.option" :key="o" >
-								<div :is="item.tagname" type='checkbox'></div>
-								{{o}}
-							</label>
+						<!--<div :is="item.tagname" 
+							:type='item.type ? item.src : ""' 
+							:style="item.style" 
+							:src="item.src ? item.src : ''"
+							style="width: 100%;height: 100%;box-sizing: border-box;	">
+							<option v-for="o in item.option" v-if="item.option" :key="o" :value="o">{{o}}</option>
+							
+						</div>-->
+						<!--根据类型渲染不同的控件-->	
+						<!--输入框-->
+						<label  v-if="item.tagname === 'input' && item.type === 'text'" style="display: flex;height: 100%;">
+							<span style="display: inline-block;margin-right:5px;min-width: 75px;vertical-align: middle;box-sizing: border-box;">{{item.label}}</span>
+							<div
+								:is="item.tagname" type='text'
+								:style="item.style"	
+								:name = "item.bindFiled"
+								style="flex-grow: 1;height: 100%;box-sizing: border-box;outline: hidden;"
+								>
+							</div>					
+						</label>
+						<!--密码框-->
+						<label  v-if="item.tagname === 'input' && item.type === 'password'"  style="display: flex;height: 100%;">
+							<span style="display: inline-block;margin-right:5px;min-width: 75px;vertical-align: middle;box-sizing: border-box;">{{item.label}}</span>
+							<div
+								:is="item.tagname" type='password'
+								:style="item.style"	
+								:name = "item.bindFiled"
+								style="flex-grow: 1;height: 100%;box-sizing: border-box;outline: hidden;"
+								>
+							</div>						
+						</label>
+						<!--文件上传-->
+						<label  v-if="item.tagname === 'input' && item.type === 'file'" style="display: flex;height: 100%;">
+							<span style="display: inline-block;margin-right:5px;min-width: 75px;vertical-align: middle;box-sizing: border-box;">{{item.label}}</span>
+							<div
+								:is="item.tagname" type='file'
+								:style="item.style"	
+								:name = "item.bindFiled"
+								style="flex-grow: 1;height: 100%;box-sizing: border-box;"
+								>
+							</div>						
+						</label>
+						<!--文本域-->
+						<label  v-if="item.tagname === 'textarea'" style="display: flex;height: 100%;">
+							<span style="display: inline-block;margin-right:5px;min-width: 75px;vertical-align: middle;box-sizing: border-box;">{{item.label}}</span>
+							<div
+								:is="item.tagname"
+								:style="item.style"	
+								:name = "item.bindFiled"
+								style="flex-grow: 1;height: 100%;box-sizing: border-box;"
+								>
+							</div>						
+						</label>
+						<!--下拉选择框-->
+						<label  v-if="item.tagname === 'select'" style="display: flex;height: 100%;">
+							<span style="display: inline-block;margin-right:5px;min-width: 75px;vertical-align: middle;box-sizing: border-box;">{{item.label}}</span>
+							<div
+								:is="item.tagname"
+								:style="item.style"		
+								:name = "item.bindFiled"
+								style="flex-grow: 1;height: 100%;box-sizing: border-box;"
+								>
+								<option v-for="o in item.option" :key = "o" :value="o" >{{o}}</option>
+							</div>						
+						</label>	
+						<!--复选框-->
+						<div v-if="item.tagname === 'input' && item.type === 'checkbox'"
+							 style="height: 100%;width: 100%; display: flex;box-sizing: border-box;">	
+							<span style="display: inline-block;margin-right:5px;min-width: 75px;">{{item.label}}</span>
+							<div :style="item.style" style="flex-grow: 1;height: 100%;box-sizing: border-box;">
+								<label  v-for="o in item.option" :key="o" >
+									<div :is="item.tagname" :value="o" type='checkbox' :name = "item.bindFiled + '[]'"></div>
+									{{o}}
+								</label>
+							</div>
 						</div>
-					</div>
-					<!--单选框-->
-					<div v-if="item.tagname === 'input' && item.type === 'radio'" 
-						 style="height: 100%;width: 100%; display: flex;box-sizing: border-box;">
-						 <span style="display: inline-block;margin-right:5px;">{{item.label}}</span>
-						 <div :style="item.style" style="flex-grow: 1;height: 100%;box-sizing: border-box;">
-						 	<label  v-for="o in item.option" :key="o">
-								<div :is="item.tagname" type='radio'></div>
-								{{o}}
-							</label>
-						 </div>
-					</div>
-					<!--按钮-->
-					<div
-						:is="item.tagname"
-						v-if="item.tagname === 'button'" style="width: 100%;height: 100%;" :style="item.style">
-						{{item.label}}
-					</div>
-					<!--标题-->
-					<div :is ="item.tagname" v-if="item.tagname === 'h1'" :style="item.style" style="width: 100%;height: 100%;box-sizing: border-box;"> 
-						{{item.description}}
-					</div>
-					<!--段落-->
-					<div :is="item.tagname" v-if="item.tagname === 'p'" :style="item.style" 
-						style="width: 100%;height: 100%;box-sizing: border-box;">
-						{{item.description}}
-					</div>
-					<!--图片-->
-					<div :is="item.tagname" v-if="item.tagname === 'img'" 
-						:style="item.style" 
-						:src="item.src ? item.src : ''"
-						:alt = "item.description"
-						style="width: 100%;height: 100%;box-sizing: border-box;">
-						
-					</div>
+						<!--单选框-->
+						<div v-if="item.tagname === 'input' && item.type === 'radio'" 
+							 style="height: 100%;width: 100%; display: flex;box-sizing: border-box;">
+							 <span style="display: inline-block;margin-right:5px;min-width: 75px;">{{item.label}}</span>
+							 <div :style="item.style" style="flex-grow: 1;height: 100%;box-sizing: border-box;">
+							 	<label  v-for="o in item.option" :key="o">
+									<div :is="item.tagname" :value="o" type='radio' :name = "item.bindFiled"></div>
+									{{o}}
+								</label>
+							 </div>
+						</div>
+						<!--按钮-->
+						<div
+							:is="item.tagname"
+							:type='item.type'
+							v-if="item.tagname === 'button'" style="width: 100%;height: 100%;" :style="item.style">
+							{{item.label}}
+						</div>
+						<!--标题-->
+						<div :is ="item.tagname" v-if="item.tagname === 'h1'" :style="item.style" style="width: 100%;height: 100%;box-sizing: border-box;"> 
+							{{item.description}}
+						</div>
+						<!--段落-->
+						<div :is="item.tagname" v-if="item.tagname === 'p'" :style="item.style" 
+							style="width: 100%;height: 100%;box-sizing: border-box;">
+							{{item.description}}
+						</div>
+						<!--图片-->
+						<div :is="item.tagname" v-if="item.tagname === 'img'" 
+							:style="item.style" 
+							:src="item.src ? item.src : ''"
+							:alt = "item.description"
+							style="width: 100%;height: 100%;box-sizing: border-box;">
+							
+						</div>
 					
-				</div>
+					
+					
+					
+					</div>
 	
+				</form>
 				
 			</div>
 			<div class="form-footer">
@@ -156,10 +170,9 @@
 		data(){
 			return {
 				oneForm:{},
+				toUrl:"", // 数据提交的接口地址
 				formConfig:{},
 				widgetList:[]
-				
-				
 			}
 		},
 		methods:{
@@ -181,7 +194,8 @@
 			restoreCanvas(){
 				// 还原布局的画布
 				this.formConfig = this.oneForm.formConfig;
-		
+				this.toUrl =  'http://192.168.0.217:8082/mapwayonline/TBUSER000001/datacenter/datas/'+this.formConfig.bindTable + "/insert";	
+//				this.toUrl = "http://localhost:80/fz/submit.php"
 			},
 			restoreWidget(){
 				// 还原控件

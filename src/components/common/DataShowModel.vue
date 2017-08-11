@@ -134,7 +134,7 @@
 
 <style>
 	.new-form {
-		width: 250px;
+		width: 235px;
 		border: 1px solid #ddd;
 		margin: 15px;
 		text-align: center;
@@ -227,7 +227,7 @@
 		height: 30px;
 		line-height: 30px;
 		background: #50bfff;
-		font-size: 16px;
+		font-size: 14px;
 		text-align: center;
 		color: #fff;
 		margin: 0 10px 10px 10px;
@@ -254,7 +254,7 @@
 	.exf_inst_vo,
 	.myf_inst_vo {
 		width: 100%;
-		height: 100%;
+		height: 165px;
 		background: rgba(0, 0, 0, 0.6);
 		position: absolute;
 		left: 0;
