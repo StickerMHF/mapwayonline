@@ -22,7 +22,7 @@
 					<DataShowModel v-for="item in formdata.recently" :key="item.id" :child-data="item"></DataShowModel>
 				</el-tab-pane>
 				<el-tab-pane label="共享中心" name="third">
-					<DataShowModel v-for="item in formdata.exchange" :key="item.id" :child-data="item"></DataShowModel>
+					<DataShowModel  :child-data="formdata.exchange"></DataShowModel>
 				</el-tab-pane>
 			</el-tabs>
 		</div>

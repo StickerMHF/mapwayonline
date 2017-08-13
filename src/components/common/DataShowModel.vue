@@ -1,87 +1,136 @@
 <template>
 	<div class="datamodel">
-		<div v-if="childData.type==2||childData.type==3||childData.type==4||childData.type==9" class="new-form create_form">
-			<div class="myf_img" @mouseenter="handleMousrOver" @mouseleave="handleMousrOut">
-					<img v-if="childData.img==null&&childData.type==2" src="/static/Index/img/point.png">
-					<img v-else-if="childData.img==null&&childData.type==3" src="/static/Index/img/line.png">
-					<img v-else-if="childData.img==null&&childData.type==4" src="/static/Index/img/polygon.png">
-					<img v-else-if="childData.img==null&&childData.type==9" src="/static/Index/img/table.png">
-					<img v-else :src="childData.img">
-					<div class="myf_inst_vo">
-						<el-button type="info"><a>预览</a></el-button>
-						<el-button type="info">编辑</el-button>
-						<el-button type="info">移动</el-button>
-						<el-button type="info">共享</el-button>
-						<el-button type="danger">删除</el-button>
-					</div>
-				</div>
-				<div class="myf_text">
-					<p>
-						<a class="detail_model" service_id="124">{{childData.name}}</a>
-					</p>
-					<div class="myft_author">
-						<span class="myft_au">{{childData.author}}</span>
-						<span class="myft_date">{{childData.createdate}}</span>
-					</div>
-				</div>
+		<div class="dmodel_title">
+			<div class="dmt_tabs">
+				<a v-if="islist==false" @click="switchlist(false)" class="dmt_graph fa fa-th-large active"></a>
+				<a v-else @click="switchlist(false)" class="dmt_graph fa fa-th-large"></a>
+				<a v-if="islist==false" @click="switchlist(true)" class="dmt_list fa fa-list-ul"></a>
+				<a v-else @click="switchlist(true)" class="dmt_list fa fa-list-ul active"></a>
+			</div>
 		</div>
-		
-		<div v-if="childData.type==26" class="new-form create_form">
-			<router-link :to='childData.url'>
-				<a class="add_dashboard" folder_id=""> 
-					<img :src="childData.img">
-					<p class="mt10">{{childData.name}}</p>
-				</a>
-			</router-link>
-		</div>
-		<div v-if="childData.type==27" class="new-form my_form">
-			<!--<router-link :to='childData.url'>-->
-				<div class="myf_img" @mouseenter="handleMousrOver" @mouseleave="handleMousrOut">
-					<img :src="childData.img">
-					<div class="myf_inst_vo">
-						<el-button type="info"><a>预览</a></el-button>
-						<el-button type="info">编辑</el-button>
-						<el-button type="info">移动</el-button>
-						<el-button type="info">共享</el-button>
-						<el-button type="danger">删除</el-button>
+		<div v-if="islist==false" class="dmodel_content dmodel_content1">
+			<div v-for="item in childData" :key="item.id">
+				<div v-if="item.type==2||item.type==3||item.type==4||item.type==9" class="new-form create_form">
+					<div class="myf_img" @mouseenter="handleMousrOver" @mouseleave="handleMousrOut">
+						<img v-if="item.img==null&&item.type==2" src="/static/Index/img/point.png">
+						<img v-else-if="item.img==null&&item.type==3" src="/static/Index/img/line.png">
+						<img v-else-if="item.img==null&&item.type==4" src="/static/Index/img/polygon.png">
+						<img v-else-if="item.img==null&&item.type==9" src="/static/Index/img/table.png">
+						<img v-else :src="childData.img">
+						<div class="myf_inst_vo">
+							<el-button type="info">
+								<a>预览</a>
+							</el-button>
+							<el-button type="info">编辑</el-button>
+							<el-button type="info">移动</el-button>
+							<el-button type="info">共享</el-button>
+							<el-button type="danger">删除</el-button>
+						</div>
 					</div>
-				</div>
-				<div class="myf_text">
-					<p>
-						<a class="detail_model" service_id="124">{{childData.name}}</a>
-					</p>
-					<div class="myft_author">
-						<span class="myft_au">{{childData.author}}</span>
-						<span class="myft_date">{{childData.createdate}}</span>
+					<div class="myf_text">
+						<p>
+							<a class="detail_model" service_id="124">{{item.name}}</a>
+						</p>
+						<div class="myft_author">
+							<span class="myft_au">{{item.author}}</span>
+							<span class="myft_date">{{item.createdate}}</span>
+						</div>
 					</div>
 				</div>
 
-			<!--</router-link>-->
-		</div>
-		<div v-if="childData.type==28" class="new-form exchange_form">
-			<!--<router-link :to='childData.url'>-->
-				<div class="exf_img" @mouseenter="handleMousrOver" @mouseleave="handleMousrOut">
-					<img :src="childData.img">
-					<div class="exf_inst_vo">
-						<el-button type="success">预览</el-button>
-						<el-button v-if="childData.usable||childData.price==0" type="info">使用</el-button>
-						<el-button v-else type="info">购买</el-button>
-					</div>
+				<div v-if="item.type==26" class="new-form create_form">
+					<router-link :to='item.url'>
+						<a class="add_dashboard" folder_id="">
+							<img :src="item.img">
+							<p class="mt10">{{childData.name}}</p>
+						</a>
+					</router-link>
 				</div>
-				<div class="exf_text">
-					<p>
-						<a class="detail_model" service_id="124">{{childData.name}}</a>
-						<span v-if="childData.usable&&childData.price>0" class="s-fc4"> 已购买</span>
-					</p>
-					<div v-if="childData.price==0" class="exft_price">免费</div>
-					<div v-else class="exft_price">售价：{{childData.price}}图道豆</div><!--￥-->
-					<div class="exft_author">
-						<span class="exft_au">{{childData.author}}</span>
-						<span class="exft_date">{{childData.createdate}}</span>
+				<div v-if="item.type==27" class="new-form my_form">
+					<!--<router-link :to='childData.url'>-->
+					<div class="myf_img" @mouseenter="handleMousrOver" @mouseleave="handleMousrOut">
+						<img :src="item.img">
+						<div class="myf_inst_vo">
+							<el-button type="info">
+								<a>预览</a>
+							</el-button>
+							<el-button type="info">编辑</el-button>
+							<el-button type="info">移动</el-button>
+							<el-button type="info">共享</el-button>
+							<el-button type="danger">删除</el-button>
+						</div>
 					</div>
-				</div>
+					<div class="myf_text">
+						<p>
+							<a class="detail_model" service_id="124">{{item.name}}</a>
+						</p>
+						<div class="myft_author">
+							<span class="myft_au">{{item.author}}</span>
+							<span class="myft_date">{{item.createdate}}</span>
+						</div>
+					</div>
 
-			<!--</router-link>-->
+					<!--</router-link>-->
+				</div>
+				<div v-if="item.type==28" class="new-form exchange_form">
+					<!--<router-link :to='childData.url'>-->
+					<div class="exf_img" @mouseenter="handleMousrOver" @mouseleave="handleMousrOut">
+						<img :src="item.img">
+						<div class="exf_inst_vo">
+							<el-button type="success">预览</el-button>
+							<el-button v-if="item.usable||item.price==0" type="info">使用</el-button>
+							<el-button v-else type="info">购买</el-button>
+						</div>
+					</div>
+					<div class="exf_text">
+						<p>
+							<a class="detail_model" service_id="124">{{item.name}}</a>
+							<span v-if="item.usable&&item.price>0" class="s-fc4"> 已购买</span>
+						</p>
+						<div v-if="item.price==0" class="exft_price">免费</div>
+						<div v-else class="exft_price">售价：{{item.price}}图道豆</div>
+						<!--￥-->
+						<div class="exft_author">
+							<span class="exft_au">{{item.author}}</span>
+							<span class="exft_date">{{item.createdate}}</span>
+						</div>
+					</div>
+
+					<!--</router-link>-->
+				</div>
+			</div>
+		</div>
+		<div v-else class="dmodel_content dmodel_content2">
+
+			<el-table :data="childData" border style="width: 100%">
+				<el-table-column sortable prop="name" label="名称" min-width="200">
+				</el-table-column>
+				<el-table-column prop="price" label="价格" min-width="100">
+				</el-table-column>
+				<el-table-column prop="author" label="市区" min-width="100">
+				</el-table-column>
+				<el-table-column prop="author" label="创建者" min-width="100">
+				</el-table-column>
+				<el-table-column label="更新时间" min-width="150">
+					<template scope="scope">
+						<el-icon name="time"></el-icon>
+						<span style="margin-left: 10px">{{ scope.row.createdate }}</span>
+					</template>
+				</el-table-column>
+				<el-table-column fixed="right" label="操作" min-width="200">
+					<template scope="scope">
+						<el-tooltip effect="dark"  placement="top" content="预览">
+							<el-button class="fa fa-edit" size="small" @click="handleEdit(scope.$index, scope.row)"></el-button>
+						</el-tooltip>
+						<el-tooltip effect="dark"  placement="top" content="编辑">
+							<el-button class="fa fa-edit" size="small" @click="handleEdit(scope.$index, scope.row)"></el-button>
+						</el-tooltip>
+						<el-button size="small" @click="handleEdit(scope.$index, scope.row)">编辑</el-button>
+						<el-button size="small" type="danger" @click="handleDelete(scope.$index, scope.row)">删除</el-button>
+					</template>
+
+				</el-table-column>
+			</el-table>
 		</div>
 	</div>
 </template>
@@ -93,20 +142,21 @@
 			return {
 				formPath: '/formDesign/init/',
 				title: "文件夹",
-				activeName: 'first'
+				activeName: 'first',
+				islist: false
 
 			}
 		},
 		props: {
 			childData: {
-				type: Object,
+				type: Array,
 				default: function() {
-					return {
+					return [{
 						name: "空白表单",
 						img: "",
 						url: "",
 						type: 26
-					} //这样可以指定默认的值
+					}] //这样可以指定默认的值
 				}
 
 			}
@@ -116,11 +166,14 @@
 			handleClick(tab, event) {
 				console.log(tab, event);
 			},
-			handleMousrOver(event){
-				event.target.lastElementChild.style.display="block";
+			handleMousrOver(event) {
+				event.target.lastElementChild.style.display = "block";
 			},
-			handleMousrOut(event){
-				event.target.lastElementChild.style.display="none";
+			handleMousrOut(event) {
+				event.target.lastElementChild.style.display = "none";
+			},
+			switchlist(flag) {
+				this.islist = flag;
 			}
 		},
 		created() {
@@ -141,7 +194,6 @@
 		font-size: 14px;
 		margin-top: 10px;
 		float: left;
-		
 	}
 	
 	.new-form:hover {
@@ -169,14 +221,12 @@
 	
 	.exf_img {
 		width: 100%;
-		
 		position: relative;
 		background: #fcfeff;
 	}
 	
 	.myf_img {
 		width: 100%;
-		
 		position: relative;
 		background: #fcfeff;
 	}
@@ -273,4 +323,34 @@
 	.el-button+.el-button {
 		margin-left: 3px;
 	}
+	
+	.dmt_tabs {
+		text-align: right;
+		line-height: 40px;
+		margin: 10px;
+	}
+	
+	.dmt_tabs a {
+		width: 32px;
+		height: 32px;
+		line-height: 32px;
+		border-radius: 999em;
+		border: 2px solid #eee;
+		text-align: center;
+		color: #666;
+		font-size: 12px;
+	}
+	
+	.dmt_tabs a:hover {
+		cursor: pointer;
+	}
+	
+	.dmt_tabs .active {
+		background: #50bfff;
+		color: white;
+	}
+	.el-button--small {
+    padding: 7px 7px;
+    border-radius: 999em;
+}
 </style>
