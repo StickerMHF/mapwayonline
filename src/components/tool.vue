@@ -2,7 +2,7 @@
   import Vue from 'vue'
 
   var initColors = ['	#778899', '#696969', '#00FFFF', '#AFEEEE', '#008B8B', '#4682B4',
-   '#87CEFA', '#6495ED', '#1E90FF', '#0000CD', '#483D8B', '#F0FFF0', '#7FFFD4', '#90EE90',
+    '#87CEFA', '#6495ED', '#1E90FF', '#0000CD', '#483D8B', '#F0FFF0', '#7FFFD4', '#90EE90',
     '#00FF7F', '#7FFF00', '#3CB371', '#20B2AA', '#228B22', '#006400', '#808000', '2F4F4F'
   ];
   var colorIndex = 0;
@@ -16,7 +16,7 @@
      * 深度克隆对象，从source到target
      */
     clone (source, target) {
-      var tmp;
+      /*var tmp;
       target = target || {};
       for (var i in source) {
         if (source.hasOwnProperty(i)) {
@@ -29,7 +29,15 @@
           }
         }
       }
-      return target;
+      return target;*/
+
+      var result;
+      (source instanceof Array) ? (result = []) : (result = {});
+
+      for (var key in source) {
+        result[key] = (typeof source[key]==='object') ? this.clone(source[key]) : source[key];
+      }
+      return result;
     },
 
     isNumber (obj) {
@@ -39,56 +47,135 @@
       return false;
     },
 
+    /* postgresql数据类型转换为js认识的类型 */
+    postsql2Js (type) {
+      var jsType = '';
+
+      switch (type) {
+        case 'integer':
+        case 'bigint':
+        case 'double precision':
+          jsType = 'number';
+          break;
+
+        case 'character varying':
+          jsType = 'string';
+          break;
+
+        case 'date':
+          jsType = 'date';
+          break;
+      }
+
+      return jsType;
+    },
+
+    /* js Date 转化为 2015-01-01格式
+     *  data 实例化的Date对象
+     * */
+    sqlDateFormet (date) {
+      var year = date.getFullYear().toString();
+      var month = date.getUTCMonth().toString();
+      var day = date.getUTCDate().toString();
+      if (month.length ===1) {
+        month = '0' + month;
+      }
+
+      return year + '-' + month + '-' + day;
+    },
+
+    /* 判断一个对像是否为空 */
+    isEmptyObject(obj) {
+      for (var key in obj) {
+        return false;
+      }
+      return true;
+    },
+
     /**
      *  通用的
      */
-    initIsType (geometryType, obj) {
-      if (geometryType === 'Point' || geometryType === 'MultiPoint') {
-        obj.isPoint = true;
-      } else if (geometryType === 'LineString' || geometryType === 'MultiLineString') {
-        obj.isLine = true;
-      }  else if (geometryType === 'Polygon' || geometryType === 'MultiPolygon') {
-        obj.isPolygon = true;
+    initIsType (gtype, obj) {
+      var gType =   this.gType(gtype);
+
+      switch (gType) {
+        case 'point':
+          obj.isPoint = true;
+          break;
+
+        case 'line':
+          obj.isLine = true;
+          break;
+
+        case 'polygon':
+          obj.isPolygon = true;
+          break;
       }
     },
 
     /* 依次添加多条图层数据，默认生成不同的style，以便于保存 */
-    createInitStyle (geometryType) {
-      if (geometryType === 'Point' || geometryType === 'MultiPoint') {
-        let fillColor = this.getUniqueInitColor();
-        return {
-          radius: 4,
-          fillColor: fillColor,
-          color: '#eee',
-          weight: 1,
-          opacity: 1,
-          fillOpacity: 1
-        };
-      } else if (geometryType === 'LineString' || geometryType === 'MultiLineString') {
-        let color = this.getUniqueInitColor();
-        return {
-          radius: 4,
-          fillColor: 'red',
-          color: color,
-          weight: 1,
-          opacity: 1,
-          fillOpacity: 1
-        };
-      }  else if (geometryType === 'Polygon' || geometryType === 'MultiPolygon') {
-        let fillColor = this.getUniqueInitColor();
-        return {
-          radius: 4,
-          fillColor: fillColor,
-          color: '#eee',
-          weight: 1,
-          opacity: 1,
-          fillOpacity: 1
-        };
+    createInitStyle (gtype, index) {
+      var gType =   this.gType(gtype),
+        fillColor = this.getUniqueInitColor(index) ,
+        color = this.getUniqueInitColor(index),
+        style = {};
+
+      switch (gType) {
+        case 'point':
+          style = {
+            radius: 4,
+            fillColor: fillColor,
+            color: '#eee',
+            weight: 1,
+            opacity: 1,
+            fillOpacity: 1
+          };
+          break;
+
+        case 'line':
+          style = {
+            radius: 4,
+            fillColor: '',
+            color: color,
+            weight: 1,
+            opacity: 1,
+            fillOpacity: 1
+          };
+          break;
+
+        case 'polygon':
+          style = {
+            radius: 4,
+            fillColor: fillColor,
+            color: '#eee',
+            weight: 1,
+            opacity: 1,
+            fillOpacity: 1
+          };
+          break;
       }
+
+      return style;
     },
 
-    getUniqueInitColor () {
-      return initColors[colorIndex];
+    getUniqueInitColor (index) {
+      return initColors[index];
+    },
+
+    gType (gtype) {
+      switch (gtype) {
+        case 'Point':
+        case 'MultiPoint':
+          return 'point';
+
+        case 'LineString':
+        case 'MultiLineString':
+          return 'line';
+
+        case 'Polygon':
+        case 'MultiPolygon':
+          return 'polygon';
+      }
     },
 
     /* 得到所有的字段数组 */
@@ -108,7 +195,6 @@
       var index, len = array.length;
 
       for (var i = 0; i < len; i++) {
-        debugger
         if ( array[i].min === array[i].max) { // min == max
           // [min, max]
           if (field === array[i].min) {
@@ -155,25 +241,30 @@
      */
     /* 得到字段值是数字且长度小于8的的字段数组，用于首次分级渲染 */
     getNumberField (data) {
-      var result = [], fields = this.getField(data), _this = this;
+      var result = [], vm = this, fields = vm.getField(data);
 
       fields.forEach(function(field) {
-        var vals = [];
+        var vals = [], allIsNumber;
+
         data.features.forEach(function(feature) {
           var fieldVal = feature.properties[field];
           if (fieldVal) {
             vals.push(fieldVal);
           }
         });
-        if( !_this.isNumber(vals[0]) && _this.arrayUnique(vals).length <= 8 && _this.arrayUnique(vals).length　> 0) {
+
+        // 判断所有的值都是number类型
+        allIsNumber = vals.every((item) => {
+          return vm.isNumber(item);
+        });
+
+        if( allIsNumber && vm.arrayUnique(vals).length <= 8 && vm.arrayUnique(vals).length　> 0) {
           result.push(field)
         }
       });
 
       return result;
     },
-
-
 
 
     /*
@@ -247,41 +338,49 @@
       return result;
     },
 
-    getGradeArray (geometryType, fieldValsSortedGrouped, obj, gradient) {
-      if (geometryType === 'LineString' || geometryType === 'MultiLineString') {
-        this.getLineGradeArray(fieldValsSortedGrouped, obj, gradient);
-      } else if (geometryType === 'Point' || geometryType === 'MultiPoint') {
-        this.getPointGradeArray(fieldValsSortedGrouped, obj, gradient);
-      } else if (geometryType === 'Polygon' || geometryType === 'MultiPolygon') {
-        this.getPolygonGradeArray(fieldValsSortedGrouped, obj, gradient);
+    getGradeArray (gtype, fieldValsSortedGrouped, obj, gradient) {
+      var gType =   this.gType(gtype);
+
+      switch (gType) {
+        case 'point':
+          this.getPointGradeArray(fieldValsSortedGrouped, obj, gradient);
+          break;
+
+        case 'line':
+          this.getLineGradeArray(fieldValsSortedGrouped, obj, gradient);
+          break;
+
+        case 'polygon':
+          this.getPolygonGradeArray(fieldValsSortedGrouped, obj, gradient);
+          break;
       }
     },
 
     getPointGradeArray (fieldValsSortedGrouped, obj, gradient) {
-      Vue.set(obj, 'pointGradeArray', null);
+      Vue.set(obj, 'fieldStyleArray', null);
       var radius = obj.fill.radius, result = [];
       fieldValsSortedGrouped.forEach((item, index) => {
         result.push({index, min: item.min, max: item.max, radius, fillColor: gradient[index], color: obj.border.color, weight: obj.border.weight });
       });
-      Vue.set(obj, 'pointGradeArray', result);
+      Vue.set(obj, 'fieldStyleArray', result);
     },
 
     getPolygonGradeArray (fieldValsSortedGrouped, obj, gradient) {
-      Vue.set(obj, 'polygonGradeArray', null);
+      Vue.set(obj, 'fieldStyleArray', null);
       var radius = obj.fill.radius, result = [];
       fieldValsSortedGrouped.forEach((item, index) => {
         result.push({index, min: item.min, max: item.max, radius: obj.fill.radius, fillColor: gradient[index], color: obj.border.color, weight: obj.border.weight });
       });
-      Vue.set(obj, 'polygonGradeArray', result);
+      Vue.set(obj, 'fieldStyleArray', result);
     },
 
     getLineGradeArray (fieldValsSortedGrouped, obj, gradient) {
-      Vue.set(obj, 'lineGradeArray', null);
+      Vue.set(obj, 'fieldStyleArray', null);
       var weight = obj.border.weight, result = [];
       fieldValsSortedGrouped.forEach((item, index) => {
         result.push({index, min: item.min, max: item.max, radius: obj.fill.radius, color: gradient[index], fillColor: obj.border.color, weight: obj.border.weight });
       });
-      Vue.set(obj, 'lineGradeArray', result);
+      Vue.set(obj, 'fieldStyleArray', result);
     },
 
 
@@ -291,7 +390,7 @@
     /* 得到字段值长度小于8的字段数组，主要用于首次分类渲染 */
     getTypeField: function(data) {
 
-      var result = [], fields = this.getField(data), _this = this;
+      var result = [], fields = this.getField(data), vm = this;
       fields.forEach(function(field) {
         var vals = [];
         data.features.forEach(function(feature) {
@@ -300,7 +399,7 @@
             vals.push(fieldVal);
           }
         });
-        if(_this.arrayUnique(vals).length <= 8 && _this.arrayUnique(vals).length > 0) {
+        if(vm.arrayUnique(vals).length <= 8 && vm.arrayUnique(vals).length > 0) {
           result.push(field)
         }
       });
@@ -310,11 +409,11 @@
 
     /* 取符合要求的字段数组第一个值，得到相应的字段值数组，并且去重，主要用于首次分类渲染 */
     getTypeValue: function(data, field) {
-      var _fieldVals=[], fieldVals, _this = this;
+      var _fieldVals=[], fieldVals, vm = this;
       data.features.forEach(function(feature) {
         _fieldVals.push(feature.properties[field]);
       });
-      fieldVals= _this.arrayUnique(_fieldVals);
+      fieldVals= vm.arrayUnique(_fieldVals);
 
       return fieldVals;
     },
@@ -328,23 +427,36 @@
       return this.arrayUnique(arr);
     },
 
-    getClassifyArray (geometryType, fieldVals, obj, gradient) {
-      debugger
-      if (geometryType === 'LineString' || geometryType === 'MultiLineString') {
-        this.getLineClassifyArray(fieldVals, obj, gradient);
-      } else if (geometryType === 'Point' || geometryType === 'MultiPoint') {
-        this.getPointClassifyArray(fieldVals, obj, gradient);
-      } else if (geometryType === 'Polygon' || geometryType === 'MultiPolygon') {
-        this.getPolygonClassifyArray(fieldVals, obj, gradient);
+    getClassifyArray (gtype, fieldVals, obj, gradient) {
+      var gType = this.gType(gtype);
+
+      switch (gType) {
+        case 'point':
+          this.getPointClassifyArray(fieldVals, obj, gradient);
+          break;
+
+        case 'line':
+          this.getLineClassifyArray(fieldVals, obj, gradient);
+          break;
+
+        case 'polygon':
+          this.getPolygonClassifyArray(fieldVals, obj, gradient);
+          break;
       }
     },
 
     getPointClassifyArray (fieldVals, obj, gradient) {
-      var result = [];
+      var result = [], vm = this;
       fieldVals.forEach((fieldVal, index) => {
-        result.push({ fieldVal, radius: obj.fill.radius, fillColor: gradient[index], color: obj.border.color, weight: obj.border.weight });
+        if ( !fieldVal && typeof(fieldVal) != "undefined" && fieldVal !=0 && vm.isEmptyObject(fieldVal) ) {
+
+        } else {
+          result.push({ fieldVal, radius: obj.fill.radius, fillColor: gradient[index], color: obj.border.color, weight: obj.border.weight });
+        }
       });
-      obj.pointClassifyArray = result;
+      obj.fieldStyleArray = result;
+      /*console.log(result)
+      debugger*/
     },
 
     getPolygonClassifyArray (fieldVals, obj, gradient) {
@@ -352,7 +464,7 @@
       fieldVals.forEach((fieldVal, index) => {
         result.push({ fieldVal, radius: obj.fill.radius, fillColor: gradient[index], color: obj.border.color, weight: obj.border.weight });
       });
-      obj.polygonClassifyArray = result;
+      obj.fieldStyleArray = result;
     },
 
     getLineClassifyArray (fieldVals, obj, gradient) {
@@ -360,7 +472,7 @@
       fieldVals.forEach((fieldVal, index) => {
         result.push({ fieldVal, radius: obj.fill.radius, color: gradient[index], fillColor: obj.border.color, weight: obj.border.weight });
       });
-      obj.lineClassifyArray = result;
+      obj.fieldStyleArray = result;
     },
 
     /**

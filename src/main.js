@@ -11,8 +11,15 @@ import ElementUI from 'element-ui'
 import 'element-ui/lib/theme-default/index.css'
 Vue.use(ElementUI)
 
+
+
+
 // 导入font-awesome
 import 'font-awesome/css/font-awesome.css'
+// fade/zoom 等
+/*import 'element-ui/lib/theme-defaut/base.css';*/
+// collapse 展开折叠
+import CollapseTransition from 'element-ui/lib/transitions/collapse-transition';
 
 // 导入vue2.0中ajax模块
 import axios from './utils/http'
@@ -44,7 +51,7 @@ else {
 }
 })
 
-   
+
 function isEmptyObject(obj) {
   for (var key in obj) {
     return false;

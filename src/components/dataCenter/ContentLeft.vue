@@ -2,26 +2,26 @@
 	<div id="content-left">
 		<div class="cl_head clearfix">
 			<h2 @click="backToDataList">数据</h2>
-			<div class="cl_header_menu dropdown">
+			<div class="cl_header_menu dropdown" @click="createtable">
 				<i class="fa fa-plus-circle"></i>
 			</div>
 		</div>
 		<div class="folder_box">
-			<div class="tree">
+			<div class="tree" @click="getDataByCondition(0,'我的数据')">
 				<ul>
 					<li>
 						<span class="view_allform">
 							<div></div>
 							<p>我的数据</p>
-							<font class="form_count">(0)</font>
+							<font class="form_count">({{datacount}})</font>
 						</span>
 					</li>
 				</ul>
 			</div>
 			<div class="folder_list">
-				<TreeFolder @getByTreeId="getByTree"></TreeFolder>
+				<TreeFolder @getByTreeId="getByTree" @updateTreeList="updateTreeList"></TreeFolder>
 			</div>
-			<div class="tree">
+			<div class="tree" @click="getDataByCondition(1,'公共数据')">
 				<ul>
 					<li>
 						<span class="view_allform">
@@ -31,7 +31,7 @@
 					</li>
 				</ul>
 			</div>
-			<div class="tree">
+			<!--<div class="tree">
 				<ul>
 					<li>
 						<span class="view_allform">
@@ -40,8 +40,8 @@
 						</span>
 					</li>
 				</ul>
-			</div>
-			<div class="tree">
+			</div>-->
+			<div class="tree" @click="getDataByCondition(2,'已分享的数据')">
 				<ul>
 					<li>
 						<span class="view_allform">
@@ -69,7 +69,9 @@
 		},
 		data() {
 			return {
-				formPath: '/formDesign/init/'
+				formPath: '/formDesign/init/',
+				treelistid: null,
+				datacount: 0
 			}
 		},
 		computed: {
@@ -81,49 +83,71 @@
 			...mapActions([
 				'_setTreeData'
 			]),
+			initEvent() {
+				this.$bus.on('gettreedata', () => {
+					this.gettreedata();
+				});
+			},
 			getByTree(node, store, data, childids) {
 				this.$emit("getByTree", node, store, data, childids);
 			},
 			backToDataList(evt) {
 				this.$emit("backToDataList", evt);
 			},
-			gettreedata() {
-				let arr = [{
-					id: 999,
-					name: '未命名文件夹',
-					children: [{
-						id: 1000,
-						name: '未命名文件夹1',
-						children: [{
-							id: 1001,
-							name: '未命名文件夹11',
-							children: []
-						}]
-					}]
-				}];
+			updateTreeList(tdata) {
+
 				var that = this;
-				var url = this.$http.defaults.baseURL + 'TBUSER000001/datacenter/treefolder';
+				var params = "data=" + JSON.stringify({
+					"id": this.treelistid,
+					"subitem": tdata
+				});
+
+				var url = this.$http.defaults.baseURL + 'TBUSER000001/datacenter/folder/update';
+				that.$http.post(url, params).then((r) => {
+					if(r.data.result) {
+						this.$message({
+							message: r.data.message,
+							type: 'success'
+						});
+					} else {
+						this.$message.error(r.data.message);
+					}
+				});
+				//this.$emit("updateTreeList", tdata);
+			},
+			gettreedata() {
+				var that = this;
+				var url = this.$http.defaults.baseURL + 'TBUSER000001/datacenter/folder';
 				that.$http.get(url).then((r) => {
-					if(r.data.length == 0) {
+					that.datacount = r.data.datacount;
+
+					if(r.data.treedata.length == 0) {
 						let arr = [{
 							id: 999,
 							name: '未命名文件夹',
 							children: []
 						}];
-						this.$bus.$emit("initTreeList", arr);
+						that.$bus.$emit("initTreeList", arr);
 					} else {
-						var tree = JSON.parse(r.data[0].subitem);
-					this.$bus.$emit("initTreeList", tree);
+						that.treelistid = r.data.treedata[0].id;
+						var tree = JSON.parse(r.data.treedata[0].subitem);
+						that.$bus.$emit("initTreeList", tree);
 					}
-					
+
 				});
+			},
+			getDataByCondition(type, name) {
+				this.$emit("getDataByCondition", type, name);
+			},
+			createtable() {
+				
 			}
 		},
 		created() {
-			this.gettreedata();
+			this.initEvent();
 		},
 		mounted() {
-
+			this.$bus.$emit("gettreedata");
 		}
 	}
 </script>

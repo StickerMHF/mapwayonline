@@ -12,6 +12,7 @@ export const render = (state) => {
 export const edit = (state) => {
   return state.edit;
 }
+
 export const getFormList = (data) => {
   return data.formlist;
 }

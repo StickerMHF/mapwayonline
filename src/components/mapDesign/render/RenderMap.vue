@@ -1,23 +1,26 @@
 <template>
   <div id="render-map"></div>
 </template>
+
 <script>
-  import Leaflet from 'leaflet'
   import { mapActions, mapGetters, mapMutations } from 'vuex'
   import Tool from '@/components/tool.vue'
+  import leafletImage from 'leaflet-image'
+
+  import Leaflet from 'leaflet'
   require('../../../../node_modules/leaflet/dist/leaflet.css');
   // TODO  以后MAP_IMAGE_PATH这个图片地址要改成node_modules中的地址
   const MAP_IMAGE_PATH = "http://cdn.bootcss.com/leaflet/1.0.3/images/";
 
   export default {
-    name: 'rendermap',
+    name: 'renderMap',
     data () {
       return {
         map: null,
-        datas: [],
-        /*datas: [{
-         id: **,
-         layer: **
+        layerTree: [], // 图层树的管理
+        /*layerTree: [{
+           id: id,
+           layer: layer
          }],*/
         currentLayerId: null,
         markers: null,
@@ -35,9 +38,10 @@
         labelLayer: null,
         layer: null,
         labelClass: 'render-label',
-        pointClassifyArray: null,
-        lineClassifyArray: null,
-        polygonClassifyArray: null,
+
+        /* 二次编辑 */
+        fieldStyleArray: [],
+        fieldValueArray: [],
       }
     },
     computed: {
@@ -49,18 +53,27 @@
       this.initEvent();
     },
     mounted () {
-      console.log('地图初始化成功');
       this.initMap();
       this.addDefaultLayer();
     },
+    beforeDestroy () {
+      this.destroyEvent();
+    },
     methods: {
       ...mapActions([
-        'setLayers', 'setBaseLayer', 'addOverlayer', 'setCurrentStyle', 'updateOverLayer', 'updateOverLayerLabel'
+        'setLayers', 'setBaseLayer', 'addOverlayerStyle', 'setCurrentStyle', 'updateOverLayer', 'updateOverLayerLabel', 'addGeoJsons', 'setCurrentLayerId',
       ]),
       initEvent () {
+        this.$bus.on('create-map-image', () => {
+          if (!!this.map) {
+            leafletImage(this.map, function(err, canvas) {
+              this.$bus.emit('get-map-image', canvas.toDataURL());
+            });
+          }
+        });
 
-        this.$bus.on('run-init-simple', (obj) => {
-          this.changeToRenderSimple(obj);
+        this.$bus.on('run-init-simple', (obj, _geoJson) => {
+          this.changeToRenderSimple(obj, _geoJson);
         });
 
         this.$bus.on('simple-render-change', (obj) => {
@@ -141,7 +154,6 @@
           }
         });
 
-
         this.$bus.on('label-change', (obj) => {
           this.changeToLabel(obj);
         });
@@ -163,8 +175,7 @@
             }
           });
 
-          if (!temObj) {
-            // temObj为空，说明当前图层没有添加label
+          if (!temObj) { // temObj为空，说明当前图层没有添加label
             return;
           }
           this.changeToLabel(temObj);
@@ -177,6 +188,35 @@
         this.$bus.on('add-layer', (id) => {
           this.addLayer(id);
         });
+
+        this.$bus.on('restore-map-render', (obj) => {
+          this.restoreMapRender(obj);
+        });
+      },
+
+      destroyEvent () {
+        this.$bus.off('create-map-image');
+        this.$bus.off('run-init-simple');
+        this.$bus.off('simple-render-change');
+        this.$bus.off('restore-render');
+        /* 分级开始 */
+        this.$bus.off('grade-render-change');
+        this.$bus.off('grade-meghod-change');
+        this.$bus.off('grade-fill-change');
+        this.$bus.off('grade-circle-border-change');
+        this.$bus.off('grade-ribbon-change');
+
+        /* 分类开始 */
+        this.$bus.off('type-render-change');
+        this.$bus.off('type-fill-change');
+        this.$bus.off('type-circle-border-change');
+        this.$bus.off('type-ribbon-change');
+        this.$bus.off('label-change');
+        this.$bus.off('remove-label');
+        this.$bus.off('add-label');
+        this.$bus.off('remove-layer');
+        this.$bus.off('add-layer');
+        this.$bus.off('restore-map-render');
       },
 
       initMap() {
@@ -188,8 +228,10 @@
           maxZoom: this.map_config.maxZoom,
           attributionControl: false,
           scrollWheelZoom: true,
+          preferCanvas: true
         });
       },
+
       addDefaultLayer() {
         this.baseLayer = L.tileLayer('http://cache1.arcgisonline.cn/arcgis/rest/services/ChinaOnlineStreetGray/MapServer/tile/{z}/{y}/{x}').addTo(this.map);
         this.setBaseLayer('http://cache1.arcgisonline.cn/arcgis/rest/services/ChinaOnlineStreetGray/MapServer/tile/{z}/{y}/{x}');
@@ -197,30 +239,266 @@
         this.labelLayer = L.layerGroup().addTo(this.map);
       },
 
+      /* 图层隐藏 */
       removeLayer (id) {
-        //debugger
-        this.datas.forEach((item) => {
+        this.layerTree.forEach((item) => {
           if (item.id === id) {
             this.renderLayer.removeLayer(item.layer);
           }
         });
       },
 
+      /* 图层显示 */
       addLayer (id) {
-        this.datas.forEach((item) => {
+        this.layerTree.forEach((item) => {
           if (item.id === id) {
             this.renderLayer.addLayer(item.layer);
           }
         });
       },
 
-      /* 简单渲染 */
-      changeToRenderSimple (obj) {
-        var layers = [], data = this.render.geoJsons, _this = this, layers = [], currentLayer;
+      /* 移除标注图层 */
+      removeLabel () {
+        var layerId;
+        this.currentLayerId = this.render.currentLayerId;
+        var over_layer = this.render.savedLayers.over_layer;
+        over_layer.some((item) => {
+          if (item.data_id === this.currentLayerId) {
+            if (!!item.label) {
+              var layerId = item.label.layerId;
+              this.labelLayer.removeLayer(layerId);
+            }
+          }
+        });
+      },
+
+      /*********************************************** 二次编辑开始 ***************************************************/
+      restoreMapRender (layers) {
+        this.addBaseLayer(layers.base_layer);
+        var over_layer = layers.over_layer;
+
+        over_layer.forEach((item) => {
+          this.getGeojson(over_layer, item);
+        });
+      },
+
+      getGeojson (over_layer, obj) {
+        var data_id = obj.data_id;
+        var url = 'TBUSER000001/mapdesign/maps/layers/'+ data_id + '/query?f=geojson&outSr=4326&returnGeometry=true';
+        var vm = this,
+          len = over_layer.length, temArray = []; // 每循环一次，往temArray中存入一个overlayer，当len === temArray.length, 说明所有数据请求成功，触发'hide-render-loading'事件;
+
+        this.$http.get(url).then((res) => {
+          let features = res.data, layers = [], _geoJson = null;
+
+          this.addOverLayer(features, obj);
+
+          layers.push({
+            data_id: data_id,
+            isAdded: true,
+          });
+          this.setLayers(layers);
+          this.$bus.$emit('update-layers', layers);
+
+          _geoJson = {
+            id: data_id,
+            data: features,
+          };
+          this.addGeoJsons( Tool.clone(_geoJson) ); // 所有图层的数据
+
+          this.setCurrentLayerId(data_id);
+
+          /* 还原label */
+          if ( !Tool.isEmptyObject(obj.label) ) {
+            this.changeToLabel(obj.label);
+          }
+
+          temArray.push(data_id);
+          if (len === temArray.length) {
+            console.log('所有图层已经加完了')
+            vm.$bus.emit('hide-render-loading');
+          }
+
+        }).catch((err) => { console.log(err) });
+      },
+
+      addBaseLayer (url) {
+        this.baseLayer = L.tileLayer(url).addTo(this.map);
+      },
+
+      addOverLayer(features, obj) {
+        // 添加的geojson数据到图层上
+        var vm = this, geojsonLayer = null,
+          gtype = obj.gtype,
+          render = obj.render,
+          label = obj.label,
+          id = obj.data_id;
+
+        switch (gtype) {
+          case 'Point':
+          case 'MultiPoint':
+            geojsonLayer = L.geoJson(features, {
+              pointToLayer: function (feature, latlng) {
+                return vm.style(feature, latlng, gtype, vm, render);
+              }
+            });
+            break;
+
+          default:
+            geojsonLayer = L.geoJson(features, {
+              style: function (feature, layer) {
+                return vm.style(feature, layer, gtype, vm, render);
+              }
+            });
+        }
+
+        /* 二次编辑构造图层树 */
+        this.layerTree.push({
+          id,
+          layer: geojsonLayer,
+        });
+
+        console.log(render);
+        //debugger
+        /* 二次编辑构造 */
+        this.addOverlayerStyle({
+          data_id: id,
+          gtype: gtype,
+          render: Tool.clone(render),
+          label: Tool.clone(label),
+        });
+
+        console.log({
+          data_id: id,
+          gtype: gtype,
+          render: Tool.clone(render),
+          label: Tool.clone(label),
+        })
+
+        this.renderLayer.addLayer(geojsonLayer);
+        this.mapLoading = false;
+      },
+
+
+      style (feature, latlng, gtype, vm, render) {
+        var rtype = render.rtype, style;
+        switch (rtype) {
+          case 'grade':
+            vm.field = render.style.field.value;
+            render.style.field.fields.forEach((item) => {
+              vm.fieldValueArray.push(item);
+            });
+            render.style.fieldStyleArray.forEach((item) => {
+              vm.fieldStyleArray.push(Tool.clone(item));
+            });
+            style = vm.getStyle(feature, latlng, rtype,  gtype);
+
+          case 'type':
+            vm.field = render.style.field.value;
+            render.style.field.fields.forEach((item) => {
+              vm.fieldValueArray.push(item);
+            });
+            render.style.fieldStyleArray.forEach((item) => {
+              vm.fieldStyleArray.push(Tool.clone(item));
+            });
+            style = vm.getStyle(feature, latlng, rtype, gtype);
+
+            break;
+
+          case 'simple':
+            vm.fieldStyleArray.push({
+              radius: render.style.fill.radius,
+              fillColor: render.style.fill.color,
+              color: render.style.border.color,
+              weight: render.style.border.color.weight,
+              opacity: render.style.border.color.opacity,
+              fillOpacity: render.style.fill.color.opacity
+            });
+            style = vm.getStyle(feature, latlng, rtype,  gtype);
+
+            break;
+        }
+
+        return style;
+      },
+
+      getStyle (feature, latlng, rtype, gtype) {
+        var vm = this, field = vm.field,
+          fieldValueArray = vm.fieldValueArray,
+          fieldStyleArray = vm.fieldStyleArray;
+
+        var gType = Tool.gType(gtype), style;
+
+        switch (rtype) {
+          case 'simple':
+            fieldStyleArray.some((item) => {
+              if (feature.properties[field] === item.fieldVal) {
+                style = {
+                  radius: item.radius,
+                  fillColor: item.fillColor,
+                  color: item.color,
+                  weight: item.weight,
+                  opacity: item.opacity,
+                  fillOpacity: item.fillOpacity,
+                };
+                return;
+              }
+            });
+
+            break;
+
+          case 'grade':
+            fieldStyleArray.some((item) => {
+              if (feature.properties[field] >= item.min && feature.properties[field] <= item.max) {
+                style = {
+                  radius: item.radius,
+                  fillColor: item.fillColor,
+                  color: item.color,
+                  weight: item.weight,
+                  opacity: item.opacity,
+                  fillOpacity: item.fillOpacity,
+                };
+                return;
+              }
+            });
+
+            break;
+
+          case 'type':
+            fieldStyleArray.some((item) => {
+              if (feature.properties[field] === item.fieldVal) {
+                style = {
+                  radius: item.radius,
+                  fillColor: item.fillColor,
+                  color: item.color,
+                  weight: item.weight,
+                  opacity: item.opacity,
+                  fillOpacity: item.fillOpacity,
+                };
+                return;
+              }
+            });
+
+            break;
+        }
+
+        if (gType != 'point') {
+          return style;
+        } else {
+          return L.circleMarker(latlng, style);
+        }
+      },
+
+      /* 二次编辑结束 */
+
+
+      /****************************************** 简单渲染（包括首次渲染） *******************************************/
+      changeToRenderSimple (obj, _geoJson) {
+        var layers = [], geoJsons =  this.render.geoJsons, _this = this, layers = [], currentLayer;
         this.currentLayerId = this.render.currentLayerId;
 
-        if (typeof this.currentLayerId === 'number' && this.currentLayerId.toString()) {
-          this.datas.forEach((item) => {
+        if (!!this.currentLayerId) {
+          this.layerTree.forEach((item) => {
             if (this.currentLayerId == item.id) {
               currentLayer = item.layer;
             }
@@ -232,18 +510,14 @@
           }
           return;
         }
+        console.log('geoJsons', geoJsons);
 
-        console.log("data.length" ,data.length);
-
-        //debugger  TODO 循环次数多
-
-        data.forEach((item, index) => {
+        geoJsons.forEach((item, index) => {
           var geometryType = item.data.features[0].geometry.type, layer; // TODO 需要后台传过来
-          var style = Tool.createInitStyle(geometryType);
+          var style = Tool.createInitStyle(geometryType, index);
           console.log(style)
           //debugger
           if (geometryType === 'LineString' || geometryType === 'MultiLineString') {
-
             layer = L.geoJson(item.data, {
               style: function () {
                 return style;
@@ -271,24 +545,20 @@
 
           this.renderLayer.addLayer(layer);
 
-          this.datas.push({
-            id: index,
+          this.layerTree.push({
+            id: item.id,
             layer,
           });
 
+          /* 渲染界面对图层显隐，是否编辑的控制 */
           layers.push({
-            data_id: index,
+            data_id: item.id,
             isAdded: true,
           });
 
-
-          // 每条数据初始化默认简单渲染保存下渲染style
-          //this.addCurrentLayerRender();
-
-          this.addOverlayer({
-            data_id: index,
+          this.addOverlayerStyle({
+            data_id: item.id,
             gtype: geometryType,
-
             render: {
               style: Tool.clone(obj),
               rtype: this.render.renderType,
@@ -296,7 +566,9 @@
             label: null
           });
         });
-        this.setLayers(layers);
+
+        this.setLayers(Tool.clone(layers));
+        this.$bus.emit('hide-render-loading');
         this.$bus.$emit('update-layers', layers);
       },
 
@@ -345,42 +617,35 @@
 
         Tool.getGradeArray(geometryType, fieldValsSortedGrouped, obj, gradients[gradientsIndex]);
 
-        if (typeof this.currentLayerId === 'number' && this.currentLayerId.toString()) {
-          this.datas.forEach((item) => {
-            if (this.currentLayerId == item.id) {
-              currentLayer = item.layer;
-              this.layer = item.layer;
-            }
-          });
-
-          for (var i in currentLayer._layers) {
-            let graphic = currentLayer._layers[i];
-            let field = graphic.feature.properties[currentField];
-            if (!field) {
-              this.$message({
-                showClose: true,
-                message: '当前字段值为' + field,
-                type: 'warning',
-              });
-              return;
-            }
-
-            let index = Tool.getIndexInArray(fieldValsSortedGrouped, field);
-            debugger
-
-            if (geometryType === 'LineString' || geometryType === 'MultiLineString') {
-              obj.border.color = gradients[gradientsIndex][index];
-            } else if (geometryType === 'Point' || geometryType === 'MultiPoint') {
-              obj.fill.color = gradients[gradientsIndex][index];
-            } else if (geometryType === 'Polygon' || geometryType === 'MultiPolygon') {
-              obj.fill.color = gradients[gradientsIndex][index];
-            }
-
-            graphic.setStyle( Tool.getFeatureStyle(obj) );
-          }
-
+        if (!this.currentLayerId) {
           return;
         }
+
+        this.layerTree.forEach((item) => {
+          if (this.currentLayerId == item.id) {
+            currentLayer = item.layer;
+            this.layer = item.layer;
+          }
+        });
+
+        for (var i in currentLayer._layers) {
+          let graphic = currentLayer._layers[i];
+          let field = graphic.feature.properties[currentField];
+          //console.log('field', field);
+          let index = Tool.getIndexInArray(fieldValsSortedGrouped, field);
+
+          if (geometryType === 'LineString' || geometryType === 'MultiLineString') {
+            obj.border.color = gradients[gradientsIndex][index];
+          } else if (geometryType === 'Point' || geometryType === 'MultiPoint') {
+            obj.fill.color = gradients[gradientsIndex][index];
+          } else if (geometryType === 'Polygon' || geometryType === 'MultiPolygon') {
+            obj.fill.color = gradients[gradientsIndex][index];
+          }
+
+          graphic.setStyle( Tool.getFeatureStyle(obj) );
+        }
+
+
       },
 
       /* 分级规则改变后重新渲染图层 */
@@ -395,20 +660,19 @@
           }
         });
 
-
         var geometryType = data.features[0].geometry.type;
 
         var currentField = obj.field.value;
 
-        if (typeof this.currentLayerId === 'number' && this.currentLayerId.toString()) {
-          this.datas.forEach((item) => {
+        if ( !!this.currentLayerId ) {
+          this.layerTree.forEach((item) => {
             if (this.currentLayerId == item.id) {
               currentLayer = item.layer;
               this.layer = item.layer;
             }
           });
 
-          var nowStyleArray = obj.pointGradeArray || obj.lineGradeArray || obj.polygonGradeArray;
+          var nowStyleArray = obj.fieldStyleArray;
 
           for (var i in currentLayer._layers) {
             let graphic = currentLayer._layers[i];
@@ -466,16 +730,12 @@
         var currentField = obj.field.value;
         var fieldVals = Tool.getTypeValue(data, currentField);
 
-
         var gradients = this.render.gradients;
         var gradientsIndex = obj.ribbon.value;
 
-
-
         Tool.getClassifyArray(geometryType, fieldVals, obj, gradients[gradientsIndex]);
-
-        if (typeof this.currentLayerId === 'number' && this.currentLayerId.toString()) {
-          this.datas.forEach((item) => {
+        if ( !!this.currentLayerId ) {
+          this.layerTree.forEach((item) => {
             if (this.currentLayerId == item.id) {
               currentLayer = item.layer;
               this.layer = item.layer;
@@ -501,75 +761,70 @@
       },
 
       pointRibbonChange: function (obj) {
-        var layer = this.layer, gradients = this.render.gradients, type = this.render.renderType;
+        var layer = this.layer, gradients = this.render.gradients, type = this.render.renderType, currentField = obj.field.value;
 
-        if (!!obj.pointClassifyArray) {
-          obj.pointClassifyArray.forEach((item, index) => {
+        if (!!obj.fieldStyleArray) {
+          obj.fieldStyleArray.forEach((item, index) => {
             item.fillColor = gradients[obj.ribbon.value][index];
           });
         }
 
-        if (!!obj.pointGradeArray) {
-          obj.pointGradeArray.forEach((item, index) => {
-            item.fillColor = gradients[obj.ribbon.value][index];
-          });
+        var nowStyleArray = obj.fieldStyleArray;
+
+        if (type === 'grade') {
+          for(var i in layer._layers) {
+            var graphic = layer._layers[i];
+
+            let index = Tool.getIndexInArray(nowStyleArray, graphic.feature.properties[currentField]);
+            if(typeof index === 'number' && index.toString()) {
+              graphic.setStyle({
+                radius: nowStyleArray[index].radius,
+                fillColor: nowStyleArray[index].fillColor,
+                color: obj.border.color,
+                weight: obj.border.weight,
+                opacity: obj.border.opacity,
+                fillOpacity: obj.fill.opacity
+              });
+            }
+          }
         }
 
-        var nowStyleArray = obj.pointClassifyArray || obj.pointGradeArray, currentField = obj.field.value;
-
-        for(var i in layer._layers) {
-          var graphic = layer._layers[i];
-
-          if (type === 'type') {
+        if (type === 'type') {
+          for(var i in layer._layers) {
+            var graphic = layer._layers[i];
             nowStyleArray.forEach((item) => {
-              if(graphic.feature.properties[currentField] === item.fieldVal) {
-
+              if (graphic.feature.properties[currentField] === item.fieldVal) {
                 graphic.setStyle({
                   radius: item.radius,
                   fillColor: item.fillColor,
                   color: obj.border.color,
                   weight: obj.border.weight,
-                  opacity: null,
-                  fillOpacity: null
+                  opacity: obj.border.opacity,
+                  fillOpacity: obj.fill.opacity
                 });
               }
             });
           }
-
-          if (type === 'grade') {
-              let index = Tool.getIndexInArray(nowStyleArray, graphic.feature.properties[currentField]);
-              if(typeof index === 'number' && index.toString()) {
-                graphic.setStyle({
-                  radius: nowStyleArray[index].radius,
-                  fillColor: nowStyleArray[index].fillColor,
-                  color: obj.border.color,
-                  weight: obj.border.weight,
-                  opacity: null,
-                  fillOpacity: null
-                });
-              }
-
-          }
-
         }
+
       },
 
       lineRibbonChange: function (obj) {
         var layer = this.layer, gradients = this.render.gradients, type = this.render.renderType;
 
-        if (!!obj.lineClassifyArray) {
-          obj.lineClassifyArray.forEach((item, index) => {
+        if (!!obj.fieldStyleArray) {
+          obj.fieldStyleArray.forEach((item, index) => {
             item.color = gradients[obj.ribbon.value][index];
           });
         }
 
-        if (!!obj.lineGradeArray) {
-          obj.lineGradeArray.forEach((item, index) => {
+        if (!!obj.fieldStyleArray) {
+          obj.fieldStyleArray.forEach((item, index) => {
             item.color = gradients[obj.ribbon.value][index];
           });
         }
 
-        var nowStyleArray = obj.lineClassifyArray || obj.lineGradeArray, currentField = obj.field.value;
+        var nowStyleArray = obj.fieldStyleArray;
 
         for(var i in layer._layers) {
           var graphic = layer._layers[i];
@@ -583,8 +838,8 @@
                   fillColor: obj.fill.color,
                   color: item.color,
                   weight: item.weight,
-                  opacity: null,
-                  fillOpacity: null
+                  opacity: obj.opacity,
+                  fillOpacity: obj.opacity
                 });
               }
             });
@@ -598,8 +853,8 @@
                 fillColor: obj.fill.color,
                 color: nowStyleArray[index].color,
                 weight: nowStyleArray[index].weight,
-                opacity: null,
-                fillOpacity: null
+                opacity: obj.opacity,
+                fillOpacity: obj.opacity
               });
             }
           }
@@ -609,8 +864,8 @@
       polygonRibbonChange: function (obj) {
         var layer = this.layer, gradients = this.render.gradients, type = this.render.renderType;
 
-        if (!!obj.polygonClassifyArray) {
-          obj.polygonClassifyArray.forEach((item, index) => {
+        if (!!obj.fieldStyleArray) {
+          obj.fieldStyleArray.forEach((item, index) => {
             item.fillColor = gradients[obj.ribbon.value][index];
           });
         }
@@ -621,7 +876,7 @@
           });
         }
 
-        var nowStyleArray = obj.polygonClassifyArray || obj.polygonGradeyArray, currentField = obj.field.value;
+        var nowStyleArray = obj.fieldStyleArray;
 
         for(var i in layer._layers) {
           var graphic = layer._layers[i];
@@ -693,8 +948,6 @@
               });
             }
           }
-
-
         }
       },
 
@@ -702,7 +955,6 @@
       changePointFill: function (item, obj) {
         var layer = this.layer, currentField = obj.field.value, nowStyleArray = [], type = this.render.renderType;
         nowStyleArray.push(item);
-
 
         for(var i in layer._layers) {
           var graphic = layer._layers[i];
@@ -714,8 +966,8 @@
                 fillColor: nowStyleArray[0].fillColor,
                 color: obj.border.color,
                 weight: obj.border.weight,
-                opacity: null,
-                fillOpacity: null
+                opacity: obj.border.opacity,
+                fillOpacity: obj.fill.opacity
               });
             }
           }
@@ -728,8 +980,8 @@
                 fillColor: nowStyleArray[0].fillColor,
                 color: obj.border.color,
                 weight: obj.border.weight,
-                opacity: null,
-                fillOpacity: null
+                opacity: obj.border.opacity,
+                fillOpacity: obj.fill.opacity
               });
             }
           }
@@ -775,12 +1027,12 @@
 
       /* 线 填充， 点 面边框 */
       changeBorder: function (_item, obj) {
-        var layer = this.layer, currentField = obj.field.value, lineClassifyArray = [],  _this = this;
-        lineClassifyArray.push(_item);
+        var layer = this.layer, currentField = obj.field.value, fieldStyleArray = [],  _this = this;
+        fieldStyleArray.push(_item);
 
         for(var i in layer._layers) {
           var graphic = layer._layers[i];
-          lineClassifyArray.forEach((item) => {
+          fieldStyleArray.forEach((item) => {
             if(graphic.feature.properties[currentField] === item.fieldVal) {
               graphic.setStyle({
                 radius: obj.fill.radius,
@@ -836,16 +1088,13 @@
 
       /* 添加标注图层 */
       changeToLabel (obj) {
-
         //this.removeLabel(); // 先清空之前的labelLayer
         var temLabelLayer = L.layerGroup();
-        console.log(this.labelLayer);
-
+        //console.log(this.labelLayer);
 
         var datas = this.render.geoJsons, data;
         var _this = this;
         this.currentLayerId = this.render.currentLayerId;
-
 
         datas.forEach((item) => {
           if (item.id === this.currentLayerId) {
@@ -881,7 +1130,6 @@
       },
 
       addLabel (geometryType, data, obj, temLabelLayer, labelLayer) {
-        //debugger
         if (geometryType === 'Point' || geometryType === 'MultiPoint') {
           L.geoJson(data, {
             onEachFeature: function(feature, layer) {
@@ -912,23 +1160,6 @@
 
         temLabelLayer.addTo(labelLayer);
       },
-
-      /* 移除标注图层 */
-      removeLabel () {
-        var layerId;
-        this.currentLayerId = this.render.currentLayerId;
-        var over_layer = this.render.savedLayers.over_layer;
-        over_layer.some((item) => {
-          if (item.data_id === this.currentLayerId) {
-            if (!!item.label) {
-              var layerId = item.label.layerId;
-              this.labelLayer.removeLayer(layerId);
-            }
-          }
-        });
-      },
-
-
     }
   }
 </script>

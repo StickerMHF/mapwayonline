@@ -1,13 +1,13 @@
 <template>
-	<div class="vdr" :class="{ draggable: draggable, resizable: resizable, active: active }" 
-		@mousedown="elmDown" :style="style" @click.ctrl="selectMore">
+	<div class="vdr" :class="{ draggable: draggable, resizable: resizable, active: active }"
+		@mousedown.stop.prevent="elmDown" :style="style" @click.stop="stop" >
 		<!--	@dblclick="fillParent" -->
 		<slot></slot>
-		<div class="handle" 
-			v-if="resizable" 
-			v-for="handle in handles" 
-			:class="'handle-' + handle" 
-			:style="{ display: active ? 'block' : 'none'}" 
+		<div class="handle"
+			v-if="resizable"
+			v-for="handle in handles"
+			:class="'handle-' + handle"
+			:style="{ display: active ? 'block' : 'none'}"
 			@mousedown.stop.prevent="handleDown(handle, $event)">
 		</div>
 		<span v-if="active" class="delete-box tool-icon deactivated" @mousedown.stop.prevent="deleteBox">Ｘ</span>
@@ -76,7 +76,7 @@
 					return val >= 0
 				}
 			},
-			
+
 			handles: {
 				type: Array,
 				default: function() {
@@ -173,26 +173,26 @@
 				handle: null,
 				zIndex: 1,
 				currentzIndex:0,
-				reg:'deactivated'
+
 			}
 		},
 		methods: {
-			selectMore(){
-				this.$emit('selectMore',this)
-			},
-			deleteBox(){				
+      stop(){
+
+      },
+			deleteBox(){
 				this.$emit('removeBox',this.oid);
 			},
-			elmDown: function(e) { // 
+			elmDown: function(e) { //
 				const tag = e.target.tagName.toLowerCase()
 
 				if(tag !== 'textarea' && tag !== 'input') {
 					if(!this.active) {
-						
+
 						this.active = true
 						this.currentzIndex = this.zIndex;
-						this.zIndex = 9999999;
-						
+						this.zIndex = 999;
+
 						this.$emit('activated', this);
 
 					}
@@ -210,6 +210,7 @@
 			},
 			deselect: function(e) {
 				let target = e.target || e.srcElement;
+
 //				console.log(target);
 /* 原版 在点击除了控件之外的地方都取消选中状态
 				let regex = new RegExp('handle-([trmbl]{2})', '');
@@ -221,9 +222,9 @@
 						this.$emit('deactivated', this)
 					}
 				}
-*/				console.log(this.reg)
+*/
 				// 只能是在点击了其他的控件或者点击了画布时（含有deactivated这个类的元素都会触发），选中状态才消失
-				let regex = new RegExp(this.reg);
+				let regex = new RegExp('deactivated');
 				if(target !== this.$el && regex.test(target.className)) {
 					if(this.active) {
 						this.active = false
@@ -232,9 +233,10 @@
 						this.$emit('deactivated', this)
 					}
 				}
-				
+
 			},
 			handleDown: function(handle, e) {
+
 				this.handle = handle
 
 				if(e.stopPropagation) e.stopPropagation()
@@ -340,7 +342,10 @@
 						else if(this.elmX + this.elmW + dX > this.parentW) this.mouseOffX = (dX - (diffX = this.parentW - this.elmX - this.elmW))
 						this.elmW += diffX
 					}
-
+				/***
+				 * 网格布局设置 grid为数组 [w,h] 分别是单元格的宽和高
+				 *
+				 */
 					this.left = (Math.round(this.elmX / this.grid[0]) * this.grid[0])
 					this.top = (Math.round(this.elmY / this.grid[1]) * this.grid[1])
 
@@ -369,6 +374,8 @@
 				}
 			},
 			handleUp: function(e) {
+        if(e.stopPropagation) e.stopPropagation()
+        if(e.preventDefault) e.preventDefault()
 				this.handle = null
 				if(this.resizing) {
 					this.resizing = false
@@ -404,11 +411,11 @@
 		position: absolute;
 		box-sizing: border-box;
 	}
-	
+
 	.draggable:hover {
 		cursor: move;
 	}
-	
+
 	.handle {
 		box-sizing: border-box;
 		display: none;
@@ -419,59 +426,59 @@
 		background: #EEE;
 		border: 1px solid #28B779;
 	}
-	
+
 	.handle-tl {
 		top: -10px;
 		left: -10px;
 		cursor: nw-resize;
 	}
-	
+
 	.handle-tm {
 		top: -10px;
 		left: 50%;
 		margin-left: -5px;
 		cursor: n-resize;
 	}
-	
+
 	.handle-tr {
 		top: -10px;
 		right: -10px;
 		cursor: ne-resize;
 	}
-	
+
 	.handle-ml {
 		top: 50%;
 		margin-top: -5px;
 		left: -10px;
 		cursor: w-resize;
 	}
-	
+
 	.handle-mr {
 		top: 50%;
 		margin-top: -5px;
 		right: -10px;
 		cursor: e-resize;
 	}
-	
+
 	.handle-bl {
 		bottom: -10px;
 		left: -10px;
 		cursor: sw-resize;
 	}
-	
+
 	.handle-bm {
 		bottom: -10px;
 		left: 50%;
 		margin-left: -5px;
 		cursor: s-resize;
 	}
-	
+
 	.handle-br {
 		bottom: -10px;
 		right: -10px;
 		cursor: se-resize;
 	}
-	
+
 	.tool-icon{
 		display: inline-block;
 		width: 14px;
@@ -487,5 +494,5 @@
 		cursor: pointer;
 		color: #000000;
 	}
-	
+
 </style>

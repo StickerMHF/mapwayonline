@@ -1,7 +1,7 @@
 <template>
 	<div id="chart-index">
 		
-		
+		<h1>chartDesign</h1>
 		
 		
 		
@@ -15,7 +15,7 @@
 		components:{},
 		data(){
 			return {
-				formPath:'/formDesign/init/'
+				formPath:'/chartDesign/init/'
 			}
 		},
 		methods:{

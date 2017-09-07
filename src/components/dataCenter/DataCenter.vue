@@ -10,6 +10,7 @@
             <span>{{item.dataname}}</span>
             <span>{{item.datadescribe}}</span>
             <span>{{item.pubdate}}</span>
+            <span>{{item.id}}</span>
             <el-button type='text' @click.prevent="toEdit(item.id)">编辑</el-button>
             <el-button type='text'>删除</el-button>
           </li>

@@ -45,6 +45,7 @@
 				isleaveli: false,
 			}
 		},
+		
 		computed: {
 			...mapGetters([
 				'getFormList'
@@ -55,9 +56,9 @@
 				'_setTreeData'
 			]),
 			initEvent() {
-				 this.$bus.on('initTreeList', (obj) => {
-				 	this.treedata = obj;
-                 });
+				this.$bus.on('initTreeList', (obj) => {
+					this.treedata = obj;
+				});
 			},
 			showmenu(store, data, evt) {
 				var evtTargetThis = evt.target.parentElement.parentElement.children[2];
@@ -73,7 +74,8 @@
 				this.form.store = store;
 				this.form.data = data;
 				this.form.type = type;
-				this.getMaxIDs(store.data[0]);
+				this.getMaxIDs(store.root.childNodes[0].data);
+				console.log("id:" + id);
 				if(type == "update") {
 					this.form.treename = data.name;
 					this.form.title = "重命名";
@@ -96,12 +98,11 @@
 
 			},
 			getMaxIDs(node) {
-				if(node.id > id) {
+				if(node.id >= id) {
 					id = node.id + 1;
 				}
 				if(node.children.length > 0) {
 					for(var i = 0; i < node.children.length; i++) {
-						console.log(i);
 						this.getMaxIDs(node.children[i], id);
 					}
 
@@ -128,10 +129,26 @@
 				} else if(this.form.type == "update") {
 					this.form.store.currentNode.data.name = this.form.treename;
 				}
-				debugger
-				this._setTreeData(this.form.store.data);
+				this.form.data = [];
+				this.updateFormData(this.form.data, this.form.store.root.childNodes);
+				this.treedata = this.form.data;
+				this.$emit("updateTreeList", this.treedata);
 			},
+			updateFormData(formdata, nodes) {
+				for(var item in nodes) {
+					var obj = {};
+					obj.id = nodes[item].data.id;
+					obj.name = nodes[item].data.name;
+					if(nodes[item].childNodes.length > 0) {
+						obj.children = [];
+						this.updateFormData(obj.children, nodes[item].childNodes);
+					} else {
+						obj.children = [];
+					}
+					formdata.push(obj);
+				}
 
+			},
 			remove(store, data) {
 				this.form.store = store;
 				if(this.form.store.currentNode.level == 1) {
@@ -143,7 +160,11 @@
 					store.remove(data);
 					this.form.store = store;
 				}
-				this._setTreeData(this.form.store.data);
+				//this._setTreeData(this.form.store.data);
+				this.form.data = [];
+				this.updateFormData(this.form.data, this.form.store.root.childNodes);
+				this.treedata = this.form.data;
+				this.$emit("updateTreeList", this.treedata);
 			},
 			mouseOver(store, data, evt) {
 
@@ -202,7 +223,7 @@
 
 			},
 		},
-		
+
 		created() {
 			this.initEvent();
 		},

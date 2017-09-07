@@ -2,18 +2,22 @@
   <div class="index">
     <nav-bar class="nav-bar"></nav-bar>
     <div id="whole_content">
-    <router-view class="route-view"></router-view>
+  
+    	<router-view class="route-view"></router-view>
+  
     </div>
+    <MapwayDialogManager></MapwayDialogManager>
   </div>
 </template>
 
 <script>
   import navBar from '@/components/navBar.vue'
-
+import MapwayDialogManager from './common/MapwayDialogManager.vue';
   export default {
     name: 'index',
     components:{
-      'navBar':navBar
+      navBar,
+      MapwayDialogManager
     }
   }
 </script>
@@ -34,7 +38,7 @@
   	left: 60px;
     overflow-y: auto;
   }
-  
+
 .el-button {
     padding: 7px 24px;
 }

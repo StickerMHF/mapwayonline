@@ -8,10 +8,11 @@
 <script>
 
 export default {
-  name: 'app'
+  name: 'app',
+ 
 }
 </script>
-
+	
 <style>
 body,html{
 	margin: 0;
@@ -63,5 +64,8 @@ a {
     border-radius: 3px;  
     -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,.3);  
     background-color:rgba(7, 170, 247, 1);  
-  }  
+  } 
+  .full-width{
+  	width: 100%;
+  } 
 </style>

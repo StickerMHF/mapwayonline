@@ -3,7 +3,7 @@
 
     <div v-show="isShowLayerList" class="layer-list">
       <div class="tip-btns">
-        <el-button type="success" @click="saveMap">保存</el-button>
+        <el-button type="success" @click="getImage">保存</el-button>
       </div>
 
       <div class="layer" v-for="item in layers" :key="item.id" :class="[ item.isAdded ? '' : 'opacity05']" @click="renderCurrent(item)">
@@ -55,6 +55,8 @@
   import LabelLayer from './LabelLayer.vue'
   import Tool from '@/components/tool.vue'
 
+  import html2canvas from 'html2canvas'
+
   export default {
     name: 'renderSet',
     components: { Grade, Type, Simple, LabelLayer },
@@ -68,7 +70,7 @@
         isShowLayerList: true,
         layers: null,
         /*layers: {
-         data_id: index,
+         data_id: TBDATA00001,
          isAdded: true
          }*/
 
@@ -84,53 +86,31 @@
         currentLayerId: null,
       }
     },
-    mounted () {
+    created () {
       this.initEvent();
-      var _this = this;
-      var _geoJson = null;
-      var dataIdChecked = this.render.dataIdChecked;
-
-      dataIdChecked.forEach((id) => {
-        //var url = 'TBUSER000001/mapdesign/map/layers/TBDATA000004/query?f=geojson&returnGeometry=true';
-        var url = 'TBUSER000001/mapdesign/map/layers/' + id + '/query?f=geojson&returnGeometry=true&OutSr=4326';
-        _this.$http.get(url).then(function(res){
-          if (!res.data) {
-            console.log('layerid： ' +id + '的geojson数据： ' + res.data);
-            return;
-          }
-          _geoJson = {
-            id,
-            data: res.data,
-          };
-          _this.addGeoJsons( Tool.clone(_geoJson) );
-          _this.$bus.emit('init-render');
-
-          console.log('_this.render.geoJsons', _this.render.geoJsons);
-        }).catch((err) => { console.log(err); });
-      });
-
-      /*var url = 'TBUSER000001/mapdesign/map/layers/TBDATA000004/query?f=geojson&returnGeometry=true';
-
-       _this.$http.get(url).then(function(res){
-       _geoJson.push({
-       id: 0,
-       data: res.data
-       });
-       _this._geoJson = _geoJson;
-       _this.setGeoJsons(_geoJson);
-
-       _this.$bus.emit('init-render');
-
-       console.log('_this.render.geoJsons', _this.render.geoJsons);
-       }).catch((error) => { console.log(error); });*/
+    },
+    beforeDestroy () {
+       this.destroyEvent();
+    },
+    mounted () {
+      this.$bus.on('show-render-map-loading');
+      if (this.render.isFirstRender) { // 首次渲染
+        this.firstRender();
+      } else { // 二次编辑还原
+        this.notFirstRender();
+      }
     },
     methods: {
       ...mapActions([
-        'setRenderType','addGeoJsons', 'setCurrentLayer', 'setDataIdChecked'
+        'setRenderType','addGeoJsons', 'resetGeoJsons', 'setCurrentLayerId',
       ]),
       initEvent () {
         this.$bus.on('grade-render',() => {
           this.gradeRender();
+        });
+
+        this.$bus.on('get-map-image',(url) => {
+          this.saveMap(url);
         });
 
         this.$bus.on('type-render', () => {
@@ -138,7 +118,7 @@
         });
 
         this.$bus.on('update-layers',(layers) => {
-          this.layers = Tool.clone(layers);
+          this.layers = layers;
         });
 
         this.$bus.on('hide-render',() => {
@@ -146,23 +126,132 @@
         });
       },
 
+      destroyEvent () {
+        this.$bus.off('grade-render');
+        this.$bus.off('get-map-image');
+        this.$bus.off('type-render');
+        this.$bus.off('update-layers');
+        this.$bus.off('hide-render');
+      },
+
+      /* 首次渲染 */
+      firstRender () {
+        var vm = this;
+        var dataIdChecked = this.render.dataIdChecked;
+
+        console.log('dataIdChecked 的长度为 ', dataIdChecked.length);
+        var len = dataIdChecked.length, _temArray = [];
+
+        this.resetGeoJsons();
+        dataIdChecked.forEach((id) => {
+          var url = 'TBUSER000001/mapdesign/maps/layers/' + id + '/query?f=geojson&returnGeometry=true&OutSr=4326';
+          vm.$http.get(url).then(function(res){
+            var _geoJson = null;
+
+            if (!res.data) {
+              console.log('layerid： ' +id + '的geojson数据： ' + res.data);
+              return;
+            }
+            _geoJson = {
+              id,
+              data: res.data,
+            };
+            vm.addGeoJsons( Tool.clone(_geoJson) );
+            _temArray.push(_geoJson);
+
+            if (len !== _temArray.length) {
+              return;
+            }
+            // 如果所需的图层数据全部请求回来, 全部默认简单渲染，进行初次默认渲染
+            vm.$bus.emit('init-render', _temArray);
+
+          }).catch((err) => { console.log(err); });
+        });
+      },
+
+      /* 二次编辑 */
+      notFirstRender () {
+        var id = this.render.currentMapId,
+          url = 'TBUSER000001/mapdesign/maps/'+ id;
+
+        this.$http.get(url).then((res) => {
+          if (!res.data.data.data) {
+            console.log('ajax 获取二此编辑数据结构发生变化', res.data);
+            return;
+          }
+
+          var layers = JSON.parse(res.data.data.data.layers);
+
+          this.$bus.emit('restore-map-render', layers);
+        }).catch((err) => { console.log(err) });
+      },
+
       /* 保存新创建的地图 */
-      saveMap () {
-        var url = 'TBUSER000001/mapdesign/map/add';
+      getImage () {
+        this.saveMap();
+      },
+
+      getSavedLayers () {
+        var savedLayers = Tool.clone(this.render.savedLayers);
+        var temOverLayer = savedLayers.over_layer;
+        temOverLayer.forEach((item) => {
+          var temStyle = item.render.style;
+          var temRType = item.render.rtype;
+
+          /*switch (temRType) {
+            case 'simple':
+              delete temStyle.field;
+              delete temStyle.isLine;
+              delete temStyle.isPolygon;
+              delete temStyle.isPoint;
+              delete temStyle.fieldStyleArray;
+
+              break;
+
+            case 'type':
+            case 'grade':
+              delete temStyle.fill;
+              delete temStyle.border;
+              delete temStyle.isLine;
+              delete temStyle.isPolygon;
+              delete temStyle.isPoint;
+          }*/
+
+        });
+
+        return savedLayers;
+      },
+      saveMap (img) {
+        var url = 'TBUSER000001/mapdesign/maps/add';
         //var url = 'TBUSER000001/mapdesign/map/TBMAP000003/update';
-        var data = this.render.savedLayers;
+
+        var layers = this.getSavedLayers();
+
+        var img = '';
 
         var params = "data=" + JSON.stringify({
             "lid": 1,
-            "description": "描述",
-            "tag": "标签",
-            "mark": "备注",
+            "description": this.render.newMapInfo.description,
+            "tag": this.render.newMapInfo.tag,
+            "mark": this.render.newMapInfo.name,
             "createdate": "2017-07-26",
             "modifydate": "2017-07-26",
-            "layers": Tool.clone(data),
+            "img": img,
+            "layers": layers
           });
 
-        this.$http.post(url, params).then(res => {
+        console.log('params', {
+          "lid": 1,
+          "description": this.render.newMapInfo.description,
+          "tag": this.render.newMapInfo.tag,
+          "mark": this.render.newMapInfo.name,
+          "createdate": "2017-07-26",
+          "modifydate": "2017-07-26",
+          "img": img,
+          "layers": layers
+        })
+
+        this.$http.post(url, params).then((res) => {
           if (res.data) {
             this.$message({
               showClose: true,
@@ -170,10 +259,8 @@
               type: 'success',
             });
           }
-        }).then(err => {
-          console.log(err)
-        });
-        console.log(this.render.savedLayers)
+        }).catch((err) => { console.log(err) });
+        console.log('this.render.savedLayers', this.render.savedLayers);
       },
 
       showRenderSetting (item) {
@@ -204,7 +291,7 @@
 
         console.log('this.render.savedLayers.over_layer: ',this.render.savedLayers.over_layer);
         this.currentLayer.id = item.data_id;
-        this.setCurrentLayer(item.data_id);
+        this.setCurrentLayerId(item.data_id);
         this.initRenderSet(item.data_id, this.render.savedLayers.over_layer);
         this.$bus.emit('init-label');
         this.currentLayer.name = '当前数据的name';
@@ -247,11 +334,11 @@
         }).then(() => {
           this.saveCurrentLayerRender();
 
-          this.$message({
+          /*this.$message({
             showClose: true,
             message: '保存成功',
             type: 'success',
-          });
+          });*/
           // TODO 保存当前对层的修改,
         }).catch(() => {
           this.notSaveCurrentLayerRender();
@@ -287,7 +374,6 @@
             this.$bus.emit('save-current-type-render');
             break;
         }
-        this.setDataIdChecked();
       },
 
       /* 对当前图层渲染样式的不保存 */

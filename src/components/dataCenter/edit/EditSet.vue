@@ -3,33 +3,26 @@
     <el-row>
       <el-col :xs="24" :sm="24" :md="24" :lg="24">
         <h3 class="editLogTitle">编辑记录</h3>
+        <div class="editLogBtn">
+          <el-button-group>
+            <el-button type="success" title="保存" @click="handleSave"><i class="fa fa-save"></i></el-button>
+            <el-button type="danger" title="删除" @click="handleDelete"><i class="fa fa-trash-o"></i></el-button>
+          </el-button-group>
+        </div>
       </el-col>
     </el-row>
     <hr style="margin-bottom: 22px;">
     <el-row>
       <div class="fieldSetList">
-        <el-form label-position="left"  ref="editForm" label-width="80px">
-          <el-form-item :label="key" :prop="key" v-for="val, key, index in mViewProperties" :key="key" :rules="[
-            { type: 'number', message: '年龄必须为数字值'}
-          ]">
-            <el-input v-model="val" :disabled="key === 'mapwayid'" @blur="valChange(key, val, mViewProperties)"></el-input>
+        <el-form  :model="attributes" label-position="left"  ref="editForm" label-width="80px">
+          <el-form-item :label="item.name" :prop="item.name"
+                        v-for="item in fieldSchemaWithValue" :key="item.name"
+                        v-if="isUpdate(item.name)"
+                        :rules="getRules(item)">
+            <el-input :type="item.name" v-model.number="attributes[item.name]" :disabled="item.name === 'mapwayid'"></el-input>
           </el-form-item>
-          <!--<el-form-item :label="(val.name)" v-for="val in edit.schema" :key="val.name">
-            <el-input v-model="mViewProperties[val.name]"></el-input>
-          </el-form-item>-->
         </el-form>
       </div>
-    </el-row>
-    <hr>
-    <el-row>
-      <el-col :xs="24" :sm="24" :md="24" :lg="24">
-        <div class="editLogBtn">
-          <el-button-group>
-            <el-button type="success" @click="handleSave"><i class="el-icon-document"></i></el-button>
-            <el-button type="danger" @click="handleDelete"><i class="el-icon-delete2"></i></el-button>
-          </el-button-group>
-        </div>
-      </el-col>
     </el-row>
   </div>
 </template>
@@ -42,10 +35,18 @@
     name: 'editset',
     data: function () {
       return {
-        mViewProperties: null,
-        update_url: 'TBUSER000001/mapdesign/map/layers/{layerid}/features/update',
-        add_url: '',
-        remove_url: '',
+        attributes: {}, // 表格的model
+        /*attributes : {
+         k1: v2,
+         k2: v2
+         },*/
+        fieldSchemaWithValue: [], // schema数组，数组中每一个元素中都有value属性
+        /*fieldSchemaWithValue : [{
+         name: k1,
+         isNull: false,
+         type: 'integer',
+         value: v1
+         }],*/
       }
     },
     computed: {
@@ -61,99 +62,165 @@
         return val;
       },
     },
+    created () {
+      this.initEvent();
+    },
     mounted: function () {
 
     },
-    created () {
-      console.log('editSet',this.edit);
-      //this.mViewProperties = Tool.clone(this.edit.mViewProperties);
-      console.log(this.mViewProperties)
-      //debugger
-      this.initEvent();
-      //debugger
-    },
     methods: {
       ...mapActions([
-        'resetCurrentDataId'
+        'resetCurrentDataId', 'setSubmitFeature'
       ]),
       initEvent () {
-        this.$bus.on('m-v-update-property', (obj) => {
-          //debugger
-          this.mViewProperties = obj;
+        this.$bus.on('map-view-update-property', (obj) => {
+          var proArr = [];
+
+          for (let i in obj) {
+            proArr.push(obj[i]);
+          }
+
+          proArr.forEach((item) => {
+            this.attributes[item.name] = item.value;
+          });
+
+          console.log('this.attributes', this.attributes)
+
+          this.fieldSchemaWithValue = proArr;
         });
 
-        this.$bus.on('m-v-add-property', (obj) => {
-          //debugger
-          this.mViewProperties = obj;
+        this.$bus.on('map-view-add-property', (obj) => {
+          var proArr = [];
+          for (let i in obj) {
+            proArr.push(obj[i]);
+          }
+
+          proArr.forEach((item) => {
+            this.attributes[item.name] = item.value;
+          });
+
+          this.fieldSchemaWithValue = proArr;
         });
+      },
+
+      /* mapwayid 字段 是否显示 */
+      isUpdate (key) {
+        if (this.edit.editType === 'add' && key === 'mapwayid') {
+          return false;
+        }
+
+        return true;
+      },
+
+      /* 类型判断 */
+      getRules (item) {
+        var rules = [], name = item.name, type = item.type;
+        switch (type) {
+          case 'integer':
+          case 'bigint':
+          case 'double precision':
+            rules.push({ type: 'number', message: name + '必须为数字值', trigger: 'blur'});
+            break;
+          case 'character varying':
+            rules.push({ required: true, message: name + '不能为空', trigger: 'blur'});
+            break;
+          case 'date':
+            rules.push({ type: 'date', message: name + '必须为日期', trigger: 'blur'});
+            break;
+        }
+
+        return rules;
       },
 
       handleSave: function () {
-        //console.log('重置前this.edit',this.edit);
-        this.$bus.emit('reset-edit-state');
-        //console.log('重置后this.edit',this.edit);
-        // TODO 将用户编辑好的属性信息上传至服务器
-        console.log(this.mViewProperties.mapwayid);
-        var layerid = this.edit.currentDataId, editType = this.edit.editType, url;
+        if (!this.edit.submitFeature.geometry && !this.attributes.mapwayid) {
+          return;
+        }
+
+        if (!this.attributes.mapwayid && this.edit.editType === 'update') {
+          console.error('mapwayid为: ', this.attributes.mapwayid);
+          return;
+        }
+
+
+        var submitFeature = Tool.clone(this.edit.submitFeature);
+        submitFeature.attributes = this.attributes;
+        if (this.edit.editType === 'add') {
+          delete submitFeature.attributes.mapwayid;
+        }
+
+        delete submitFeature.geometry.spatialReference;
+
+        var layerid = this.edit.currentDataId, editType = this.edit.editType, url, layerid = this.$route.params.dataid;
         switch (editType) {
-          case 'add': url = 'TBUSER000001/mapdesign/map/layers/' + layerid + '/features/add'; break;
-          case 'update': url = 'TBUSER000001/mapdesign/map/layers/' + layerid + '/features/update'; break;
+          case 'add': url = 'TBUSER000001/mapdesign/maps/layers/' + layerid + '/features/add'; break;
+          case 'update': url = 'TBUSER000001/mapdesign/maps/layers/' + layerid + '/features/update'; break;
         }
 
         var params = "data=" + JSON.stringify({
-            features: [{
-              geometry:{x:104, y:54},
-              attributes: Tool.clone(this.mViewProperties),
-            }],
+            features: [submitFeature],
             f: 'json',
             wkid: 4326
           });
-        console.log(params)
-        debugger
 
         this.$http.post(url, params).then(res => {
-          if (!res.data) {
+          /* 更新feature */
+          if (res.data.updateResults && res.data.updateResults.length === 0) {
             console.log('更新错误');
             return;
           }
-          this.$message({
-            showClose: true,
-            message: '成功保存至数据库',
-            type: 'success',
-          });
-          this.resetCurrentDataId();
-        }).catch(err => {
-          console.log(err)
-        });
-      },
 
-      valChange (key, val) {
-        this.mViewProperties[key] = val
-        console.log(key, '变为:' + this.mViewProperties[key])
-      },
-
-      canNull (key) {
-        var schema = this.edit.schema;
-        schema.some((item) => {
-          if (key === item.name) {
-            if (item.notnull) {
-              return false;
-            }
-            return true;
+          /* 添加feature */
+          if (res.data.addResults && res.data.addResults.length === 0) {
+            console.log('添加错误');
+            return;
           }
-        });
+
+          console.log('res', res);
+
+          this.resetCurrentDataId();
+          this.setSubmitFeature({});
+
+          this.$bus.emit('map-view-refresh', '保存成功!');
+        }).catch(err => { console.log(err)  });
       },
 
       handleDelete: function () {
-        this.$confirm('确认删除？').then(() =>  {
+        var mapwayid = this.attributes.mapwayid;
+
+        /* 当前为用户刚添加的数据，为保存为生成mapwayid，只需在前端将当前数据删除 */
+        if (!mapwayid) {
+            console.log('mapwayid为: ', mapwayid);
+            this.$bus.emit('map-view-delete-no-mapwayid-feature');
+            return;
+        }
+
+        this.$confirm('确认删除？', '提示', {
+          type: 'warning'
+        }).then(() => {
+          var dataid = this.$route.params.dataid;
+          var url = 'TBUSER000001/mapdesign/maps/layers/' + dataid + '/features/delete';
+
+          var params = "data=" + JSON.stringify({
+              mapwayid,
+              f: 'json',
+            });
+
+          this.$http.post(url, params).then(res => {
+            if (res.data.deleteResults.length === 0) {
+              console.log('删除错误, res.data: ', res.data);
+              return;
+            }
+
+            this.$bus.emit('map-view-refresh', '删除成功!');
+
+          }).catch(err => { console.log(err)});
+        }).catch(() => {
           this.$message({
             showClose: true,
-            message: '删除成功',
-            type: 'success'
+            message: '取消删除！',
+            type: 'warning'
           });
-          this.$bus.emit('delete-feature');
-          this.$bus.emit('reset-edit-state');
-          //  TODO 重新请求数据刷新表格列表
         });
       }
     }

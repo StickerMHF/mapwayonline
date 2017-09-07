@@ -24,10 +24,10 @@
     </div>
 
     <!--点 填充-->
-    <div class="setLine mb10" v-for="item in renderSet.pointClassifyArray" v-if="renderSet.isPoint">
+    <div class="setLine mb10" v-for="item in renderSet.fieldStyleArray" v-if="renderSet.isPoint">
       <div class="renderDetail" style="padding-left: 20%;">
         <div class="setLine">
-          <div class="field-value-box">{{ item.fieldVal }}</div>
+          <div class="field-value-box" >{{ item.fieldVal }}</div>
           <el-button-group>
             <el-button type="primary" icon="minus" @click="pointFillRadiusMinus(item)"></el-button>
             <el-input class="render-input" style="float: left;"  v-model="item.radius" @blur="pointFillRadiusBlur(item, $event)"></el-input>
@@ -39,7 +39,7 @@
     </div>
 
     <!--线 填充-->
-    <div class="setLine mb10" v-for="item in renderSet.lineClassifyArray" v-if="renderSet.isLine">
+    <div class="setLine mb10" v-for="item in renderSet.fieldStyleArray" v-if="renderSet.isLine">
       <div class="renderDetail" style="padding-left: 20%;">
         <div class="setLine">
           <div class="field-value-box">{{ item.fieldVal }}</div>
@@ -54,7 +54,7 @@
     </div>
 
     <!--面 填充-->
-    <div class="setLine mb10" v-for="item in renderSet.polygonClassifyArray" v-if="renderSet.isPolygon">
+    <div class="setLine mb10" v-for="item in renderSet.fieldStyleArray" v-if="renderSet.isPolygon">
       <div class="renderDetail" style="padding-left: 20%;">
         <div class="setLine">
           <div class="field-value-box">{{ item.fieldVal }}</div>
@@ -117,9 +117,7 @@
           isLine: false,
           isPolygon: false,
           isPoint: false,
-          polygonClassifyArray: null,
-          pointClassifyArray: null,
-          lineClassifyArray: null,
+          fieldStyleArray: null,
         },
         currentLayerId: null,
         fieldShow: false,
@@ -133,6 +131,9 @@
     },
     mounted () {
       this.initEvent();
+    },
+    beforeDestroy () {
+      this.destroyEvent();
     },
     methods: {
       ...mapActions([
@@ -162,8 +163,21 @@
         });
       },
 
-      updateCurrentStyle () {
+      destroyEvent () {
+        this.$bus.off('init-type');
 
+        /* 对当前图层的渲染保存 */
+        this.$bus.off('save-current-type-render');
+
+        /* 对当前图层的渲染不保存 */
+        this.$bus.off('not-save-current-type-render');
+
+        this.$bus.off('type-renderSet-change');
+
+        this.$bus.off('reset-type-data');
+      },
+
+      updateCurrentStyle () {
         this.updateOverLayer({
           rtype: this.render.renderType,
           style: Tool.clone(this.renderSet),
@@ -171,7 +185,6 @@
 
         this.setRenderType(null);
         this.reset();
-
       },
 
       notUpdateCurrentStyle () {
@@ -187,8 +200,6 @@
           }
         });
       },
-
-
 
       /* 第二次点击分类渲染，将之前分级的配置项覆盖当前data */
       restoreRenderSet (obj) {
@@ -213,13 +224,13 @@
         Tool.initIsType(geometryType, this.renderSet);
 
         var typeFields = Tool.getTypeField(currentData);  // typeFields表示字段值长度小于8的字段数组，主要用于首次渲染
-        debugger
+        //debugger
         if (typeFields.length === 0) {
           if (!this.renderSet.field.value) {
             this.$message({
               showClose: true,
-              message: '分类字段有误，不能进行分类渲染',
-              type: 'error'
+              message: '当前图层没有可用于分类的字段',
+              type: 'warning'
             });
             return;
           }
@@ -261,9 +272,7 @@
           isLine: false,
           isPolygon: false,
           isPoint: false,
-          polygonClassifyArray: null,
-          pointClassifyArray: null,
-          lineClassifyArray: null,
+          fieldStyleArray: null,
         };
       },
 

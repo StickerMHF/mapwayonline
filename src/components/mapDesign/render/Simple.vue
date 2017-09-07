@@ -66,7 +66,7 @@
       };
     },
     created () {
-
+      this.initEvent();
     },
     computed: {
       ...mapGetters([
@@ -74,7 +74,11 @@
       ]),
     },
     mounted () {
-      this.initEvent();
+
+    },
+    beforeDestroy () {
+      this.destroyEvent();
+
     },
     methods: {
       ...mapActions([
@@ -85,8 +89,8 @@
           this.renderSet.border.color = color;
         });
 
-        this.$bus.on('simple-fill-color-change', color => {
-          this.renderSet.fill.color = color;
+        this.$bus.on('simple-fill-color-change', (fillColor) => {
+          this.renderSet.fill.color = fillColor;
         });
 
         this.$bus.on('simple-renderSet-change', (obj) => {
@@ -111,9 +115,25 @@
           this.notUpdateCurrentStyle();
         });
 
-        this.$bus.on('init-render', () => {
-          this.$bus.$emit('run-init-simple', this.renderSet);
+        this.$bus.on('init-render', (_geoJson) => {
+          this.$bus.$emit('run-init-simple', this.renderSet, _geoJson);
         });
+      },
+
+      destroyEvent () {
+        this.$bus.off('simple-color-change');
+        this.$bus.off('simple-fill-color-change');
+        this.$bus.off('simple-renderSet-change');
+        this.$bus.off('init-simple');
+        this.$bus.off('reset-simple-data');
+
+        /* 对当前图层的渲染保存 */
+        this.$bus.off('save-current-simple-render');
+
+        /* 对当前图层的渲染不保存 */
+        this.$bus.off('not-save-current-simple-render');
+
+        this.$bus.off('init-render');
       },
 
       updateCurrentStyle () {
@@ -143,24 +163,6 @@
       restoreRenderSet (obj) {
         var renderSet = Tool.clone(obj.render.style); // 深拷贝vuex中的数据到此
         this.renderSet = renderSet;
-
-        /*if (!this.renderSet.label.value) {
-          var currentData, datas = this.render.geoJsons;
-          var currentLayerId = this.render.currentLayerId;
-
-          datas.forEach((item) => {
-            if (currentLayerId === item.id) {
-              currentData = item.data;
-            }
-          });
-
-          var geometryType = currentData.features[0].geometry.type;
-          Tool.initIsType(geometryType, this.renderSet);
-
-          // 预定义标注显示字段
-          /!*var labelFields = Tool.getField(currentData);
-          this.renderSet.label.fields = labelFields;*!/
-        }*/
       },
 
       initSimple () {
@@ -176,14 +178,9 @@
         });
 
         console.log(currentData)
-        debugger
+
         var geometryType = currentData.features[0].geometry.type;
         Tool.initIsType(geometryType, this.renderSet);
-
-        // 预定义标注显示字段
-        /*var labelFields = Tool.getField(currentData);
-        this.renderSet.label.fields = labelFields;*/
-
       },
 
       reset () {

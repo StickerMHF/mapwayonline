@@ -13,15 +13,15 @@
 						<span class="view_allform">
 							<div></div>
 							<p>我的表单</p>
-							<font class="form_count">(0)</font>
+							<font class="form_count">({{formcount}})</font>
 						</span>
 					</li>
 				</ul>
 			</div>
 			<div class="folder_list">
-				<TreeFolder @getByTreeId="getByTree"></TreeFolder>
+				<TreeFolder @getByTreeId="getByTree" @updateTreeList="updateTreeList"></TreeFolder>
 			</div>
-			<div class="tree" @click="getFormByCondition(1,'已购买的表单')">
+			<!--<div class="tree" @click="getFormByCondition(1,'已购买的表单')">
 				<ul>
 					<li>
 						<span class="view_allform">
@@ -30,7 +30,7 @@
 						</span>
 					</li>
 				</ul>
-			</div>
+			</div>-->
 			<div class="tree" @click="getFormByCondition(2,'已分享的表单')">
 				<ul>
 					<li>
@@ -59,7 +59,8 @@
 		},
 		data() {
 			return {
-				formPath: '/formDesign/init/'
+				formPath: '/formDesign/init/',
+				formcount: 0
 			}
 		},
 		computed: {
@@ -71,49 +72,70 @@
 			...mapActions([
 				'_setTreeData'
 			]),
+			initEvent() {
+				this.$bus.on('gettreedata', () => {
+					this.gettree();
+				});
+			},
 			getByTree(node, store, data, childids) {
 				this.$emit("getByTree", node, store, data, childids);
 			},
+			updateTreeList(tdata) {
+
+				var that = this;
+				var params = "data=" + JSON.stringify({
+					"id": this.treelistid,
+					"subitem": tdata
+				});
+
+				var url = this.$http.defaults.baseURL + 'TBUSER000001/formdesign/folder/update';
+				that.$http.post(url, params).then((r) => {
+					if(r.data.result) {
+						this.$message({
+							message: r.data.message,
+							type: 'success'
+						});
+					} else {
+						this.$message.error(r.data.message);
+					}
+				});
+				//this.$emit("updateTreeList", tdata);
+			},
 			backToFormList(evt) {
 				this.$emit("backToFormList", evt);
+
 			},
-			gettreedata() {
-//				let arr = [{
-//					id: 999,
-//					name: '未命名文件夹',
-//					children: [{
-//						id: 1000,
-//						name: '未命名文件夹1',
-//						children: []
-//					}]
-//					
-//				}];
+			gettree() {
 				var that = this;
-				var url = this.$http.defaults.baseURL + 'TBUSER000001/formdesign/treefolder';
+				var url = this.$http.defaults.baseURL + 'TBUSER000001/formdesign/folder';
 				that.$http.get(url).then((r) => {
-					if(r.data.length == 0) {
+					that.formcount = r.data.formcount;
+					if(r.data.treedata.length == 0) {
 						let arr = [{
 							id: 999,
 							name: '未命名文件夹',
 							children: []
 						}];
-						this.$bus.$emit("initTreeList", arr);
+						that.$bus.$emit("initTreeList", arr);
 					} else {
-						var tree = JSON.parse(r.data[0].subitem);
-					this.$bus.$emit("initTreeList", tree);
+						that.treelistid = r.data.treedata[0].id;
+						var tree = JSON.parse(r.data.treedata[0].subitem);
+						that.$bus.$emit("initTreeList", tree);
 					}
+
 				});
 			},
 			getFormByCondition(type, name) {
 				this.$emit("getFormByCondition", type, name);
 			}
 		},
-		
+
 		created() {
-			this.gettreedata();
+			this.initEvent();
+			//this.gettree();
 		},
 		mounted() {
-
+			this.$bus.$emit("gettreedata");
 		}
 	}
 </script>

@@ -37,29 +37,38 @@ export default {
       base_layer: null,
       over_layer: [
         /*{
-         data_id: null,
-         gtype: null,
-         new: {
-         rtype: null,
-         rule: {
-         field: null,
-         field_zone: null,
-         },
-         label: {
-         layerId: null,
-         field: null,
-         style: {
-         color: null,
-         fontSize: null
-         }
-         },
-         }
-         }*/
+          data_id: null,
+          gtype: null,
+          new: {
+            rtype: null,
+            rule: {
+              field: null,
+              field_zone: null,
+            },
+            label: {
+              layerId: null,
+              field: null,
+              style: {
+                color: null,
+                fontSize: null
+              }
+            },
+          }
+        }*/
       ],
     },
+    newMapInfo: {
+      name: '',
+      description: '',
+      tag: '',
+    },
     currentStyle: null,
+
     // 创建地图选择的数据id集合
-    dataIdChecked: []
+    dataIdChecked: [],
+
+    isFirstRender: true, // 是否是第一次渲染
+    currentMapId: '', // 当前选中的mapid
 
   },
 
@@ -68,15 +77,20 @@ export default {
       state.layers = layers;
     },
 
-    SET_CURRENT_LAYER (state, id) {
+    SET_CURRENT_LAYER_ID (state, id) {
       state.currentLayerId = id;
     },
 
+    /* 记录下当前渲染方式
+     * @param {String}
+     */
     SET_RENDER_TYPE (state, type) {
       state.renderType = type;
     },
 
-
+    /* 将图层数据id和data 存入 state.geoJsons数组中
+     * @param {Object}
+     */
     ADD_GEO_JSON (state, obj) {
       var exit = false;
       state.geoJsons.some((item) => {
@@ -90,9 +104,13 @@ export default {
         state.geoJsons.push(obj);
       }
       /*console.log(state.geoJsons)
-      debugger*/
+       debugger*/
     },
 
+    /* 重置state.geoJsons数组 */
+    RESET_GEO_JSON (state) {
+      state.geoJsons = [];
+    },
 
     // 向服务器提交的数据中
     SET_BASE_LAYER (state, url) {
@@ -101,7 +119,6 @@ export default {
 
     // 更新每个叠加图层的样式
     UPDATE_OVER_LAYER (state, obj) {
-
       if (!!obj) {
         state.savedLayers.over_layer.some((item) => {
           if (state.currentLayerId === item.data_id) {
@@ -125,12 +142,16 @@ export default {
           return;
         });
       }
-      console.log(state.savedLayers.over_layer);
+      //console.log(state.savedLayers.over_layer);
       return;
     },
 
-    ADD_OVER_LAYER (state, obj) {
+    ADD_OVER_LAYER_STYLE (state, obj) {
       state.savedLayers.over_layer.push(obj);
+    },
+
+    SET_NEW_MAP_INFO (state, obj) {
+      state.newMapInfo[obj.key] = obj.value;
     },
 
     SET_CURRENT_STYLE (state, style) {
@@ -156,23 +177,39 @@ export default {
       state.dataIdChecked = [];
     },
 
+    SET_NOT_FRIST_RENDER (state) {
+      state.isFirstRender = false;
+    },
+
+    SET_FRIST_RENDER (state) {
+      state.isFirstRender = true;
+    },
+
+    SET_CURRENT_MAP_ID (state, id) {
+      state.currentMapId = id;
+    },
   },
 
   actions: {
-    addGeoJsons ({commit}, geoJsons) {
-      commit('ADD_GEO_JSON', geoJsons);
+    addGeoJsons ({commit}, obj) {
+      commit('ADD_GEO_JSON', obj);
+    },
+
+    resetGeoJsons ({commit}) {
+      commit('RESET_GEO_JSON');
     },
 
     setRenderType ({commit}, type) {
       commit('SET_RENDER_TYPE', type);
     },
 
+
     setLayers ({commit}, layers) {
       commit('SET_LAYERS', layers);
     },
 
-    setCurrentLayer ({commit}, id) {
-      commit('SET_CURRENT_LAYER', id);
+    setCurrentLayerId ({commit}, id) {
+      commit('SET_CURRENT_LAYER_ID', id);
     },
 
     setBaseLayer ({commit}, url) {
@@ -187,8 +224,12 @@ export default {
       commit('UPDATE_OVER_LAYER_LABEL', obj);
     },
 
-    addOverlayer ({commit}, obj) {
-      commit('ADD_OVER_LAYER', obj);
+    addOverlayerStyle ({commit}, obj) {
+      commit('ADD_OVER_LAYER_STYLE', obj);
+    },
+
+    setNewMapInfo ( {commit}, obj ) {
+      commit('SET_NEW_MAP_INFO', obj);
     },
 
     setCurrentStyle ({commit}, style) {
@@ -203,8 +244,20 @@ export default {
       commit('REMOVE_DATA_ID_CHECKED', id);
     },
 
-    resetDataIdChecked ( {commit} ) {
+    resetDataIdChecked ({commit}) {
       commit('RESET_DATA_ID_CHECKED');
+    },
+
+    setNotFirstRender ({commit}) {
+      commit('SET_NOT_FRIST_RENDER');
+    },
+
+    setFirstRender ({commit}) {
+      commit('SET_FRIST_RENDER');
+    },
+
+    setCurrentMapId ({commit}, id) {
+      commit('SET_CURRENT_MAP_ID', id);
     },
   }
 }

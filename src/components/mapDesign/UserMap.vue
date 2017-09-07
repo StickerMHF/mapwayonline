@@ -179,7 +179,7 @@
         } else {
           this.removeDataIdChecked(item.layerid);
         }
-        /*console.log(this.render.dataIdChecked)
+        /*console.log(this.render.dataIdChecked);
         debugger*/
       },
     },

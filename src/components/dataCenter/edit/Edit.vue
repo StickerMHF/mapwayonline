@@ -7,7 +7,7 @@
       </el-button-group>
     </div>
     <div class="edit-main">
-      <div id="mapView" class="map-view"  v-show="mapViewShow">
+      <div id="mapView" class="map-view"  v-if="mapViewShow">
         <div :class="[animate, edit.showEditLog ? edit_map_showlog : edit_map_noshowlog ]">
           <edit-map></edit-map>
         </div>
@@ -15,7 +15,7 @@
           <edit-set></edit-set>
         </div>
       </div>
-      <div id="dataView" class="data-view" v-show="dataViewShow">
+      <div id="dataView" class="data-view" v-if="dataViewShow">
         <div class="data-view-container">
           <data-grid ></data-grid>
         </div>
@@ -55,12 +55,23 @@
 
     },
     methods: {
+      ...mapActions([
+        'setEditLog',
+      ]),
       toMapView: function () {
+        if (!!this.edit.editType) {
+          return;
+        }
+        this.setEditLog(false);
         this.mapViewShow = true;
         this.dataViewShow = false;
       },
 
       toDataView: function () {
+        if (!!this.edit.editType) {
+          return;
+        }
+        this.setEditLog(false);
         this.mapViewShow = false;
         this.dataViewShow = true;
       }

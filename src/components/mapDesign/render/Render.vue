@@ -1,31 +1,62 @@
 <template>
-    <div class="renderDiv">
-      <div class="renderMap">
-        <render-map></render-map>
-      </div>
-      <div class="renderSet">
-        <render-set></render-set>
-      </div>
+  <div class="renderDiv" v-loading="renderLoading" element-loading-text="数据加载中">
+    <div class="renderConfig">
+
     </div>
+    <div class="renderMap">
+      <render-map></render-map>
+    </div>
+    <div class="renderSet">
+      <render-set></render-set>
+    </div>
+  </div>
 </template>
 
 <script>
-  import RenderMap from  './RenderMap'
-  import RenderSet from  './RenderSet'
+  import RenderConfig from './RenderConfig.vue'
+  import RenderMap from  './RenderMap.vue'
+  import RenderSet from  './RenderSet.vue'
 
   export default {
     name: 'render',
-    components: { RenderMap, RenderSet },
+    components: {
+      'render-config': RenderConfig,
+      'render-map': RenderMap,
+      'render-set': RenderSet
+    },
     data: function () {
       return {
-
+        renderLoading: false,
       }
     },
-    mounted () {
 
+    created () {
+      this.initEvent();
+    },
+
+    mounted () {
+      this.showRenderLoading();
+    },
+
+    beforeDestroy () {
+      this.destroyEvent();
     },
     methods: {
+      initEvent () {
+        this.$bus.on('hide-render-loading', () => {
+          this.renderLoading = false;
+          console.log('hide loading')
+        });
+      },
 
+      destroyEvent () {
+        this.$bus.off('hide-render-loading');
+      },
+
+      showRenderLoading () {
+        this.renderLoading = true;
+        console.log('show loading');
+      },
     }
   }
 </script>
@@ -48,5 +79,4 @@
     overflow-y: scroll;
     background-color: #fff;
   }
-
 </style>

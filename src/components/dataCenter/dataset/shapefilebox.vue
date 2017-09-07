@@ -202,8 +202,7 @@
           maxZoom: 18
         });
 
-        L.tileLayer('http://cache1.arcgisonline.cn/arcgis/rest/services/ChinaOnlineStreetGray/MapServer/tile/{z}/{y}/{x}')
-          .addTo(this.shapeMap);
+        L.tileLayer('http://cache1.arcgisonline.cn/arcgis/rest/services/ChinaOnlineStreetGray/MapServer/tile/{z}/{y}/{x}').addTo(this.shapeMap);
         this.templateLayer=L.layerGroup();
         this.templateLayer.addTo(this.shapeMap);
         this.shapeMap.invalidateSize();

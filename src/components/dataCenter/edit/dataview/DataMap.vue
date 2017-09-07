@@ -7,6 +7,8 @@
   //import Leaflet_draw from 'leaflet-draw'
   import Leaflet_draw from '../../../../../static/mapDesign/js/leaflet-draw/leaflet.draw-src.js'
   import { mapGetters, mapActions } from 'vuex'
+  import Tool from '@/components/tool.vue'
+
   var Terraformer = require('terraformer-arcgis-parser');
 
   require('../../../../../node_modules/leaflet-draw/dist/leaflet.draw-src.css');
@@ -17,26 +19,26 @@
 
   export default {
     name: 'editmap',
+    props: ['message'],
     data () {
       return {
         map: null,
-        markers: null,
-        geoJsonLayer: null,
-        init_map_data: null,
-        reset_btn: null,
+        drawPlugin: null, // 实例化的draw插件
         map_config: {
           zoom: 5,
           center: [36, 108],
           minZoom: 2,
-          maxZoom: 18
+          maxZoom: 20
         },
         baselayer: 'http://cache1.arcgisonline.cn/arcgis/rest/services/ChinaOnlineStreetGray/MapServer/tile/{z}/{y}/{x}',
-        mapViewEditGroup: null,
-        geoJsonLayer: null,
+        featureGroup: null, // 添加leaflet-draw插件draw的layer和默认原始layer的保存图层， featureGroup
 
         // 编辑状态的feature属性
-        now_layer: null,
-        now_feature: null
+        now_layer: null, // 当前处在编辑状态的layer
+
+        fieldSchema: {},  // 后台传过来的数据的所有字段
+
+        mapLoading: false, // 加载数据时，loading动画控制
       }
     },
     computed: {
@@ -45,27 +47,19 @@
       ])
     },
     mounted () {
+      console.log(this.message)
       this.initMap();
       this.addMapLayer();
-      this.fetchData();
-      this.initListener();
-      //console.log(this.edit);
+      this.fetSchema();
+      this.addDrawPlugin([this.message]);
+      this.initEvent();
     },
     methods: {
       ...mapActions([
-         'setDViewProperties', 'setIsSave',  'setSubmitFeature'
+        'setIsSave', 'setEditLog', 'setSubmitFeature', 'setSchema', 'setEditType',
       ]),
-      initListener: function () {
-        this.$bus.$on('reset-edit-state', function () {
-          console.log('重置前', _this.now_layer);
-          this.cancelEditState();
-        });
+      initEvent: function () {
 
-        this.$bus.$on('delete-feature', function () {
-          debugger
-          this.geoJsonLayer.removeLayer(_this.now_layer);
-          this.cancelEditState();
-        });
       },
 
       initMap: function () {
@@ -79,48 +73,48 @@
           // scrollWheelZoom: false,
         });
         // 添加leaflet-draw插件draw和edit的保存图层
-        this.mapViewEditGroup = L.featureGroup().addTo(this.map);
+        this.featureGroup = L.featureGroup().addTo(this.map);
       },
 
       addMapLayer: function () {
         L.tileLayer(this.baselayer).addTo(this.map);
       },
 
-      fetchData: function () {
-        var url ;
-        switch (this.$route.params.dataid) {
-          case '0':
-            url = '../../../../static/data/pointdata.json';
-            break;
-          case '1':
-            url = '../../../../static/data/polylinedata.json';
-            break;
-          case '2':
-            url = '../../../../static/data/polygondata.json';
-            break;
-        }
+      fetSchema () {
+        var dataid = this.$route.params.dataid;
+        var url = 'TBUSER000001/datacenter/datas/' + dataid + '/field';
 
         this.$http.get(url).then((res) => {
-          let features = res.data.data.features;
-          console.info(res)
-          this.addDrawPlugin(features);
-        });
+          let field = res.data.data;
+          this.setSchema(field);
+          this.$bus.emit('update-schema', field);
+
+          field.forEach((item) => {
+            if (Tool.postsql2Js(item.type) === 'number') {
+              item.value = 0;
+              return;
+            }
+
+            if (Tool.postsql2Js(item.type) === 'string') {
+              item.value = '';
+              return;
+            }
+
+            if (Tool.postsql2Js(item.type) === 'date') {
+              item.value = Tool.sqlDateFormet(new Date);
+              return;
+            }
+          });
+
+          this.fieldSchema = field;
+        })
       },
 
       toobarConfig: function (type) {
-        let drawConfig = null;
+        let drawConfig = {};
 
         switch (type) {
           case 'Point':
-            drawConfig = {
-              rectangle: false,
-              polyline: false,
-              circle: false,
-              marker: true,
-              polygon: false
-            };
-            break;
-
           case 'MultiPoint':
             drawConfig = {
               rectangle: false,
@@ -132,15 +126,6 @@
             break;
 
           case 'LineString':
-            drawConfig = {
-              rectangle: false,
-              polyline: true,
-              circle: false,
-              marker: false,
-              polygon: false
-            };
-            break;
-
           case 'MultiLineString':
             drawConfig = {
               rectangle: false,
@@ -152,14 +137,6 @@
             break;
 
           case 'Polygon':
-          drawConfig = {
-            rectangle: false,
-            polyline: false,
-            circle: false,
-            marker: false,
-            polygon: true
-          };
-          break;
           case 'MultiPolygon':
             drawConfig = {
               rectangle: false,
@@ -169,135 +146,157 @@
               polygon: true
             };
             break;
-
-
         }
         return drawConfig;
       },
 
-      /**
-       * initEditState: 图层feature点击的clicMapToSave
-       */
-      initEditState: function  (layer) {
+      /* 图层feature点击的clicMapToSave */
+      initEditState: function  (layer, feature) {
+        var arcgisJson = Terraformer.convert(layer.toGeoJSON());
+        this.setSubmitFeature(Tool.clone(arcgisJson));
+
         this.now_layer = layer;
         this.now_layer.editing.enable();
-        this.setDViewProperties(layer.feature.properties);
+        this.setEditLog(true);
+        //显示editlog
         this.setIsSave(false);
+
+        var editType = this.edit.editType;
+
+        switch (editType) {
+          case 'add':
+            this.$bus.emit('data-view-add-property', Tool.clone(this.fieldSchema));
+            break;
+          case 'update':
+            this.$bus.emit('data-view-update-property', Tool.clone(this.schemaAddValueField(feature)));
+            break;
+        }
       },
 
       /**
        * cancelEditState：取消feature编辑状态
        */
       cancelEditState: function  () {
-        this.now_layer.editing.disable();
-        this.now_layer = null;
-        this.setDViewProperties(null);
+        if (!!this.now_layer && !!this.now_layer.editing) {
+          this.now_layer.editing.disable();
+          this.now_layer = null;
+        }
+
         this.setIsSave(true);
-        this.now_feature = null;
-        this.setSubmitFeature(null);
+        this.setEditLog(false); // 隐藏右侧editlog
+        this.setEditType('');
       },
 
       onEachFeature: function (feature, layer) {
-        var _this = this;
-        //线和面处理编辑完后的处理
-        layer.on('edit', function() {
-          _this.now_editing = layer.editing;
-          _this.now_layer = layer;
-          var latlngs = [], latlngsArray = layer.editing.latlngs, _feature, type = layer.feature.geometry.type;
-          //TODO 多线和多面没处理
-          if (latlngsArray.length === 1) {
-            latlngsArray[0].forEach(function (item) {
-              var temArray = [item.lat, item.lng];
-              latlngs.push(temArray);
-            });
-          }
-          switch ( type ) {
-            case 'LineString':
-              _feature = L.polyline(latlngs);
-              break;
-            case 'Polygon':
-              _feature = L.polygon(latlngs);
-              break;
-          }
-          _this.now_feature = Terraformer.convert(_feature.toGeoJSON());
-          _this.setSubmitFeature(_this.now_feature);
-        });
-
-        //点编辑后的处理
-        layer.on('dragend', function(e) {
-          _this.now_editing = layer.editing;
-          _this.now_layer = layer;
-          var latlng = e.target._latlng, _feature;
-          _feature = L.marker(latlng);
-          _this.now_feature = Terraformer.convert(_feature.toGeoJSON());
-          console.log('拖动后', _this.edit);
-          _this.setSubmitFeature(_this.now_feature);
-        });
+        var vm = this;
 
         layer.on('click', function  (e) {
-          var _layer = e.target;
-          if ( !_this.now_layer ) {
-            console.log(layer);
-            _this.initEditState(_layer);
-            console.log('点击之后_this.now_layer', _this.now_layer)
+          vm.setEditType('update');
+          let layer = e.layer || e.target, feature = e.target.feature;
+
+          /*  编辑开始 */
+          //线和面处理编辑完后的处理
+          layer.on('edit', function() {
+            var arcgisJson = Terraformer.convert(layer.toGeoJSON());
+            //console.log(arcgisJson)
+            vm.setSubmitFeature(Tool.clone(arcgisJson));
+            console.log('vm.edit.submitFeature', vm.edit.submitFeature)
+          });
+
+          //点编辑后的处理  // TODO
+          layer.on('dragend', function(e) {
+            vm.now_layer = layer;
+            var latlng = e.target._latlng, _feature;
+            _feature = L.marker(latlng);
+            var now_feature = Terraformer.convert(_feature.toGeoJSON());
+
+            //debugger
+            console.log('拖动后', vm.edit);
+            vm.setSubmitFeature(now_feature);
+          });
+          /*  编辑结束 */
+
+          if ( !vm.now_layer ) {
+            vm.initEditState(layer, feature);
+            console.log('点击之后vm.now_layer', vm.now_layer)
           } else {
-            if (_this.now_layer != _layer) {  // 当前点击的feature和上次的不一样
-              if ( _this.edit.isSave === false) {
-                _this.$confirm('当前有未保存的数据', '提示', {
+            if (vm.now_layer != layer) {  // 当前点击的feature和上次的不一样
+              if ( vm.edit.isSave === false) {
+                vm.$confirm('当前有未保存的数据', '提示', {
                   type: 'warning'
                 }).then(() => {
-                  //saveToDb(_this.edit.now_layer);
-                  _this.cancelEditState();
-                  _this.initEditState(_layer);
-                  console.log('点击别的feature', _this.now_layer)
-                }).catch(() => {
-
-                });
+                  vm.cancelEditState();
+                  vm.initEditState(layer, feature);
+                  console.log('点击别的feature', vm.now_layer)
+                }).catch((err) => { console.log(err); });
               }
             }
           }
         });
       },
 
+      /* 给字段字段的schame数据中的每一项添加value字段，并为其赋值 */
+      schemaAddValueField (feature) {
+        var proObj = Tool.clone(this.fieldSchema), proArr = [];
+
+        for (let i in proObj) {
+          proArr.push(proObj[i]);
+        }
+
+        proArr.forEach((item) => {
+          item.value = feature.properties[item.name];
+        });
+
+        return proArr;
+      },
+
       addDrawPlugin: function (features) {
         let map = this.map;
-        let _this = this;
-        let drawItem = _this.mapViewEditGroup;
+        let vm = this;
+        let drawItem = vm.featureGroup;
         let type = features[0].geometry.type;
 
+        map.off(L.Draw.Event.CREATED);
+
         // 添加从后台传过来的geojson数据
-        _this.geoJsonLayer = L.geoJson(features, {
+        var defalutLayer = L.geoJson(features, {
           style: {
             color: '#ff7800',
             weight: 5,
             opacity: 1,
             fillColor: 'pink',
             fillOpacity: 1,
-            dashArray: '1, 2'
+            dashArray: '1, 2',
           },
-          onEachFeature: _this.onEachFeature
+          onEachFeature: vm.onEachFeature
         });
-        drawItem.addLayer(_this.geoJsonLayer);
+        console.log(defalutLayer);
+        drawItem.addLayer(defalutLayer);
+        map.fitBounds(defalutLayer.getBounds(), { maxZoom: 10 });
+
 
         // 添加draw插件
-        map.addControl(new L.Control.Draw({
-          position: 'topright',
-          edit: {
-            selectedPathOptions: {
-              dashArray: '10, 10',
-              fill: true,
-              fillColor: '#fe57a1',
-              fillOpacity: 0.1,
-              // Whether to user the existing layers color
-              maintainColor: false
+        if (!this.drawPlugin) {
+          this.drawPlugin =  new L.Control.Draw({
+            position: 'topright',
+            edit: {
+              selectedPathOptions: {
+                dashArray: '10, 10',
+                fill: true,
+                fillColor: '#fe57a1',
+                fillOpacity: 0.1,
+                // Whether to user the existing layers color
+                maintainColor: false
+              },
+              poly: null,
+              featureGroup: drawItem,
+              remove: false,
+              edit: false
             },
-            poly: null,
-            featureGroup: drawItem,
-            remove: false,
-            edit: false
-          },
-          draw: _this.toobarConfig(type)
-        }));
+            draw: vm.toobarConfig(type),
+          });
+          map.addControl(this.drawPlugin);
+        }
 
         function getStyle (type) {
           switch (type) {
@@ -322,41 +321,35 @@
         }
 
 
-        function saveToDb (obj) {
-          console.log('保存到数据库')
-        }
-
-        /**
-         * featureClick: 图层feature点击的处理函数
-         */
-
-
         // 添加手动画的geojson数据
         map.on(L.Draw.Event.CREATED, function (e) {
-          let layer = e.layer;
-          let type = e.layerType;
-          _this.geoJsonLayer = L.geoJson(layer.toGeoJSON(), {
+          vm.setEditType('add');
+          let layerFromE = e.layer, type = e.layerType;
+
+          var drawLayer = L.geoJson(layerFromE.toGeoJSON(), {
             style: getStyle.bind(this, type),
-            onEachFeature: _this.onEachFeature
+            onEachFeature: vm.onEachFeature
           });
-          drawItem.addLayer(_this.geoJsonLayer);
-          debugger
-          console.log(_this.now_layer)
-          if (_this.now_layer) { //如果有正在编辑的feature
-            _this.$confirm('当前有未保存的数据?', '提示', {
+          var arcgisJson = Terraformer.convert(drawLayer.toGeoJSON());
+          //console.log(arcgisJson[0]);
+          vm.setSubmitFeature(arcgisJson[0]);
+
+          drawItem.addLayer(drawLayer);
+          var layer = drawLayer.getLayers()[0], feature = layer.feature;
+
+          if (vm.now_layer) { //如果有正在编辑的feature
+            vm.$confirm('当前有未保存的数据?', '提示', {
               type: 'warning'
             }).then(() => {
-              //saveToDb(_this.edit.now_layer);
-              _this.cancelEditState();
-              _this.initEditState(_this.geoJsonLayer.getLayers()[0]);
-              console.log('添加新的feature', _this.now_layer)
+              vm.cancelEditState();
+              vm.initEditState(layer, feature);
+              console.log('添加新的feature', vm.now_layer)
             }).catch(() => {
-              drawItem.removeLayer(_this.geoJsonLayer);
+              drawItem.removeLayer(drawLayer);
             });
           } else {
-            _this.initEditState(_this.geoJsonLayer.getLayers()[0]);
+            vm.initEditState(layer, feature);
           }
-
         });
       },
 

@@ -5,7 +5,7 @@ export default {
   state: {
     /******************************************************/
     /*地图视图*/
-    mViewProperties: null,
+
     // 是否展开右侧的编辑记录
     showEditLog: false,
 
@@ -17,8 +17,18 @@ export default {
     /*公共的*/
     // 用于检测当前正在的编辑的feature是否保存
     isSave: false,
-    submitFeature: null,
+    submitFeature:{}, // arcgis json
+    /*{
+       "geometry" : {"x" : -118.15, "y" : 33.80},
+       "attributes" : {
+         "OWNER" : "Joe Smith",
+         "VALUE" : 94820.37,
+         "APPROVED" : true,
+         "LASTUPDATE" : 1227663551096
+       }
+     },*/
     schema: null,
+
     currentDataId: null,
 
     // 记录是更新还是添加
@@ -27,10 +37,6 @@ export default {
 
   mutations: {
     /*地图视图*/
-    SET_MVIEW_ROPERTIES (state, properties) {
-      state.mViewProperties = properties;
-    },
-
     SET_EDITLOG (state, boolean) {
       state.showEditLog = boolean;
     },
@@ -71,10 +77,6 @@ export default {
     /*
      *  地图视图
      */
-    //记录当前正在编辑feature的属性
-    setMViewProperties ({commit}, properties) {
-      commit('SET_MVIEW_ROPERTIES', properties);
-    },
 
     //控制右侧的editSet显示和隐藏
     setEditLog ({commit}, boolean) {

@@ -27,14 +27,14 @@
     </div>
 
     <!--点 填充-->
-    <div class="setLine mb10" v-for="item in renderSet.pointGradeArray" :key="item.index" v-if="renderSet.isPoint && grade_method.isDiy">
+    <div class="setLine mb10" v-for="item in renderSet.fieldStyleArray" :key="item.index" v-if="renderSet.isPoint && grade_method.isDiy">
       <div class="renderDetail" style="padding-left: 20%;">
         <div class="setLine">
           <div class="grade-field" style="font-size: 12px;">
             <div class="grade-min">{{item.min}}</div>
             <span class="grade-mark"> ~ </span>
-            <input class="grade-max" type="text" v-model="item.max" @blur="pointGradeChange(item)" v-if="!isLast(item.index, renderSet.pointGradeArray)">
-            <div class="grade-max" style="border: 2px solid transparent;" v-if="isLast(item.index, renderSet.pointGradeArray)">{{item.max}}</div>
+            <input class="grade-max" type="text" v-model="item.max" @blur="pointGradeChange(item)" v-if="!isLast(item.index, renderSet.fieldStyleArray)">
+            <div class="grade-max" style="border: 2px solid transparent;" v-if="isLast(item.index, renderSet.fieldStyleArray)">{{item.max}}</div>
           </div>
           <el-button-group>
             <el-button type="primary" icon="minus" @click="pointFillRadiusMinus(item)"></el-button>
@@ -47,14 +47,14 @@
     </div>
 
     <!--线 填充-->
-    <div class="setLine mb10" v-for="item in renderSet.lineGradeArray" :key="item.index" v-if="renderSet.isLine && grade_method.isDiy">
+    <div class="setLine mb10" v-for="item in renderSet.fieldStyleArray" :key="item.index" v-if="renderSet.isLine && grade_method.isDiy">
       <div class="renderDetail" style="padding-left: 20%;">
         <div class="setLine">
           <div class="grade-field" style="font-size: 12px;">
             <div class="grade-min">{{item.min}}</div>
             <span class="grade-mark"> ~ </span>
-            <input class="grade-max" type="text" v-model="item.max" @change="lineGradeChange(item)" v-if="!isLast(item.index, renderSet.lineGradeArray)">
-            <div class="grade-max" style="border: 2px solid transparent;" v-if="isLast(item.index, renderSet.lineGradeArray)">{{item.max}}</div>
+            <input class="grade-max" type="text" v-model="item.max" @change="lineGradeChange(item)" v-if="!isLast(item.index, renderSet.fieldStyleArray)">
+            <div class="grade-max" style="border: 2px solid transparent;" v-if="isLast(item.index, renderSet.fieldStyleArray)">{{item.max}}</div>
           </div>
           <el-button-group>
             <el-button type="primary" icon="minus" @click="lineBorderWeightMinus(item)"></el-button>
@@ -67,14 +67,14 @@
     </div>
 
     <!--面 填充-->
-    <div class="setLine mb10" v-for="item in renderSet.polygonGradeArray" :key="item.index" v-if="renderSet.isPolygon && grade_method.isDiy">
+    <div class="setLine mb10" v-for="item in renderSet.fieldStyleArray" :key="item.index" v-if="renderSet.isPolygon && grade_method.isDiy">
       <div class="renderDetail" style="padding-left: 20%;">
         <div class="setLine">
           <div class="grade-field" style="font-size: 12px;">
             <div class="grade-min">{{item.min}}</div>
             <span class="grade-mark">~ </span>
-            <input class="grade-max" type="text" v-model="item.max" @change="polygonGradeChange(item)" v-if="!isLast(item.index, renderSet.polygonGradeArray)">
-            <div class="grade-max" style="border: 2px solid transparent;" v-if="isLast(item.index, renderSet.polygonGradeArray)">{{item.max}}</div>
+            <input class="grade-max" type="text" v-model="item.max" @change="polygonGradeChange(item)" v-if="!isLast(item.index, renderSet.fieldStyleArray)">
+            <div class="grade-max" style="border: 2px solid transparent;" v-if="isLast(item.index, renderSet.fieldStyleArray)">{{item.max}}</div>
           </div>
           <el-color-picker v-model="item.fillColor" color-format="hex" show-alpha @change="polygonFillColorChange(item)"></el-color-picker>
         </div>
@@ -160,9 +160,8 @@
           isLine: false,
           isPolygon: false,
           isPoint: false,
-          polygonGradeArray: null,
-          pointGradeArray: null,
-          lineGradeArray: null,
+
+          fieldStyleArray: null,
         },
         fieldShow: false,
         gradeMethodShow: false,
@@ -179,6 +178,9 @@
     },
     mounted () {
 
+    },
+    beforeDestroy () {
+      this.destroyEvent();
     },
     methods: {
       ...mapActions([
@@ -209,6 +211,20 @@
         });
       },
 
+      destroyEvent () {
+        this.$bus.off('init-grade');
+
+        /* 对当前图层的渲染保存 */
+        this.$bus.off('save-current-grade-render');
+
+        /* 对当前图层的渲染不保存 */
+        this.$bus.off('not-save-current-grade-render');
+
+        this.$bus.off('grade-renderSet-change');
+
+        this.$bus.off('reset-grade-data');
+      },
+
       /* 第二次点击分级渲染，将之前分级的配置项覆盖当前data */
       restoreRenderSet (obj) {
         var renderSet = Tool.clone(obj.render.style); // 深拷贝vuex中的数据到此
@@ -228,17 +244,19 @@
           }
         });
 
+        console.log('currentData', currentData);
+
         var geometryType = currentData.features[0].geometry.type;
         Tool.initIsType(geometryType, this.renderSet);
 
         var gradeFields = Tool.getNumberField(currentData);  // gradeFields表示字段值长度小于8的字段数组，主要用于首次渲染
-        debugger
+
         if (gradeFields.length === 0) {
           if (!this.renderSet.field.value) {
             this.$message({
               showClose: true,
-              message: '分级字段有误，不能进行分级渲染',
-              type: 'error'
+              message: '当前图层没有可用于分级的字段',
+              type: 'warning'
             });
             return;
           }
@@ -315,9 +333,7 @@
           isLine: false,
           isPolygon: false,
           isPoint: false,
-          polygonGradeArray: null,
-          pointGradeArray: null,
-          lineGradeArray: null,
+          fieldStyleArray: null,
         };
       },
 
@@ -408,15 +424,15 @@
         if (!Tool.isNumber(obj.max)) {
           obj.max = Number(obj.max);
         }
-        this.gradeConfigChange(obj, 'pointGradeArray');
+        this.gradeConfigChange(obj, 'fieldStyleArray');
       },
 
       lineGradeChange (obj) {
-        this.gradeConfigChange(this.renderSet, 'lineGradeArray');
+        this.gradeConfigChange(this.renderSet, 'fieldStyleArray');
       },
 
       polygonGradeChange (obj) {
-        this.gradeConfigChange(this.renderSet, 'polygonGradeArray');
+        this.gradeConfigChange(this.renderSet, 'fieldStyleArray');
       },
 
       gradeConfigChange (obj, key) {
@@ -784,8 +800,6 @@
     display: inline-block;
     float: left;
   }
-
-
 
   .grade-min {
     display: inline-block;

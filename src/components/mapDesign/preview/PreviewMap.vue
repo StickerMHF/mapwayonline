@@ -1,0 +1,307 @@
+<template>
+  <div id="preview-map"></div>
+</template>
+<script>
+  import Leaflet from 'leaflet'
+  import { mapActions, mapGetters, mapMutations } from 'vuex'
+  import Tool from '@/components/tool.vue'
+  require('../../../../node_modules/leaflet/dist/leaflet.css');
+  // TODO  以后MAP_IMAGE_PATH这个图片地址要改成node_modules中的地址
+  const MAP_IMAGE_PATH = "http://cdn.bootcss.com/leaflet/1.0.3/images/";
+
+  export default {
+    name: 'preview_map',
+    props: ['layers'],
+    data () {
+      return {
+        map: null,
+        map_config: {
+          zoom: 3,
+          center: [36, 108],
+          minZoom: 2,
+          maxZoom: 18
+        },
+        baseLayer: null,
+        renderLayer: null,
+        labelLayer: null,
+        /*  */
+        field: '',
+        fieldValueArray: [],
+        fieldStyleArray: [],
+        geoJsons: [],
+        currentLayerId: '',
+      }
+    },
+    created () {
+
+    },
+    mounted () {
+      this.initMap();
+      this.addDefaultLayer();
+      //this.fetchData();
+      console.log('this.layers', this.layers);
+      this.addLayers(this.layers);
+    },
+    methods: {
+      initMap() {
+        L.Icon.Default.imagePath = MAP_IMAGE_PATH;
+        this.map = L.map("preview-map",{
+          center: this.map_config.center,
+          zoom: this.map_config.zoom,
+          minZoom: this.map_config.minZoom,
+          maxZoom: this.map_config.maxZoom,
+          attributionControl: false,
+          scrollWheelZoom: true,
+        });
+      },
+
+      addDefaultLayer() {
+        this.renderLayer = L.layerGroup().addTo(this.map);
+        this.labelLayer = L.layerGroup().addTo(this.map);
+      },
+
+      addLayers (layers) {
+        this.addBaseLayer(layers.base_layer);
+        var over_layers = layers.over_layer;
+
+
+        over_layers.forEach((item) => {
+          this.getGeojson(item);
+        });
+      },
+
+      getGeojson (obj) {
+        var data_id = obj.data_id,  gtype = obj.gtype, gtype = obj.gtype, render = obj.render;
+        var url = 'TBUSER000001/mapdesign/maps/layers/'+ data_id + '/query?f=geojson&outSr=4326&returnGeometry=true';
+
+        this.$http.get(url).then((res) => {
+          let features = res.data;
+
+          this.addOverLayer(features, gtype, render);
+
+          this.geoJsons.push({
+            id: data_id,
+            data: features,
+          });
+
+          this.currentLayerId = data_id;
+
+          if ( !Tool.isEmptyObject(obj.label) ) {
+            this.changeToLabel(obj.label);
+          }
+
+        }).catch((err) => { console.log(err) });
+      },
+
+      addBaseLayer (url) {
+        this.baseLayer = L.tileLayer(url).addTo(this.map);
+      },
+
+      addOverLayer(features, gtype, render) {
+        // 添加的geojson数据到图层上
+        var vm = this, geojsonLayer, rtype = render.rtype;
+
+        switch (gtype) {
+          case 'Point':
+          case 'MultiPoint':
+            geojsonLayer = L.geoJson(features, {
+              pointToLayer: function (feature, latlng) {
+                return vm.style(feature, latlng, gtype, vm, render);
+              }
+            });
+            break;
+
+          default:
+            geojsonLayer = L.geoJson(features, {
+              style: function (feature, layer) {
+                return vm.style(feature, layer, gtype, vm, render);
+              }
+            });
+        }
+
+        this.renderLayer.addLayer(geojsonLayer);
+        this.$bus.emit('hide-preview-loading');
+      },
+
+
+      style (feature, latlng, gtype, vm, render) {
+        var rtype = render.rtype, style;
+
+        switch (rtype) {
+          case 'grade':
+            vm.field = render.style.field.value;
+            render.style.field.fields.forEach((item) => {
+              vm.fieldValueArray.push(item);
+            });
+            render.style.fieldStyleArray.forEach((item) => {
+              vm.fieldStyleArray.push(Tool.clone(item));
+            });
+            style = vm.getStyle(feature, latlng, rtype,  gtype);
+
+          case 'type':
+            vm.field = render.style.field.value;
+            render.style.field.fields.forEach((item) => {
+              vm.fieldValueArray.push(item);
+            });
+            render.style.fieldStyleArray.forEach((item) => {
+              vm.fieldStyleArray.push(Tool.clone(item));
+            });
+            style = vm.getStyle(feature, latlng, rtype, gtype);
+
+            break;
+
+          case 'simple':
+            vm.fieldStyleArray.push({
+              radius: render.style.fill.radius,
+              fillColor: render.style.fill.color,
+              color: render.style.border.color,
+              weight: render.style.border.color.weight,
+              opacity: render.style.border.color.opacity,
+              fillOpacity: render.style.fill.color.opacity
+            });
+            style = vm.getStyle(feature, latlng, rtype,  gtype);
+
+            break;
+        }
+
+        return style;
+      },
+
+      getStyle (feature, latlng, rtype, gtype) {
+        var vm = this, field = vm.field, fieldValueArray = vm.fieldValueArray, fieldStyleArray = vm.fieldStyleArray, fieldLen = fieldValueArray.length;
+
+        var gType = Tool.gType(gtype), style;
+
+        switch (rtype) {
+          case 'simple':
+            fieldStyleArray.some((item) => {
+              if (feature.properties[field] === item.fieldVal) {
+                style = {
+                  radius: item.radius,
+                  fillColor: item.fillColor,
+                  color: item.color,
+                  weight: item.weight,
+                  opacity: item.opacity,
+                  fillOpacity: item.fillOpacity,
+                };
+                return;
+              }
+            });
+
+            break;
+
+          case 'grade':
+            fieldStyleArray.some((item) => {
+              if (feature.properties[field] >= item.min && feature.properties[field] <= item.max) {
+                style = {
+                  radius: item.radius,
+                  fillColor: item.fillColor,
+                  color: item.color,
+                  weight: item.weight,
+                  opacity: item.opacity,
+                  fillOpacity: item.fillOpacity,
+                };
+                return;
+              }
+            });
+
+            break;
+
+          case 'type':
+            fieldStyleArray.some((item) => {
+              if (feature.properties[field] === item.fieldVal) {
+                style = {
+                  radius: item.radius,
+                  fillColor: item.fillColor,
+                  color: item.color,
+                  weight: item.weight,
+                  opacity: item.opacity,
+                  fillOpacity: item.fillOpacity,
+                };
+                return;
+              }
+            });
+
+            break;
+        }
+
+        if (gType != 'point') {
+          return style;
+        } else {
+          return L.circleMarker(latlng, style);
+        }
+      },
+
+      /* 添加标注图层 */
+      changeToLabel (obj) {
+        //this.removeLabel(); // 先清空之前的labelLayer
+        var temLabelLayer = L.layerGroup();
+        //console.log(this.labelLayer);
+
+        var datas = this.geoJsons, data;
+        var vm = this;
+
+        datas.forEach((item) => {
+          if (item.id === this.currentLayerId) {
+            data = item.data;
+          }
+        });
+
+        var geometryType = data.features[0].geometry.type,
+          color = obj.color,
+          size = obj.size,
+          value = obj.value,
+          labelClass = this.labelClass,
+          width  = obj.value.length*size + 20,
+          height = size + 2;
+
+        // 对当前图层添加标注
+        vm.addLabel(geometryType, data,  { color, size, value, labelClass, width, height}, temLabelLayer);
+        obj.layerId = this.labelLayer.getLayerId(temLabelLayer);
+      },
+
+      addLabel (geometryType, data, obj, temLabelLayer) {
+        if (geometryType === 'Point' || geometryType === 'MultiPoint') {
+          L.geoJson(data, {
+            onEachFeature: function(feature, layer) {
+              var label = L.marker(layer._latlng, {
+                icon: L.divIcon({
+                  className: obj.labelClass,
+                  html: '<label class="hover" style="color: ' + obj.color +'; font-size:'+ obj.size + 'px">' + feature.properties[obj.value] + '</label>',
+                  iconSize: [obj.width, obj.height],
+                })
+              });
+              temLabelLayer.addLayer(label);
+            }
+          });
+        } else {
+          L.geoJson(data, {
+            onEachFeature: function(feature, layer) {
+              var label = L.marker(layer.getBounds().getCenter(), {
+                icon: L.divIcon({
+                  className: obj.labelClass,
+                  html: '<label class="hover" style="color: ' + obj.color +'; font-size:'+ obj.size + 'px">' + feature.properties[obj.value] + '</label>',
+                  iconSize: [obj.width, obj.height]
+                })
+              });
+              temLabelLayer.addLayer(label);
+            }
+          });
+        }
+
+        temLabelLayer.addTo(this.labelLayer);
+      },
+
+      addLabelLayer() {
+        this.labelLayer = L.layerGroup().addTo(this.map);
+      },
+    }
+  }
+</script>
+
+<style>
+  #preview-map {
+    width: 100%;
+    height: 100%;
+  }
+</style>

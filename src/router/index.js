@@ -7,6 +7,7 @@ import chartDesign from '@/components/chartDesign/index.vue'
 Vue.use(Router)
 
 export default new Router({
+	mode: 'history',
   routes: [
     { path: '/', redirect: '/index' },
     {
@@ -24,9 +25,9 @@ export default new Router({
           component: res => require(['@/components/dataCenter/index.vue'], res),
           meta: {requireAuth: false,}, // 添加该字段，表示进入这个路由是需要登录的
         },
-       
         {
-          path:'/datacenter/:dataid/edit',
+          path:'/datacenter/edit/:dataid',
+          name: '数据编辑',
           component: res => require(['@/components/dataCenter/edit/Edit.vue'], res),
           meta: {requireAuth: false,}, // 添加该字段，表示进入这个路由是需要登录的
         },
@@ -38,7 +39,20 @@ export default new Router({
         },
         {
           path:'/mapdesign',
-          component: res => require(['@/components/mapDesign/UserMap.vue'], res),
+          name: 'mapDesign',
+          component: res => require(['@/components/mapDesign/index.vue'], res),
+          meta: {requireAuth: false,}, // 添加该字段，表示进入这个路由是需要登录的
+        },
+        {
+          path:'/mapdesign/render/:mapid',
+          name: '地图编辑',
+          component: res => require(['@/components/mapDesign/render/Render.vue'], res),
+          meta: {requireAuth: false,}, // 添加该字段，表示进入这个路由是需要登录的
+        },
+        {
+          path:'/mapdesign/preview/:mapid',
+          name: '地图预览',
+          component: res => require(['@/components/mapDesign/preview/Preview.vue'], res),
           meta: {requireAuth: false,}, // 添加该字段，表示进入这个路由是需要登录的
         },
         {
@@ -71,10 +85,28 @@ export default new Router({
       component: Index,
     },
     {
-      path:'/formpreview/:id',
-      name:'formpreview',
+      path:'/appformpreview/:id',
+      name:'appformpreview',
       meta: {requireAuth: false,}, // 添加该字段，表示进入这个路由是需要登录的
-      component:res => require(['@/components/formDesign/formpreview.vue'],res)
+      component:res => require(['@/components/formDesign/preview/appformpreview.vue'],res)
+    },
+    {
+      path:'/showformpreview/:id/:detail',
+      name:'showformpreview',
+      meta: {requireAuth: false,}, // 添加该字段，表示进入这个路由是需要登录的
+      component:res => require(['@/components/formDesign/preview/showformpreview.vue'],res)
+    },
+     {
+      path:'/share/form/:uuid',
+      name:'shareform',
+      meta: {requireAuth: false,}, // 添加该字段，表示进入这个路由是需要登录的
+      component:res => require(['@/components/formDesign/share/index.vue'],res)
+    },
+    {
+      path:'/share/map/:uuid',
+      name: '地图分享',
+      meta: {requireAuth: false,}, // 添加该字段，表示进入这个路由是需要登录的
+      component:res => require(['@/components/mapDesign/share/Share.vue'],res)
     },
   ]
 })

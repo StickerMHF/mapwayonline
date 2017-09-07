@@ -8,18 +8,29 @@
 						<h3>MapWayOnline</h3>
 						<div class="input_outer">
 							<span class="u_user"></span>
-							<input name="logname" class="text" v-model="loginForm.username" style="color: #FFFFFF !important" type="text" placeholder="请输入账户">
+							<input name="logname" autocomplete="off" class="text" v-model="loginForm.username" style="color: #FFFFFF !important" type="text"  placeholder="请输入账户">
+						</div>
+						<div class="fg1">
+								<p v-show="showTishi1" align="center" style="margin: 0px; text-align: left; color: orange;" >{{tishi1}}</p>
 						</div>
 						<div class="input_outer">
 							<span class="us_uer"></span>
 							<input name="logpass" class="text" v-model="loginForm.password" style="color: #FFFFFF !important; position:absolute; z-index:100;" type="password" placeholder="请输入密码">
 						</div>
+						<div class="fg1">
+								<p v-show="showTishi2" align="center" style="margin: 0px; text-align: left; color: orange;" >{{tishi2}}</p>							
+						</div>
+						<div class="fg-forget">	
+							<div class="forget" v-on:click="toForget" style="text-align: right;">忘记密码?</div>
+						</div>	
 						<div class="mb2">
 							<a class="act-but submit" v-on:click="login" href="javascript:;" style="color: #FFFFFF">登录</a>
 						</div>
-						<div class="fg">
-							<div class="forget" v-on:click="toForget">忘记密码</div>
-							<div class="register" v-on:click="toRegister">用户注册</div>
+						<div class="fg-register">							
+							<div class="register" v-on:click="toRegister" style="text-align: center;">还没有账号？注册</div>
+						</div>
+						<div>
+								<p v-show="showTishi" align="center" >{{tishi}}</p>
 						</div>
 					</div>
 					<div class="box_forget lbox" id="box_forget">
@@ -28,21 +39,51 @@
 						<form action="#" name="f" method="post">
 							<div class="input_outer">
 								<span class="u_user"></span>
-								<input name="logname" class="text" style="color: #FFFFFF !important" type="text" placeholder="请输入账户">
+								<input name="logname" class="text" v-model="forget.logname" style="color: #FFFFFF !important" type="text" @blur="check1('logname')" placeholder="请输入账户">
+								<i class="el-icon-circle-check" v-show="button1" style="position: absolute;right: 10px;top: 14px;"></i>
+							</div>
+							<div class="fg1">
+								<p v-show="showTishi1" align="center" style="margin: 0px; text-align: left; color: orange;" >{{tishi1}}</p>
 							</div>
 							<div class="input_outer">
 								<span class="us_uer"></span>
-								<input name="logpass" class="text" style="color: #FFFFFF !important; position:absolute; z-index:100;" value="" type="password" placeholder="请输入密码">
+								<input name="logpass1" class="text" v-model="forget.logpass1" style="color: #FFFFFF !important; position:absolute; z-index:100;" @blur="check1('logpass1')" value="" type="password" placeholder="请输入新密码">
+								<i class="el-icon-circle-check" v-show="button2" style="position: absolute;right: 10px;top: 14px;"></i>
+							</div>
+							<div class="fg1">
+								<p v-show="showTishi2" align="center" style="margin: 0px; text-align: left; color: orange;" >{{tishi2}}</p>
 							</div>
 							<div class="input_outer">
 								<span class="us_uer"></span>
-								<input name="logpass" class="text" style="color: #FFFFFF !important; position:absolute; z-index:100;" value="" type="password" placeholder="请再输入密码">
+								<input name="logpass2" class="text" v-model="forget.logpass2" style="color: #FFFFFF !important; position:absolute; z-index:100;" @blur="check1('logpass2')" value="" type="password" placeholder="请再输入新密码">
+								<i class="el-icon-circle-check" v-show="button3" style="position: absolute;right: 10px;top: 14px;"></i>
 							</div>
-
-							<div class="registerbtn">
+							<div class="fg1">
+								<p v-show="showTishi3" align="center" style="margin: 0px; text-align: left; color: orange;" >{{tishi3}}</p>
+							</div>
+							<div class="input_outer">
+								<span class="us_phone"></span>
+								<div  @click="send1"  style="width: 130px;height：40px;line-height: 40px;overflow: hidden;border:0.5px whitesmoke solid;border-radius: 50px;text-align: center;position: absolute;right: 0px;top: 0px;z-index: 999999999999;" >
+									<code-btn  :disabled="disabled1" ref="btn1"></code-btn>
+								</div>
+								<input name="verify" class="text"  style="color: #FFFFFF !important; position:absolute; z-index:100;" value="" type="text" placeholder="请输入验证码">
+							</div>
+							<div class="fg1">
+								<p v-show="showTishi4" align="center" style="margin: 0px; text-align: left; color: orange;" >{{tishi4}}</p>
+							</div>
+							<div class="mb2">
+								<a class="act-buts submit" v-on:click="Gotoretrieve" href="javascript:;" style="color: #FFFFFF">提交</a>
+							</div>
+							<div class="fg-register">							
+								<div class="register" v-on:click="fBackToLogin" style="text-align: center;">返回</div>
+							</div>
+							<!--<div class="registerbtn">
 								<span class="forget_back backbtn" v-on:click="fBackToLogin"></span>
-								<span class="register_next nextbtn"></span>
+								<span class="register_next nextbtn" v-on:click="Gotoretrieve"></span>
 							</div>
+							<div>
+								<p v-show="showTishi" align="center" >{{tishi}}</p>
+							</div>-->
 						</form>
 
 					</div>
@@ -51,21 +92,51 @@
 						<form action="#" name="f" method="post">
 							<div class="input_outer">
 								<span class="u_user"></span>
-								<input name="logname" class="text" style="color: #FFFFFF !important" type="text" placeholder="请输入账户">
+								<input autocomplete="off" name="logname" v-model="register.logname" class="text" style="color: #FFFFFF !important" type="text"  @blur="check('logname')"  placeholder="请输入手机号">
+								<i class="el-icon-circle-check" v-show="button1" style="position: absolute;right: 10px;top: 14px;"></i>
+							</div>
+							<div class="fg1">
+								<p v-show="showTishi1" align="center" style="margin: 0px; text-align: left; color: orange;" >{{tishi1}}</p>
 							</div>
 							<div class="input_outer">
 								<span class="us_uer"></span>
-								<input name="logpass" class="text" style="color: #FFFFFF !important; position:absolute; z-index:100;" value="" type="password" placeholder="请输入密码">
+								<input name="logpass1" v-model="register.logpass1"  class="text" @blur="check('logpass1')" style="color: #FFFFFF !important; position:absolute; z-index:100;" value="" type="password" placeholder="请输入密码">
+								<i class="el-icon-circle-check" v-show="button2" style="position: absolute;right: 10px;top: 14px;"></i>
+							</div>
+							<div class="fg1">
+								<p v-show="showTishi2" align="center" style="margin: 0px; text-align: left; color: orange;" >{{tishi2}}</p>
 							</div>
 							<div class="input_outer">
 								<span class="us_uer"></span>
-								<input name="logpass" class="text" style="color: #FFFFFF !important; position:absolute; z-index:100;" value="" type="password" placeholder="请再输入密码">
+								<input name="logpass2" v-model="register.logpass2"  class="text" @blur="check('logpass2')" style="color: #FFFFFF !important; position:absolute; z-index:100;" value="" type="password" placeholder="请再输入密码">
+								<i class="el-icon-circle-check" v-show="button3" style="position: absolute;right: 10px;top: 14px;"></i>
 							</div>
-
-							<div class="registerbtn">
-								<span class="register_back backbtn" v-on:click="rBackToLogin"></span>
-								<span class="register_next nextbtn"></span>
+							<div class="fg1">
+								<p v-show="showTishi3" align="center" style="margin: 0px; text-align: left; color: orange;" >{{tishi3}}</p>
 							</div>
+							<div class="input_outer">
+								<span class="us_phone"></span>
+								<div @click="send2" style="width: 130px;height：40px;line-height: 40px;overflow: hidden;border:0.5px whitesmoke solid;border-radius: 50px;text-align: center;position: absolute;right: 0px;top: 0px;z-index: 999999999999;">
+									<code-btn :disabled="disabled2" ref="btn2"></code-btn>
+								</div>
+								<input name="verify" class="text" style="color: #FFFFFF !important; position:absolute; z-index:100;" value="" type="text" placeholder="请输入验证码" >
+							</div>
+							<div class="fg1">
+								<p v-show="showTishi4" align="center" style="margin: 0px; text-align: left; color: orange;" >{{tishi4}}</p>
+							</div>
+							<!--<div class="registerbtn">
+								<span class="register_back backbtn" v-on:click="rBackToLogin"></span>								
+								<span class="register_next nextbtn" v-on:click="Gotoregister"></span>
+							</div>-->
+							<div class="mb2">
+								<a class="act-buts submit" v-on:click="Gotoregister" href="javascript:;" style="color: #FFFFFF">注册</a>
+							</div>
+							<div class="fg-register">							
+								<div class="register" v-on:click="rBackToLogin" style="text-align: center;">返回登录</div>
+							</div>
+							<!--<div>
+								<p v-show="showTishi" align="center" >{{tishi}}</p>
+							</div>-->
 						</form>
 
 					</div>
@@ -76,23 +147,54 @@
 </template>
 
 <script>
-	import {
-		mapGetters,
-		mapActions
-	} from 'vuex'
+	import {mapGetters,mapActions} from 'vuex';
 	var Circ = require('./js/EasePack.min.js');
 	var TweenLite = require('./js/TweenLite.min.js');
 	require('./css/normalize.css');
 	require('./css/demo.css');
 	require('./css/component.css');
+
+	import code from "@/components/Login/SMSVerification.vue";
+
 	export default {
 		name: 'login',
+		components:{
+			"code-btn":code
+		},
 		data() {
-			return {
+			return {			
+				disabled1:false,
+				disabled2:false,
+				disabled:false,
 				loginurl: "user/login",
 				loginForm: {
-					username: 'admin',
-					password: 'admin'
+					username: '',
+					password: ''
+				},
+                showLogin: true,
+                showRegister: false,
+                showTishi: false,
+                showTishi1: false,
+                showTishi2: false,
+                showTishi3: false,
+                showTishi4: false,
+                tishi: '',
+                tishi1: '',
+                tishi2: '',
+                tishi3: '',
+                tishi4: '',
+                button1:false,
+                button2:false,
+                button3:false,
+                forget:{
+					logname:'',
+					logpass1:'',
+					logpass2:''
+				},
+				register:{
+					logname:'',
+					logpass1:'',
+					logpass2:''
 				},
 				rememberPassword: true,
 				width: 0,
@@ -109,6 +211,7 @@
 
 		},
 		mounted() {
+			console.log(this.$refs.btn)
 			var _this=this;
 			this.initHeader();
 			this.initAnimation();
@@ -120,29 +223,65 @@
 		created() {
 			this.loginurl = this.$http.defaults.baseURL + this.loginurl;
 			console.log(this.loginurl);
-
+				
 			//debugger
 		},
+		
 		methods: {
 			...mapActions([
 				'setUserName',
 				'setUserInfo'
 			]),
+			send1() {
+                this.disabled1 = true;
+                setTimeout(this.sended1, 1000);
+            },
+            sended1() {
+            	this.disabled1 = true;
+                this.$refs.btn1.run();                
+            },
+            send2() {
+                this.disabled2 = true;
+                setTimeout(this.sended2, 1000);
+            },
+            sended2() {
+                this.$refs.btn2.run();
+                this.disabled2 = true;
+            },
+			send() {
+	            this.disabled = true;
+	            setTimeout(this.sended, 2000);
+	        },
+	        sended(){
+	        	
+	            this.$refs.btn.run();
+	            this.disabled = false;
+	        },
 			login() {
-				this.$router.replace('/index');
-				//this.setUserName(this.loginForm.username);
-				/*
-				var param = "data=" + JSON.stringify(this.loginForm);
-				this.$http.post(this.loginurl, param).then((res) => {
-					if(res.data.result){
-						this.setUserInfo(res.data.data);
-						this.$router.replace('/index')
-					}else{
-						console.info(res)
-					}
-				});
-				*/
-				//this.$router.push('/user/' + this.loginForm.username);
+				this.showTishi= false
+                this.showTishi1= false
+                this.showTishi2= false
+				if(this.loginForm.username == ""){
+					this.tishi1 = "用户名不能为空！"
+				    this.showTishi1 = true		
+				}else if(this.loginForm.password == ""){
+					this.tishi2 = "密码不能为空！"
+				    this.showTishi2 = true
+				}else{
+						this.setUserName(this.loginForm.username);
+						var param = "data=" + JSON.stringify(this.loginForm);
+						this.$http.post("http://192.168.0.217:8082/mapwayonline/userinfo/login", param).then((res) => {
+							if(res.data.result){
+								this.setUserInfo(res.data.data);
+								this.$router.replace('/index')
+							}else{
+								this.tishi2 = res.data.message
+				        		this.showTishi2 = true
+							}
+						});
+//		
+//				this.$router.push('/user/' + this.loginForm.username);  
+				}
 			},
 			signUp() {
 				// 跳转到注册页
@@ -151,6 +290,11 @@
 			},
 			//忘记密码
 			toForget() {
+				this.showTishi= false
+                this.showTishi1= false
+                this.showTishi2= false
+                this.showTishi3= false
+                this.showTishi4= false
 				document.getElementById("logobox").style.transitionDuration = "2s";
 				document.getElementById("logobox").style.transform = "rotateY(180deg)";
 				setTimeout(function() {
@@ -159,10 +303,133 @@
 					document.getElementById("box_login").style.display = "none";
 				}, 600);
 			},
+			//忘记密码
+			Gotoretrieve() {
+				if(this.forget.logname == "" ){
+					this.tishi1 = "账户不能为空"
+			        this.showTishi1 = true
+			    }else if(this.forget.logpass1 == "" ){
+					this.tishi2 = "请填写密码！"
+			        this.showTishi2 = true
+			        this.button2=false	
+			    }else if(this.forget.logpass2 == "" ){
+					this.tishi3 = "请再次输入密码！"
+			        this.showTishi3 = true
+			        this.button3=false	    
+				}else if(this.showTishi1 || this.showTishi2 || this.showTishi3 ){
+					this.tishi4 = "修改信息有误,请重新填写！"
+			        this.showTishi4 = true
+			    }else{
+			    	this.button1=true
+					this.button2=true
+					this.button3=true
+			        let data = {'username':this.forget.logname,'password1':this.forget.logpass1,'password2':this.forget.logpass2};
+			        var params = "data="+JSON.stringify(data);
+			        this.$http.post('http://192.168.0.217:8082/mapwayonline/userinfo/retrieve',params).then((res)=>{
+			            console.log(res)
+			            if(res.data.result){
+			                showTishi1: false
+			                showTishi2: false
+			                showTishi3: false
+//			                showTishi4: false
+			                /*this.register.logname:''
+							this.register.logpass1:''
+							this.register.logpass2:''*/
+			                this.tishi4 = res.data.message
+			                this.showTishi4 = true
+			                 /*注册成功之后再跳回登录页*/
+				                setTimeout(function(){
+				                	this.showTishi= false
+					                this.showTishi1= false
+					                this.showTishi2= false
+					                this.showTishi3= false
+					                this.showTishi4= false
+					                this.button1=false
+							    	this.button2=false
+							    	this.button3=false
+				                	document.getElementById("logobox").style.transitionDuration = "2s";
+									document.getElementById("logobox").style.transform = "rotateY(0deg)";
+									this.forget = {
+											logname:'',
+											logpass1:'',
+											logpass2:''
+									};
+									setTimeout(function() {
+										document.getElementById("box_login").style.display = "block";
+										document.getElementById("box_login").style.transform = "rotateY(0deg)";
+										document.getElementById("box_forget").style.display = "none";
+									}, 600);
+									
+				                }.bind(this),3000)
+				                
+			            }else{
+			            	this.tishi4 = res.data.message
+			                this.showTishi4 = true
+			            }
+			        })
+			    }
+			},
+			check1(forget){
+//				console.log('111',this.islogin());
+				switch(forget){
+					case "logname":
+						this.button1=false
+						if(!(/^1[34578]\d{9}$/.test(this.forget.logname))){
+							this.tishi1 = "手机号格式错误，请重新填写！"
+			                this.showTishi1 = true			              
+			            }else{
+			            	this.islogin(this.forget.logname);
+			            }  
+						break;
+					case "logpass1":	
+						this.button2=false
+						if(!this.showTishi1&&this.forget.logname !== ""){
+							if(this.forget.logpass1 === ""){
+								this.tishi2 = "请输入密码！"
+				                this.showTishi2 = true	
+							}else if(this.forget.logpass1.length < 6 || this.forget.logpass1.length > 12){
+								this.tishi2 = "密码必须为6~12位！"
+				                this.showTishi2 = true
+				            }else{
+				            	this.showTishi2 = false	
+				            	this.button2=true
+				            }
+				        }
+						break;
+					case "logpass2":
+						this.button3=false
+						if((!(this.showTishi1 || this.showTishi2))&&(this.forget.logname !== "" && this.forget.logpass1 !== "" )){
+							if( this.forget.logpass2 == ""){
+								this.tishi3 = "请再次输入密码！"
+				                this.showTishi3 = true
+							}else if(!(this.forget.logpass2 === this.forget.logpass1)){
+								this.tishi3 = "两次输入密码不一致！"
+				                this.showTishi3 = true
+							}else{
+				            	this.showTishi3 = false
+				            	this.button3=true
+				            }
+						}
+						break;
+				}
+			},
 			//忘记密码返回到登录
 			fBackToLogin() {
+				this.showTishi1= false
+			    this.showTishi2= false
+			    this.showTishi3= false
+			    this.showTishi4= false
+			    this.button1=false
+				this.button2=false
+				this.button3=false
 				document.getElementById("logobox").style.transitionDuration = "2s";
 				document.getElementById("logobox").style.transform = "rotateY(0deg)";
+				this.register = {
+								logname:'',
+								logpass1:'',
+								logpass2:''
+							};
+
 				setTimeout(function() {
 					document.getElementById("box_login").style.display = "block";
 					document.getElementById("box_login").style.transform = "rotateY(0deg)";
@@ -171,6 +438,11 @@
 			},
 			//注册
 			toRegister() {
+				this.showTishi= false
+                this.showTishi1= false
+                this.showTishi2= false
+                this.showTishi3= false
+                this.showTishi4= false
 				document.getElementById("logobox").style.transitionDuration = "2s";
 				document.getElementById("logobox").style.transform = "rotateY(180deg)";
 				setTimeout(function() {
@@ -179,10 +451,170 @@
 					document.getElementById("box_login").style.display = "none";
 				}, 600);
 			},
+			//注册
+			Gotoregister() {
+				if(this.register.logname == "" ){
+					this.tishi1 = "注册手机号不能为空"
+			        this.showTishi1 = true
+			        this.button1=false
+			   	}else if(this.register.logpass1 == "" ){
+					this.tishi2 = "请填写密码！"
+			        this.showTishi2 = true
+			        this.button2=false	
+			    }else if(this.register.logpass2 == "" ){
+					this.tishi3 = "请再次输入密码！"
+			        this.showTishi3 = true
+			        this.button3=false	    
+				}else if(this.showTishi1 || this.showTishi2 || this.showTishi3 ){
+					this.tishi4 = "注册信息有误,请重新填写！"
+			        this.showTishi4 = true
+			    }else{
+			    	this.button1=true
+			    	this.button2=true
+			    	this.button3=true
+			        let data = {'username':this.register.logname,'password1':this.register.logpass1,'password2':this.register.logpass2};
+			        var params = "data="+JSON.stringify(data);
+			        this.$http.post('http://192.168.0.217:8082/mapwayonline/userinfo/register',params).then((res)=>{
+			            console.log(res)
+			            if(res.data.result){
+			                showTishi1: false
+			                showTishi2: false
+			                showTishi3: false
+//			                showTishi4: false
+			                /*this.register.logname:''
+							this.register.logpass1:''
+							this.register.logpass2:''*/
+			                this.tishi4 = res.data.message
+			                this.showTishi4 = true
+			                 /*注册成功之后再跳回登录页*/
+				                setTimeout(function(){
+				                	this.showTishi= false
+					                this.showTishi1= false
+					                this.showTishi2= false
+					                this.showTishi3= false
+					                this.showTishi4= false
+					                this.button1=false
+							    	this.button2=false
+							    	this.button3=false
+				                	document.getElementById("logobox").style.transitionDuration = "2s";
+									document.getElementById("logobox").style.transform = "rotateY(0deg)";
+									this.register = {
+											logname:'',
+											logpass1:'',
+											logpass2:''
+									};
+									setTimeout(function() {
+										document.getElementById("box_login").style.display = "block";
+										document.getElementById("box_login").style.transform = "rotateY(0deg)";
+										document.getElementById("box_register").style.display = "none";
+									}, 600);
+									
+				                }.bind(this),3000)
+				                
+			            }else{
+			            	
+			            	this.tishi4 = res.data.message
+			                this.showTishi4 = true
+			            }
+			        })
+			    }
+			},
+			check(register){
+//				console.log('111',this.islogin());
+				switch(register){
+					case "logname":		
+						this.button1=false
+						if(!(/^1[34578]\d{9}$/.test(this.register.logname))){
+							this.tishi1 = "手机号格式错误，请重新填写！"
+			                this.showTishi1 = true			              
+			            }else{
+			            	this.islogin(this.register.logname);
+			            }  
+						break;
+					case "logpass1":	
+						this.button2=false
+						if((!this.showTishi1) && (this.register.logname !== "")){
+							if(this.register.logpass1 == ""){
+								this.tishi2 = "请输入密码！"
+				                this.showTishi2 = true	
+							}else if(this.register.logpass1.length < 6 || this.register.logpass1.length > 12){
+								this.tishi2 = "密码必须为6~12位！"
+				                this.showTishi2 = true
+				            }else{
+				            	this.showTishi2 = false	
+				            	this.button2=true
+				            }
+				        }
+						break;
+					case "logpass2":	
+						this.button3=false
+						if((!(this.showTishi1 || this.showTishi2))&&(this.register.logname !== "" && this.register.logpass1 !== "" )){
+							if( this.register.logpass2 == ""){
+								this.tishi3 = "请再次输入密码！"
+				                this.showTishi3 = true
+							}else if(!(this.register.logpass2 === this.register.logpass1)){
+								this.tishi3 = "两次输入密码不一致！"
+				                this.showTishi3 = true
+							}else{
+				            	this.showTishi3 = false
+				            	this.button3=true
+				            }
+						}
+						break;
+				}
+			},
+			//验证手机号是否被注册过
+			islogin(username){
+				switch(username){
+					case this.register.logname:
+						let data = {'username':username};
+					    var params = "data="+JSON.stringify(data);
+					    this.$http.post('http://192.168.0.217:8082/mapwayonline/userinfo/register/islogin',params).then((res)=>{
+					            console.log(res);					            
+					           	if(res.data.result){
+					           		this.tishi1 = "该手机号已被注册！"
+					                this.showTishi1 = true	
+					           	}else{
+					           		this.showTishi1 = false
+					           		this.button1=true
+					           	}
+  	
+					      })
+					    break;
+					case this.forget.logname:
+						let data1 = {'username':username};
+					    var params = "data="+JSON.stringify(data1);
+					    this.$http.post('http://192.168.0.217:8082/mapwayonline/userinfo/register/islogin',params).then((res)=>{
+					            console.log(res);					            
+					           	if(res.data.result){
+					           		this.showTishi1 = false
+					           		this.button1=true
+					           	}else{
+					           		this.tishi1 = "该账号不存在！"
+					                this.showTishi1 = true	
+					           	}
+  	
+					      })
+					    break;
+				}	    
+			},
 			//注册返回到登录
 			rBackToLogin() {
+				this.showTishi= false
+				this.showTishi1= false
+			    this.showTishi2= false
+			    this.showTishi3= false
+			    this.showTishi4= false
+			    this.button1=false
+				this.button2=false
+				this.button3=false
 				document.getElementById("logobox").style.transitionDuration = "2s";
 				document.getElementById("logobox").style.transform = "rotateY(0deg)";
+				this.register = {
+								logname:'',
+								logpass1:'',
+								ogpass2:''
+							};
 				setTimeout(function() {
 					document.getElementById("box_login").style.display = "block";
 					document.getElementById("box_login").style.transform = "rotateY(0deg)";
