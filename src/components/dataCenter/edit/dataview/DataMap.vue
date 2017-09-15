@@ -81,8 +81,8 @@
       },
 
       fetSchema () {
-        var id = this.$route.params.id;
-        var url = 'datacenter/datas/' + id + '/field';
+        var dataid = this.$route.params.dataid;
+        var url = 'TBUSER000001/datacenter/datas/' + dataid + '/field';
 
         this.$http.get(url).then((res) => {
           let field = res.data.data;
@@ -222,13 +222,13 @@
           } else {
             if (vm.now_layer != layer) {  // 当前点击的feature和上次的不一样
               if ( vm.edit.isSave === false) {
-                /*vm.$confirm('当前有未保存的数据', '提示', {
+                vm.$confirm('当前有未保存的数据', '提示', {
                   type: 'warning'
-                }).then(() => {*/
+                }).then(() => {
                   vm.cancelEditState();
                   vm.initEditState(layer, feature);
                   console.log('点击别的feature', vm.now_layer)
-                //}).catch((err) => { console.log(err); });
+                }).catch((err) => { console.log(err); });
               }
             }
           }
@@ -338,15 +338,15 @@
           var layer = drawLayer.getLayers()[0], feature = layer.feature;
 
           if (vm.now_layer) { //如果有正在编辑的feature
-            /*vm.$confirm('当前有未保存的数据?', '提示', {
+            vm.$confirm('当前有未保存的数据?', '提示', {
               type: 'warning'
-            }).then(() => {*/
+            }).then(() => {
               vm.cancelEditState();
               vm.initEditState(layer, feature);
               console.log('添加新的feature', vm.now_layer)
-            /*}).catch(() => {
+            }).catch(() => {
               drawItem.removeLayer(drawLayer);
-            });*/
+            });
           } else {
             vm.initEditState(layer, feature);
           }

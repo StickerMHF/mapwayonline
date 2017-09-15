@@ -68,47 +68,42 @@
     mounted: function () {
 
     },
-    beforeDestroy () {
-      this.destroyEvent();
-    },
     methods: {
       ...mapActions([
-        'resetCurrentId', 'setSubmitFeature'
+        'resetCurrentDataId', 'setSubmitFeature'
       ]),
       initEvent () {
         this.$bus.on('map-view-update-property', (obj) => {
-          this.createFieldSchemaWithValue(obj);
+          var proArr = [];
+
+          for (let i in obj) {
+            proArr.push(obj[i]);
+          }
+
+          proArr.forEach((item) => {
+            this.attributes[item.name] = item.value;
+          });
+
+          console.log('this.attributes', this.attributes)
+
+          this.fieldSchemaWithValue = proArr;
         });
 
         this.$bus.on('map-view-add-property', (obj) => {
-          this.createFieldSchemaWithValue(obj);
-        });
+          var proArr = [];
+          for (let i in obj) {
+            proArr.push(obj[i]);
+          }
 
-        this.$bus.on('save-edit-feature', () => {
-            this.handleSave();
+          proArr.forEach((item) => {
+            this.attributes[item.name] = item.value;
+          });
+
+          this.fieldSchemaWithValue = proArr;
         });
       },
 
-      destroyEvent () {
-        this.$bus.on('map-view-update-property');
-        this.$bus.on('map-view-add-property');
-        this.$bus.on('save-edit-feature');
-      },
-
-      createFieldSchemaWithValue (obj) {
-        var proArr = [];
-        for (let i in obj) {
-          proArr.push(obj[i]);
-        }
-
-        proArr.forEach((item) => {
-          this.attributes[item.name] = item.value;
-        });
-
-        this.fieldSchemaWithValue = proArr;
-      },
-
-      /* mapwayid 字段 是否显示, this.edit.editType === 'add' ? false : true  */
+      /* mapwayid 字段 是否显示 */
       isUpdate (key) {
         if (this.edit.editType === 'add' && key === 'mapwayid') {
           return false;
@@ -142,10 +137,10 @@
           return;
         }
 
-        /*if (!this.attributes.mapwayid && this.edit.editType === 'update') {
+        if (!this.attributes.mapwayid && this.edit.editType === 'update') {
           console.error('mapwayid为: ', this.attributes.mapwayid);
           return;
-        }*/
+        }
 
 
         var submitFeature = Tool.clone(this.edit.submitFeature);
@@ -156,11 +151,10 @@
 
         delete submitFeature.geometry.spatialReference;
 
-        var id = this.edit.currentId, editType = this.edit.editType, url, layerid = this.$route.params.id;
-
+        var layerid = this.edit.currentDataId, editType = this.edit.editType, url, layerid = this.$route.params.dataid;
         switch (editType) {
-          case 'add': url = 'mapdesign/maps/layers/' + layerid + '/features/add'; break;
-          case 'update': url = 'mapdesign/maps/layers/' + layerid + '/features/update'; break;
+          case 'add': url = 'TBUSER000001/mapdesign/maps/layers/' + layerid + '/features/add'; break;
+          case 'update': url = 'TBUSER000001/mapdesign/maps/layers/' + layerid + '/features/update'; break;
         }
 
         var params = "data=" + JSON.stringify({
@@ -184,7 +178,7 @@
 
           console.log('res', res);
 
-          this.resetCurrentId();
+          this.resetCurrentDataId();
           this.setSubmitFeature({});
 
           this.$bus.emit('map-view-refresh', '保存成功!');
@@ -204,8 +198,8 @@
         this.$confirm('确认删除？', '提示', {
           type: 'warning'
         }).then(() => {
-          var id = this.$route.params.id;
-          var url = 'mapdesign/maps/layers/' + id + '/features/delete';
+          var dataid = this.$route.params.dataid;
+          var url = 'TBUSER000001/mapdesign/maps/layers/' + dataid + '/features/delete';
 
           var params = "data=" + JSON.stringify({
               mapwayid,

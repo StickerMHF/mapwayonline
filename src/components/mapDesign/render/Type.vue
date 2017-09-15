@@ -140,8 +140,8 @@
         'updateOverLayer', 'setRenderType'
       ]),
       initEvent () {
-        this.$bus.on('type-render', () => {
-          this.typeRender();
+        this.$bus.on('init-type', () => {
+          this.initType();
         });
 
         /* 对当前图层的渲染保存 */
@@ -154,7 +154,7 @@
           this.notUpdateCurrentStyle();
         });
 
-        this.$bus.on('type-renderSet-restore', (obj) => {
+        this.$bus.on('type-renderSet-change', (obj) => {
           this.restoreRenderSet(obj)
         });
 
@@ -164,7 +164,7 @@
       },
 
       destroyEvent () {
-        this.$bus.off('type-render');
+        this.$bus.off('init-type');
 
         /* 对当前图层的渲染保存 */
         this.$bus.off('save-current-type-render');
@@ -172,7 +172,7 @@
         /* 对当前图层的渲染不保存 */
         this.$bus.off('not-save-current-type-render');
 
-        this.$bus.off('type-renderSet-restore');
+        this.$bus.off('type-renderSet-change');
 
         this.$bus.off('reset-type-data');
       },
@@ -187,20 +187,6 @@
         this.reset();
       },
 
-      currentLayerIsAdded () {
-        var currentLayerId = this.render.currentLayerId, layers = this.render.layers, isAdded = false;
-
-        layers.some((item) => {
-          if (item.id === currentLayerId) {
-            isAdded = item.isAdded;
-          }
-        });
-
-        debugger
-
-        return isAdded;
-      },
-
       notUpdateCurrentStyle () {
         var currentLayerId = this.render.currentLayerId;
         var overLayersStyle =  this.render.savedLayers.over_layer;
@@ -209,7 +195,7 @@
         this.reset();
 
         overLayersStyle.some((item) => {
-          if (currentLayerId === item.id) {
+          if (currentLayerId === item.data_id) {
             this.$bus.emit('restore-render',item.render)
           }
         });
@@ -222,7 +208,7 @@
       },
 
       /* 第一次点击分类渲染，需要判断能否分类 */
-      typeRender () {
+      initType () {
         this.reset();
 
         var currentData, datas = this.render.geoJsons;
@@ -250,6 +236,10 @@
           }
         }
         this.renderSet.field.fields = typeFields;
+
+        // 预定义标注显示字段
+        /*var labelFields = Tool.getField(currentData);
+        this.renderSet.label.fields = labelFields;*/
       },
 
       /* 保存当前图层样式信息后，将当前组件的数据重置 */

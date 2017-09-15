@@ -1,11 +1,32 @@
 <template>
   <div class="renderContent">
-    <div v-show="isShowRenderSetting">
-      <div class="layer-info">
-        {{ dataName }}
+
+    <div v-show="isShowLayerList" class="layer-list">
+      <div class="tip-btns">
+        <el-button type="success" @click="getImage">保存</el-button>
       </div>
 
-      <hr>
+      <div class="layer" v-for="item in layers" :key="item.id" :class="[ item.isAdded ? '' : 'opacity05']" @click="renderCurrent(item)">
+        <div class="left">
+          <div class="box"><img src="../../../assets/mapDesign/img/esriGeometryPoint.png" alt=""></div>
+        </div>
+        <div>{{ item.id }}</div>
+        <div class="right">
+          <div class="box">
+            <i :class="[ item.isAdded ? 'fa-eye' : 'fa-eye-slash', 'fa']" @click.stop.prevent="showRenderSetting(item)"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div v-show="isShowRenderSetting">
+      <div class="current-layer-info">
+        <el-row :gutter="10">
+          <el-col :xs="24" :sm="24" :md="8" :lg="8"><el-button icon="arrow-left" style="margin-left: 10px;" @click="showLayerList">上一页</el-button></el-col>
+          <el-col :xs="24" :sm="24" :md="8" :lg="10"><div class="layer-name">{{ currentLayer.name }}</div></el-col>
+          <!--<el-col :xs="24" :sm="24" :md="8" :lg="8"><div class="layer-name">{{ currentLayer.name }}</div></el-col>-->
+        </el-row>
+      </div>
 
       <div class="render-btns">
         <el-button-group>
@@ -14,7 +35,6 @@
           <el-button type="primary"  @click="typeRender">分类</el-button>
         </el-button-group>
       </div>
-
       <hr>
 
       <div class="render-set">
@@ -35,6 +55,8 @@
   import LabelLayer from './LabelLayer.vue'
   import Tool from '@/components/tool.vue'
 
+  import html2canvas from 'html2canvas'
+
   export default {
     name: 'renderSet',
     components: { Grade, Type, Simple, LabelLayer },
@@ -45,14 +67,14 @@
     },
     data () {
       return {
+        isShowLayerList: true,
         layers: null,
         /*layers: {
-         id: TBDATA00001,
+         data_id: TBDATA00001,
          isAdded: true
          }*/
 
-        isShowRenderSetting: true,
-        dataName:　'',
+        isShowRenderSetting: false,
         isGrade: false,
         isType: false,
         isSimple: false,
@@ -61,13 +83,14 @@
           name: null,
           isAdded: null,
         },
+        currentLayerId: null,
       }
     },
     created () {
       this.initEvent();
     },
     beforeDestroy () {
-      this.destroyEvent();
+       this.destroyEvent();
     },
     mounted () {
       this.$bus.on('show-render-map-loading');
@@ -79,7 +102,7 @@
     },
     methods: {
       ...mapActions([
-        'setRenderType','addGeoJsons', 'resetGeoJsons', 'setNewMapInfo'
+        'setRenderType','addGeoJsons', 'resetGeoJsons', 'setCurrentLayerId',
       ]),
       initEvent () {
         this.$bus.on('grade-render',() => {
@@ -101,21 +124,6 @@
         this.$bus.on('hide-render',() => {
           this.hideRender();
         });
-
-        this.$bus.on('init-render-set',(id, layers) => {
-          this.dataName = id; // 将当前渲染图层id在RenderSet组件中显示出来  TODO 以后需换成name 显示
-          this.initRenderSet(id, layers);
-        });
-
-        /* 显示右侧渲染方法 */
-        this.$bus.on('set-render-set-display', (boolValue) => {
-          this.isShowRenderSetting = boolValue;
-        });
-
-        /* 渲染页面新增的数据 */
-        this.$bus.on('add-data-render', idChecked => {
-            this.addDataRender(idChecked);
-        });
       },
 
       destroyEvent () {
@@ -124,52 +132,39 @@
         this.$bus.off('type-render');
         this.$bus.off('update-layers');
         this.$bus.off('hide-render');
-        this.$bus.off('init-render-set');
-        this.$bus.off('set-render-set-display');
-        this.$bus.off('add-data-render');
       },
 
       /* 首次渲染 */
       firstRender () {
-        this.$bus.emit('hide-render-loading');
+        var vm = this;
+        var dataIdChecked = this.render.dataIdChecked;
+
+        console.log('dataIdChecked 的长度为 ', dataIdChecked.length);
+        var len = dataIdChecked.length, _temArray = [];
+
         this.resetGeoJsons();
-        this.getLayerData(this.render.idChecked, 'initData');
-        console.log('选择渲染图层个数为 ', this.render.idChecked.length);
-      },
-
-      /* 渲染界面新选择的数据进行渲染 */
-      addDataRender (idChecked) {
-        this.getLayerData(idChecked, 'addData');
-      },
-
-      /* 根据数据数组，请求所需的图层数据，并更新vuex中的geoJsons */
-      getLayerData (dataArray, type) {
-        this.$bus.emit('hide-render-loading');
-         if (dataArray.length === 0) {
-             return;
-         }
-
-        var vm = this, _temArray = [],
-          len = dataArray.length;
-
-        dataArray.forEach((item) => {
-          var url = 'mapdesign/maps/layers/' + item.layerid + '/query?f=geojson&returnGeometry=true&OutSr=4326';
+        dataIdChecked.forEach((id) => {
+          var url = 'TBUSER000001/mapdesign/maps/layers/' + id + '/query?f=geojson&returnGeometry=true&OutSr=4326';
           vm.$http.get(url).then(function(res){
-            if (!res.data.features) {
-              console.log('后台传回来的数据结构有问题geojson数据： ' + res.data);
+            var _geoJson = null;
+
+            if (!res.data) {
+              console.log('layerid： ' +id + '的geojson数据： ' + res.data);
               return;
             }
-
-            var _geoJson = {
-              id: item.layerid,
+            _geoJson = {
+              id,
               data: res.data,
             };
             vm.addGeoJsons( Tool.clone(_geoJson) );
             _temArray.push(_geoJson);
 
-            if (len === _temArray.length) {  // 如果所需的图层数据全部请求回来, 全部默认简单渲染，进行初次默认渲染
-              vm.$bus.emit('init-render', type, _temArray);
+            if (len !== _temArray.length) {
+              return;
             }
+            // 如果所需的图层数据全部请求回来, 全部默认简单渲染，进行初次默认渲染
+            vm.$bus.emit('init-render', _temArray);
+
           }).catch((err) => { console.log(err); });
         });
       },
@@ -177,35 +172,146 @@
       /* 二次编辑 */
       notFirstRender () {
         var id = this.render.currentMapId,
-          url = 'mapdesign/maps/'+ id;
+          url = 'TBUSER000001/mapdesign/maps/'+ id;
 
         this.$http.get(url).then((res) => {
-          if (!res.data.data) {
+          if (!res.data.data.data) {
             console.log('ajax 获取二此编辑数据结构发生变化', res.data);
             return;
           }
 
-          var layers = JSON.parse(res.data.data.layers); // 还原地图的图层信息
-          this.setNewMapInfo({
-            name: res.data.data.name
-          }); // 还原地图的基本信息  TODO name字段为空
-          console.log('this.render.newMapInfo.name', res.data.data.name);
+          var layers = JSON.parse(res.data.data.data.layers);
 
           this.$bus.emit('restore-map-render', layers);
         }).catch((err) => { console.log(err) });
       },
 
-      /* 点击RenderConfig组件每个图层树的时候 */
-      initRenderSet (id, over_layers) {
+      /* 保存新创建的地图 */
+      getImage () {
+        this.saveMap();
+      },
 
+      getSavedLayers () {
+        var savedLayers = Tool.clone(this.render.savedLayers);
+        var temOverLayer = savedLayers.over_layer;
+        temOverLayer.forEach((item) => {
+          var temStyle = item.render.style;
+          var temRType = item.render.rtype;
+
+          /*switch (temRType) {
+            case 'simple':
+              delete temStyle.field;
+              delete temStyle.isLine;
+              delete temStyle.isPolygon;
+              delete temStyle.isPoint;
+              delete temStyle.fieldStyleArray;
+
+              break;
+
+            case 'type':
+            case 'grade':
+              delete temStyle.fill;
+              delete temStyle.border;
+              delete temStyle.isLine;
+              delete temStyle.isPolygon;
+              delete temStyle.isPoint;
+          }*/
+
+        });
+
+        return savedLayers;
+      },
+      saveMap (img) {
+        var url = 'TBUSER000001/mapdesign/maps/add';
+        //var url = 'TBUSER000001/mapdesign/map/TBMAP000003/update';
+
+        var layers = this.getSavedLayers();
+
+        var img = '';
+
+        var params = "data=" + JSON.stringify({
+            "lid": 1,
+            "description": this.render.newMapInfo.description,
+            "tag": this.render.newMapInfo.tag,
+            "mark": this.render.newMapInfo.name,
+            "createdate": "2017-07-26",
+            "modifydate": "2017-07-26",
+            "img": img,
+            "layers": layers
+          });
+
+        console.log('params', {
+          "lid": 1,
+          "description": this.render.newMapInfo.description,
+          "tag": this.render.newMapInfo.tag,
+          "mark": this.render.newMapInfo.name,
+          "createdate": "2017-07-26",
+          "modifydate": "2017-07-26",
+          "img": img,
+          "layers": layers
+        })
+
+        this.$http.post(url, params).then((res) => {
+          if (res.data) {
+            this.$message({
+              showClose: true,
+              message: '成功保存至数据库',
+              type: 'success',
+            });
+          }
+        }).catch((err) => { console.log(err) });
+        console.log('this.render.savedLayers', this.render.savedLayers);
+      },
+
+      showRenderSetting (item) {
+        item.isAdded = !item.isAdded;
+        if (item.isAdded === false) {
+          this.$bus.emit('remove-layer', item.data_id);
+          this.$bus.emit('remove-label');
+        } else if (item.isAdded === true) {
+          this.$bus.emit('add-layer', item.data_id);
+          this.$bus.emit('add-label');
+        }
+      },
+
+      /* 选择图层进行渲染 */
+      renderCurrent (item) {
+        if (this.currentLayer.id) {
+          return;
+        }
+
+        if (!item.isAdded) {
+          this.$message({
+            showClose: true,
+            message: '未添加的图层不允许编辑',
+            type: 'warning',
+          });
+          return;
+        }
+
+        console.log('this.render.savedLayers.over_layer: ',this.render.savedLayers.over_layer);
+        this.currentLayer.id = item.data_id;
+        this.setCurrentLayerId(item.data_id);
+        this.initRenderSet(item.data_id, this.render.savedLayers.over_layer);
+        this.$bus.emit('init-label');
+        this.currentLayer.name = '当前数据的name';
+        // 发出渲染的事件
+        this.isShowRenderSetting = true;
+        this.isShowLayerList = false;
+      },
+
+      initRenderSet (data_id, over_layers) {
         over_layers.some((item) => {
-          if (id === item.id) {
-            var renderType = item.render.rtype;
-            console.log('点击当前图层的渲染类型', renderType)
+
+          if (data_id === item.data_id) {
+            var geometryType = item.gtype, renderType = item.render.rtype;
+            this.setRenderType(renderType);
+            console.log('renderType 点击当前图层的时候', renderType)
 
             switch (renderType) {
               case 'simple':
                 this.showOneRender('isSimple');
+                this.$bus.emit('init-simple');
                 break;
               case 'grade':
                 this.showOneRender('isGrade');
@@ -214,16 +320,81 @@
                 this.showOneRender('isType');
                 break;
             }
-
-            this.$bus.emit(renderType + '-renderSet-restore', item);
-            this.$bus.emit('label-restore', item);
+            this.$bus.emit(this.render.renderType + '-renderSet-change', item);
 
             return;
           }
         });
       },
 
-      /* 切换为简单渲染 */
+      /* 返回图层列表 */
+      showLayerList () {
+        this.$confirm('是否保存对当前图层的修改?', '提示', {
+          type: 'warning'
+        }).then(() => {
+          this.saveCurrentLayerRender();
+
+          /*this.$message({
+            showClose: true,
+            message: '保存成功',
+            type: 'success',
+          });*/
+          // TODO 保存当前对层的修改,
+        }).catch(() => {
+          this.notSaveCurrentLayerRender();
+          // TODO 不保存当前对层的修改,
+        });
+
+        this.isShowLayerList = true;
+        this.isShowRenderSetting = false;
+
+        // 清空currentLayer数据
+        this.currentLayer = {
+          id: null,
+          name: null,
+          isAdded: null,
+        };
+
+        this.$bus.emit('update-currentLayerId', null);
+      },
+
+      /* 对当前图层渲染样式的保存 */
+      saveCurrentLayerRender () {
+        this.hideRender();
+        switch (this.render.renderType) {
+          case 'simple':
+            this.$bus.emit('save-current-simple-render');
+            break;
+
+          case 'grade':
+            this.$bus.emit('save-current-grade-render');
+            break;
+
+          case 'type':
+            this.$bus.emit('save-current-type-render');
+            break;
+        }
+      },
+
+      /* 对当前图层渲染样式的不保存 */
+      notSaveCurrentLayerRender () {
+        this.hideRender();
+        switch (this.render.renderType) {
+
+          case 'simple':
+            this.$bus.emit('not-save-current-simple-render');
+            break;
+
+          case 'grade':
+            this.$bus.emit('not-save-current-grade-render');
+            break;
+
+          case 'type':
+            this.$bus.emit('not-save-current-type-render');
+            break;
+        }
+      },
+
       simpleRender () {
         if (this.render.renderType === 'simple') {
           return;
@@ -234,10 +405,9 @@
         this.$bus.emit('reset-type-data');
         this.$bus.emit('reset-grade-data');
         this.setRenderType('simple');
-        this.$bus.emit('simple-render');
+        this.$bus.emit('init-simple');
       },
 
-      /* 切换为分级渲染 */
       gradeRender () {
         if (this.render.renderType === 'grade') {
           return;
@@ -248,10 +418,9 @@
         this.$bus.emit('reset-type-data');
         this.$bus.emit('reset-simple-data');
         this.setRenderType('grade');
-        this.$bus.emit('grade-render');
+        this.$bus.emit('init-grade');
       },
 
-      /* 切换为分类渲染 */
       typeRender () {
         if (this.render.renderType === 'type') {
           return;
@@ -262,7 +431,7 @@
         this.$bus.emit('reset-grade-data');
         this.$bus.emit('reset-simple-data');
         this.setRenderType('type');
-        this.$bus.emit('type-render');
+        this.$bus.emit('init-type');
       },
 
       hideRender () {
@@ -304,11 +473,6 @@
   .renderContent {
     height: 100%;
     overflow-y: auto;
-    padding-top: 20px;
-  }
-
-  .layer-info {
-    text-align: center;
   }
 
   .layer-list {

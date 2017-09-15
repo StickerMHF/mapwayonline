@@ -2,54 +2,53 @@
 	<div class="mwsdatabox" >
 		<h2 style="font-weight: 400;">MapWayServer™导入</h2>
 		<p style="color: #979ea1;">从MapWayServer™实例导入数据</p>
-		<div class="formArea">
+		<div class="formArea">	    			
 			<el-form v-model='mapwayserver'>
 				<el-form-item class='serverInput' v-show='mwsShow'>
 					<el-input value placeholder="在这里输入您的MapWayServer™表地址" v-model="mapwayserver.serverUrl">
 					    <template slot="prepend">输入URL</template>
-
+					    <el-button slot='append' @click= 'showmwsList' > 提交 </el-button>
 					</el-input>
 					<p class="otip" style="color: #979ea1;line-height: 16px;">
 						格式：http：// &lt;host> / mapway / rest / services / &lt;folder> / &lt;serviceType> / &lt;serviceName>
-					</p>
+					</p> 
 				</el-form-item>
-        <el-button @click= 'showmwsList' class="submitBtn"> 提交 </el-button>
 				<el-form-item v-show='!mwsShow' >
 					<div style='text-align: left;'><el-button @click='showtip' type='text'>返回</el-button></div>
 					<!--获取对应地址的图层列表-->
-
-					<el-checkbox-group :min='1' name='checkedList' class="mwsUrlList" v-model='mapwayserver.checkedList' style='text-align: left;'>
-						<el-checkbox class="mwsUrlItem" v-for="item in mapwayserver.mwsUrlList" :label='item' :key = 'item' checked>
-
+					
+					<el-checkbox-group :min='1' name='checkedList' class="mwsUrlList" v-model='mapwayserver.checkedList' style='text-align: left;'> 
+						<el-checkbox class="mwsUrlItem" v-for="item in mapwayserver.mwsUrlList" :label='item' :key = 'item' checked>	
+							
 							<span style="color: red; display: inline-block;width: 100px;padding-left: 20px;"> {{item.name}}</span>
 							<span> {{item.description}}</span>
 
 							<div style="float: right;">
 								<i class="typebg" :class="item.geometryType"></i>
-							</div>
+							</div>    													
 						</el-checkbox>
-
+						
 					</el-checkbox-group >
 					<p style="color:#979EA1;">
-						至少保留一个图层数据 <br />
+						至少保留一个图层数据 <br />	
 						是否同步数据
 					</p>
 					<el-radio-group v-model='mapwayserver.isSave'>
 						<el-radio :label='false'>不保存</el-radio>
 						<el-radio :label='true'>保存</el-radio>
 					</el-radio-group>
-					<div style='text-align: right; padding-right: 40px;'>
+					<div style='text-align: right; padding-right: 40px;'> 
 						<el-button type='primary' @click = 'submitMWS'>提交</el-button>
 					</div>
 				</el-form-item>
-			</el-form>
-		</div>
-	</div>
-
-
+			</el-form>					    							
+		</div>	    						    					
+	</div>	 
+	
+	
 </template>
 
-<script>
+<script>  
 export default {
 	data () {
       return {
@@ -70,19 +69,19 @@ export default {
     	gettype(t){
     		switch (t){
     			case 'esriGeometryPoint':
-    				return 'Point' ;
+    				return 'Point' ; 			
     				break;
     			case 'esriGeometryMultipoint':
-    				return 'MultiPoint' ;
+    				return 'MultiPoint' ; 			
     				break;
     			case 'esriGeometryPolyline':
-    				return 'LineString' ;
+    				return 'LineString' ; 			
     				break;
     			case 'esriGeometryPolygon':
-    				return 'Polygon' ;
+    				return 'Polygon' ; 			
     				break;
     			case 'esriGeometryEnvelope':
-    				return 'Envelope' ;
+    				return 'Envelope' ; 			
     				break;
     			default:
     				return 'errerType'
@@ -91,26 +90,26 @@ export default {
     	},
     	getToday(){
     		// 获取 2017-6-23 格式的时间字符串
-    		var date = new Date();
+    		var date = new Date(); 
 			var mon = date.getMonth() + 1;
 			var day = date.getDate();
-			var nowDay = date.getFullYear() + "-" + (mon<10?"0"+mon:mon) + "-" +(day<10?"0"+day:day);
+			var nowDay = date.getFullYear() + "-" + (mon<10?"0"+mon:mon) + "-" +(day<10?"0"+day:day);	
 			return nowDay;
-    	},
+    	},    
       showmwsList() {
       	// 这里用来获取用户输入的url对应的数据图层 并显示。
       	var that = this;
       	let u = {
-      		"url": this.mapwayserver.serverUrl
+      		"url": this.mapwayserver.serverUrl 
       	};
-      	let prams = 'data='+JSON.stringify(u);
-      	this.$http.post( 'mapdesign/data/add/mws',prams)
+      	let prams = 'data='+JSON.stringify(u);      
+      	this.$http.post( 'http://192.168.0.222:8082/mapwayonline/TBUSER000001/mapdesign/data/add/mws',prams)
       	.then(
       		(res) => {
       			console.log(res);
       			if(res.data.result == true){
-      				that.mapwayserver.mwsUrlList = res.data.data.layers;
-      				that.mwsShow = !that.mwsShow;
+      				that.mapwayserver.mwsUrlList = res.data.data.layers;    
+      				that.mwsShow = !that.mwsShow; 
       			}else{
       				this.$notify.error({
 				          title: '请求失败！',
@@ -118,13 +117,13 @@ export default {
 				          offset: 300
 				        });
       			}
-
-      		}
+      			
+      		}     		
       	).catch((error) => {
-      		console.log(error);
+      		console.log(error);	
       	});
-
-
+      	
+      	
       },
     	submitMWS() {
       	// 用来提交用户选中的数据 并返回
@@ -143,47 +142,46 @@ export default {
       		a.pubdate = that.getToday();
       		a.size = 0;
       		a.folder = 'folder';
-      		a.fields = item.fields;
+      		a.fields = item.fields;   		
       		subList.push(a);
       	})
-
-      	let prams = 'data='+JSON.stringify({layers:subList});
+      	
+      	let prams = 'data='+JSON.stringify({layers:subList}); 
       	console.log('用户提交数据',{layers:subList})
-		this.$http.post('mapdesign/datas/add/layers',prams)
+		this.$http.post('http://192.168.0.222:8082/mapwayonline/TBUSER000001/mapdesign/datas/add/layers',prams)
       	.then(
       		(res) => {
 				console.log(res);
 				that.goDataSet('myDataSets');
-      		}
-      	).catch(() => {console.log('请求失败');});
-
+      		}     		
+      	).catch(() => {console.log('请求失败');}); 
+    	
     	},
 	      showtip (){
-	      	this.mwsShow = !this.mwsShow;
+	      	this.mwsShow = !this.mwsShow; 
 	      }
-
+    	
     }
-}
-
+}	
+	
 </script>
 
 <style>
-
 ul,li{
 		list-style: none;
 }
 .mwsdatabox{
 	padding-top: 40px;
-}
+}	
 .getDataSets .el-tabs__header{
   	background-color: #f9f9f9;
   }
  .formArea{
- 	width:760px;
+ 	width:500px;
   	margin: 0 auto;
   	padding-top: 50px;
  	min-height: 280px;
-  	/*border-bottom: 1px solid #DDDDDD;*/
+  	border-bottom: 1px solid #DDDDDD;	
  }
  .headerIcon{
  	width: 40px;
@@ -191,16 +189,15 @@ ul,li{
  	border: 1px solid rgba(0,0,0,0.6);
  	border-radius: 3px;
  	margin: 0 auto;
- }
+ } 
   .headerIcon i{
   	font-size: 30px;
-  	line-height: 40px;
+  	line-height: 40px;	
   }
-
+  
  .getDataWays{
-   height:86%;
- 	background-color: #fff;
-   padding:20px;
+ 	min-height: 500px;
+ 	background-color: #f9f9f9;
  	border: none;
  }
 .el-tabs__item{
@@ -211,7 +208,7 @@ ul,li{
 }
 .mwsUrlList {
 	width: 100%;
-
+	
 }
 .mwsUrlList .typebg{
 	display: inline-block;
@@ -231,15 +228,5 @@ ul,li{
 	margin-left: 0 !important;
 	border-bottom: 1px solid #D1DBE5;
 }
-.submitBtn{
-  width:100px;
-  height:40px;
-  background-color: #009688;
-  color: #fff;
-  font-size:14px;
-}
-.submitBtn:hover{
-  border:0px solid #009688 !important;
-  color: #fff;
-}
+
 </style>

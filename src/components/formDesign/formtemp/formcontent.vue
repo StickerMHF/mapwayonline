@@ -36,23 +36,27 @@
              @dragging="dragging"
              class="box-item deactivated"
              ref="owidget"
+
         >
           <div :style='item.style' class="owidget">
             <div class="label deactivated" v-show="hasLabel(item.tagname)">{{item.label}}</div>
             <div
               :style="{backgroundColor: item.style.backgroundColor}"
               :class="item.tagname"
-              class="type deactivated">{{item.description}}
+              class="type deactivated"> {{index}} {{item.description}}
             </div>
           </div>
 
         </div>
+
       </div>
+
+
     </div>
   </div>
 </template>
 
-<script>
+<script type="text/ecmascript-6">
   import VueDraggableResizable from '../drag/vue-draggable-resizable.vue'
   import {mapGetters, mapActions} from 'vuex'
 
@@ -89,6 +93,7 @@
         '_upData',
         '_setCanvasStyle'
       ]),
+
       activated(i) {
         console.log('容器被选中', i.oid);
         this.currentOid = i.oid;
@@ -139,11 +144,13 @@
 
         this.mouseOffY = 0;
 
+
         let dragBox = document.getElementById('drag-area');
         const style = window.getComputedStyle(dragBox, null);
+
         const parentH = parseInt(style.getPropertyValue('height'), 10);
 
-        let d = parentH + diffY;
+        let d = parentH + Math.ceil(diffY / 3 * 2);
         this._setCanvasStyle({attr: 'height', value: d + 'px'});
 
         this.lastMouseY = this.mouseY;
@@ -163,7 +170,7 @@
         document.getElementById('drag-bar').style.display = 'none';
         document.documentElement.removeEventListener('mousemove', this.dragCanvasMove);
         document.documentElement.removeEventListener('mouseup', this.dragCanvasUp);
-        document.documentElement.removeEventListener('mousedown', this.dragCanvas);
+
       },
       dragCanvas($event) {
         this.lastMouseY = $event.pageY || $event.clientY + document.documentElement.scrollTop;
@@ -171,11 +178,14 @@
 //				const style = window.getComputedStyle(document.getElementById('drag-bar'), null);
 //				const parentW = parseInt(style.getPropertyValue('width'), 10);
 //				const parentH = parseInt(style.getPropertyValue('height'), 10);
+        this.lastMouseY = $event.pageY || e.clientY + document.documentElement.scrollTop;
         let target = $event.target || $event.srcElement;
         target.style.display = 'block';
         document.documentElement.addEventListener('mousemove', this.dragCanvasMove, false);
         document.documentElement.addEventListener('mouseup', this.dragCanvasUp, false);
+
       },
+
       hasLabel(tagname) {
         let noLabel = ['button', 'h1','h2','h3','h4','h5','h6','p', 'img'];
         return noLabel.indexOf(tagname)<0;
@@ -200,21 +210,21 @@
             x: 0, y: 0, w: 300, h: 30
           },
           style: {
-            backgroundColor: 'rgba(255,255,255,0.5)',
-            lineHeight: '20px',
+            backgroundColor: '',
+            lineHeight: '',
             fontSize: '16px',
             color: '#333',
             borderStyle: 'solid',
             borderWidth: '1px',
-            borderColor: '#C3C3C3',
-            borderRadius: '4px'
+            borderColor: '#EEE',
+            borderRadius: '0'
           }
         };
 
 
         switch (tagname + type) {
           case 'inputtext':
-            oneWidget.layout.w = 320;
+            oneWidget.layout.w = 300;
             oneWidget.layout.h = 40;
             oneWidget.label = oneWidget.description = '输入框';
             break;
@@ -254,22 +264,16 @@
           case 'buttonsubmit':
             oneWidget.layout.w = 120;
             oneWidget.layout.h = 50;
-            oneWidget.style.backgroundColor = "#009688";
-            oneWidget.style.color = "#FFF";
             oneWidget.label = oneWidget.description = '提交';
             break;
           case 'buttonreset':
             oneWidget.layout.w = 120;
             oneWidget.layout.h = 50;
-            oneWidget.style.backgroundColor = "#009688";
-            oneWidget.style.color = "#FFF";
             oneWidget.label = oneWidget.description = '重置';
             break;
           case 'buttonbutton':
             oneWidget.layout.w = 120;
             oneWidget.layout.h = 50;
-            oneWidget.style.backgroundColor = "#009688";
-            oneWidget.style.color = "#FFF";
             oneWidget.label = oneWidget.description = '按钮';
             break;
           case 'h1':
@@ -281,7 +285,7 @@
             oneWidget.layout.w = 200;
             oneWidget.layout.h = 250;
             oneWidget.label = oneWidget.description = '图片';
-            oneWidget.src = "url";
+            oneWidget.src = "";
             break;
           case 'p':
             oneWidget.layout.w = 300;
@@ -364,18 +368,19 @@
 
 <style lang="less" scoped>
   #formcontent {
-    height: 100%;
-    overflow: hidden;
-    background-color: #EEEEEE;
+    flex-grow: 1;
+    max-height: 800px;
+    overflow-y: scroll;
+    overflow-x: hidden;
     .hiddenbar {
       padding-top: 35px;
       position: relative;
       width: 100%;
       height: 100%;
       box-sizing: border-box;
-      overflow-x: hidden;
-      overflow-y: scroll;
-      margin: 0 auto 100px;
+      padding-bottom: 100px;
+      margin: 0 auto;
+      background-color: #EEEEEE;
       #drag-area {
         box-shadow: 6px 6px 5px #888888;
         background-color: #FFFFFF;
@@ -407,8 +412,6 @@
       }
       .active {
         border: 1px dashed #28B779;
-        padding-top: 1px;
-        padding-bottom: 1px;
       }
       .vdr-content {
         width: 100%;
@@ -421,6 +424,7 @@
         -moz-user-select: none; /*火狐*/
         -webkit-user-select: none; /*webkit浏览器*/
         -ms-user-select: none; /*IE10*/
+        -khtml-user-select: none; /*早期浏览器*/
         user-select: none;
       }
       .box-item {
@@ -441,13 +445,12 @@
       .label {
         display: flex;
         align-items: center;
-        justify-content: center;
         width: 80px;
         padding: 0 10px;
         height: auto;
         box-sizing: border-box;
-        background-color: rgba(251,251,251,0.7);
-        border-right: solid 1px #C3C3C3;
+        background-color: rgba(255,255,255,0.5);
+        border-right: solid 1px #EEEEEE;
         vertical-align: middle;
         font-size: 12px;
         color: #000000;
@@ -461,6 +464,7 @@
         height: auto;
         flex-grow: 1;
         box-sizing: border-box;
+        background-color: rgba(255,255,255,0.5);
         vertical-align: middle;
         padding-left: 10px;
         text-overflow: ellipsis;
@@ -468,8 +472,8 @@
         white-space: nowrap;
       }
       .button {
-        justify-content: center;
-        padding-left: -10px;
+        background: #DDD;
+        text-align: center !important;
       }
 
     }

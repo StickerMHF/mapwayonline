@@ -16,110 +16,83 @@
 			</div>
 		</div>
 		<div id="data_content1" class="data_content data_content1">
-			<el-tabs class="dc_tabs" v-model="activeName">
-				<el-tab-pane class="dc_tab" label="个人数据" name="first">
-          <el-tabs  v-model="active5" class="tabsTwo">
-            <el-tab-pane label='创建' name='f1'>
-              <div class="dc_content" style="height: 230px;">
-              <DataShowModel :child-data="defaultAddData.data" @addItem="addItem"></DataShowModel>
-              </div>
-              <div class="fct1_title">数据列表</div>
-              <DataShowModel :child-data="datadata.create" :show-list="true" @deleteItem="deleteItem" @designItem="designItem"></DataShowModel>
-            </el-tab-pane>
-            <el-tab-pane label='上传' name='f2' class="updata" >
-              <el-tabs label="上传数据" >
-                <div class="dc_createdata">
-                  <el-tabs v-model='activeName4' class='getDataWays tabsTwo'>
-                    <el-tab-pane label='shapefile' name='w3'>
-                      <shapefile-box v-on:refreshdata='gotab' ></shapefile-box>
-                    </el-tab-pane>
-                    <el-tab-pane label='上传Excel' name='w2'>
-                      <excelfile-box v-on:refreshdata='gotab'></excelfile-box>
-                    </el-tab-pane>
-                  </el-tabs>
-                </div>
-              </el-tabs>
-            </el-tab-pane>
-            <el-tab-pane label='在线' name='f3' class="updata">
-              <el-tabs label="在线数据">
-                <div class="dc_createdata">
-                  <el-tabs v-model='activeName4' class='getDataWays tabsTwo'>
-                    <el-tab-pane label='ArcGisServer' name='w1' >
-                      <ags-box v-on:refreshdata='gotab'></ags-box>
-                    </el-tab-pane>
-                    <el-tab-pane label='MapWayServer' name='w3' >
-                      <mws-box v-on:refreshdata='gotab'></mws-box>
-                    </el-tab-pane>
-                  </el-tabs>
-                </div>
-              </el-tabs>
-            </el-tab-pane>
-          </el-tabs>
-        </el-tab-pane>
-				<!--<el-tab-pane label="最近编辑" name="second">-->
-					<!--<DataShowModel :child-data="datadata.recently" :show-list="true" @deleteItem="deleteItem" @designItem="designItem"></DataShowModel>-->
-				<!--</el-tab-pane>-->
-        <el-tab-pane label="公共数据" name="third">
-          <div class="dc_commondata">
-            <DataShowModel :child-data="datadata.common"></DataShowModel>
-            <!--<el-tabs v-model='activeName0' class='getDataWays'>-->
-              <!--<el-tab-pane label='公共数据' name='w1'>-->
-                <!--<DataShowModel :child-data="datadata.common"></DataShowModel>-->
-              <!--</el-tab-pane>-->
-              <!--<el-tab-pane label='第三方数据' name='w2'>-->
-              <!--</el-tab-pane>-->
-              <!--<el-tab-pane label='数据库' name='w3'>-->
-
-              <!--</el-tab-pane>-->
-              <!--<el-tab-pane label='分享数据' name='w3'>-->
-
-              <!--</el-tab-pane>-->
-              <!--&lt;!&ndash;数据库方式正在开发中。。。&ndash;&gt;-->
-              <!--&lt;!&ndash; <el-tab-pane label='数据库' name='w4'>-->
-                              <!--<datalibrary-box></datalibrary-box>-->
-                        <!--</el-tab-pane> &ndash;&gt;-->
-
-            <!--</el-tabs>-->
-          </div>
-        </el-tab-pane>
-
-				<!--<el-tab-pane label="已分享数据" name="fourth">-->
-					<!--<div class="dc_commondata">-->
-            <!--<DataShowModel :child-data="datadata.common"></DataShowModel>-->
-						<!--&lt;!&ndash;<el-tabs v-model='activeName0' class='getDataWays'>&ndash;&gt;-->
-							<!--&lt;!&ndash;<el-tab-pane label='公共数据' name='w1'>&ndash;&gt;-->
-								<!--&lt;!&ndash;<DataShowModel :child-data="datadata.common"></DataShowModel>&ndash;&gt;-->
-							<!--&lt;!&ndash;</el-tab-pane>&ndash;&gt;-->
-							<!--&lt;!&ndash;<el-tab-pane label='第三方数据' name='w2'>&ndash;&gt;-->
-							<!--&lt;!&ndash;</el-tab-pane>&ndash;&gt;-->
-							<!--&lt;!&ndash;<el-tab-pane label='数据库' name='w3'>&ndash;&gt;-->
-
-							<!--&lt;!&ndash;</el-tab-pane>&ndash;&gt;-->
-							<!--&lt;!&ndash;<el-tab-pane label='分享数据' name='w3'>&ndash;&gt;-->
-
-							<!--&lt;!&ndash;</el-tab-pane>&ndash;&gt;-->
-							<!--&lt;!&ndash;&lt;!&ndash;数据库方式正在开发中。。。&ndash;&gt;&ndash;&gt;-->
-							<!--&lt;!&ndash;&lt;!&ndash; <el-tab-pane label='数据库' name='w4'>&ndash;&gt;-->
-				              <!--&lt;!&ndash;<datalibrary-box></datalibrary-box>&ndash;&gt;-->
-				        <!--&lt;!&ndash;</el-tab-pane> &ndash;&gt;&ndash;&gt;-->
-
-						<!--&lt;!&ndash;</el-tabs>&ndash;&gt;-->
-					<!--</div>-->
-				<!--</el-tab-pane>-->
-
-				<el-tab-pane label="数据模型" name="fifth">
-          <div class="fct1_title">创建新的数据</div>
-          <DataShowModel :child-data="defaultAddData.data" @addItem="addModelItem" ></DataShowModel>
-          <div class="fct1_title">最新创建的数据</div>
-          <div class="dc_content" style="height: 230px;">
-            <DataShowModel :child-data="myModeldata.recently" @addItem="addModelItem" @deleteModel="deleteModel" @editItem="designModel" ></DataShowModel>
-          </div>
-
+			<el-tabs class="dc_tabs" v-model="activeName" @tab-click="handleClick">
+				<el-tab-pane class="dc_tab" label="数据列表" name="first">
+					<div class="dc_content" style="height: 230px;;">
+						<DataShowModel :child-data="defaultAddData.data" @addItem="addItem"></DataShowModel>
+					</div>
+					<div class="fct1_title">最新创建的数据</div>
+					<DataShowModel :child-data="datadata.create" :show-list="true" @deleteItem="deleteItem" @designItem="designItem"></DataShowModel>
 				</el-tab-pane>
+				<el-tab-pane label="最近编辑" name="second">
+					<DataShowModel :child-data="datadata.recently" :show-list="true" @deleteItem="deleteItem" @designItem="designItem"></DataShowModel>
+				</el-tab-pane>
+				<el-tab-pane label="共享数据" name="fourth">
+					<div class="dc_commondata">
+						<el-tabs v-model='activeName0' class='getDataWays'>
+							<el-tab-pane label='公共数据' name='w1'>
+								<DataShowModel :child-data="datadata.common"></DataShowModel>
+							</el-tab-pane>
+							<el-tab-pane label='第三方数据' name='w2'>
 
+							</el-tab-pane>
+							<el-tab-pane label='数据库' name='w3'>
+
+							</el-tab-pane>
+							<el-tab-pane label='分享数据' name='w3'>
+
+							</el-tab-pane>
+							<!--数据库方式正在开发中。。。-->
+							<!-- <el-tab-pane label='数据库' name='w4'>
+				              <datalibrary-box></datalibrary-box>
+				        </el-tab-pane> -->
+
+						</el-tabs>
+					</div>
+				</el-tab-pane>
+				<el-tab-pane label="数据模型" name="fifth">
+					<div class="dc_createdata">
+						<el-tabs v-model='activeName3' class='getDataWays'>
+							<el-tab-pane label='我的模型' name='f1'>
+								<div class="dc_content" style="height: 230px;;">
+									<DataShowModel :child-data="defaultAddData.data" @addItem="addModelItem"></DataShowModel>
+								</div>
+							</el-tab-pane>
+							<el-tab-pane label='新建模型' name='f2'>
+
+							</el-tab-pane>
+							<el-tab-pane label='共享模型' name='f3'>
+
+							</el-tab-pane>
+						</el-tabs>
+					</div>
+				</el-tab-pane>
+				<el-tab-pane label="上传数据" name="third">
+					<div class="dc_createdata">
+						<el-tabs v-model='activeName2' class='getDataWays'>
+							<el-tab-pane label='MapWayServer' name='w1'>
+								<mws-box v-on:refreshdata='gotab'></mws-box>
+							</el-tab-pane>
+							<el-tab-pane label='上传Excel' name='w2'>
+								<excelfile-box v-on:refreshdata='gotab'></excelfile-box>
+							</el-tab-pane>
+							<el-tab-pane label='shapefile' name='w3'>
+								<shapefile-box v-on:refreshdata='gotab'></shapefile-box>
+							</el-tab-pane>
+							<!--数据库方式正在开发中。。。-->
+							<!-- <el-tab-pane label='数据库' name='w4'>
+				              <datalibrary-box></datalibrary-box>
+				        </el-tab-pane> -->
+							<el-tab-pane label='自定义数据' name='w5'>
+								<customdata-box v-on:refreshdata='gotab'></customdata-box>
+							</el-tab-pane>
+						</el-tabs>
+					</div>
+				</el-tab-pane>
 
 			</el-tabs>
 		</div>
+
 	</div>
 
 </template>
@@ -132,7 +105,6 @@
 	import customdataBox from './dataset/customdataBox.vue';
 	import datalibraryBox from './dataset/datalibrarybox.vue';
 	import mwsBox from './dataset/mwsdatabox.vue';
-	import agsBox from './dataset/agsdatabox.vue';
 
 	export default {
 		name: 'data-index',
@@ -143,8 +115,7 @@
 			excelfileBox,
 			customdataBox,
 			datalibraryBox,
-			mwsBox,
-			agsBox,
+			mwsBox
 		},
 		data() {
 			return {
@@ -155,8 +126,6 @@
 				activeName0: "w1",
 				activeName2: 'w1',
 				activeName3: "f1",
-				activeName4: "w3",
-				active5: "f1",
 				dialogdata: {
 					title: "创建数据表",
 					description: "新建我自己的数据库表"
@@ -165,7 +134,7 @@
 					data: {
 						data: [{
 							formid: 1,
-							name: "创建数据表",
+							name: "空白表单",
 							type: 27,
 							img: "/static/Index/img/newform.png",
 							url: "/formDesign/init/new",
@@ -176,19 +145,6 @@
 						}]
 					}
 				},
-        myModeldata:{
-            recently:{
-              url: {
-                preview: "/datacenter/init/",
-                edit: "/datacenter/init/edit/",
-                share: "/datacenter/init/",
-                delete: "",
-                move: ""
-              },
-              data: []
-            }
-
-        },
 				listdata: {
 					title: "未命名文件夹",
 					data: {
@@ -255,8 +211,7 @@
 
 			},
 			handleClick(tab, event) {
-//				console.log(tab, event.target);
-//				debugger
+				console.log(tab, event);
 			},
 
 			getByTreepid(node, store, data, childids) {
@@ -264,53 +219,49 @@
 				document.getElementById("data_content2").style.display = "block";
 				this.listdata.title = data.name;
 				if(data.id == "999") {
-					var url = this.$http.defaults.baseURL + 'datacenter/datas';
+					var url = this.$http.defaults.baseURL + 'TBUSER000001/datacenter/datas';
 					this.getDataByUrl(url, 28);
 				} else {
-					var url = this.$http.defaults.baseURL + 'datacenter/datas/folder/' + data.id;
+					var url = this.$http.defaults.baseURL + 'TBUSER000001/datacenter/datas/folder/' + data.id;
 					this.getDataByUrl(url, 28);
 				}
 				//this.getDataByUrl(url, 28);
-
 			},
 			getDataByCondition(type, name) {
 				this.listdata.title = name;
-//				document.getElementById("data_content1").style.display = "none";
-//				document.getElementById("data_content2").style.display = "block";
-//				if(type == 0) { //我的数据
-//					var url = this.$http.defaults.baseURL + 'datacenter/datas';
-//					this.getDataByUrl(url, 28);
-//				} else if(type == 1) { //公共数据
-//					var url = this.$http.defaults.baseURL + 'commondata/management';
-//					this.getDataByUrl(url, 29);
-//				} else if(type == 2) { //已分享的表单
-//					var url = this.$http.defaults.baseURL + 'datacenter/datas/share';
-//					this.getDataByUrl(url, 28);
-//				} else if(type == 3){//数据模型
-//          var url = this.$http.defaults.baseURL + 'datamodel';
-//          this.getDataByUrl(url, 31);
-//        }
+				document.getElementById("data_content1").style.display = "none";
+				document.getElementById("data_content2").style.display = "block";
+				if(type == 0) { //我的数据
+					var url = this.$http.defaults.baseURL + 'TBUSER000001/datacenter/datas';
+					this.getDataByUrl(url, 28);
+				} else if(type == 1) { //公共数据
+					var url = this.$http.defaults.baseURL + 'commondata/management';
+					this.getDataByUrl(url, 29);
+				} else if(type == 2) { //已分享的表单
+					var url = this.$http.defaults.baseURL + 'TBUSER000001/datacenter/datas/share';
+					this.getDataByUrl(url, 28);
+				}
 
 			},
 			getDataByUrl(url, type) {
 				var that = this;
 				that.$http.get(url).then((res) => {
-				    debugger
 					if(res.data.result) {
 						var data = [];
-						that.datadata.create.url.preview = "/datacenter/";
-						that.datadata.create.url.edit = "/datacenter/init/";
-						that.datadata.create.url.share = "/datacenter/init/";
-						that.datadata.create.url.delete = this.$http.defaults.baseURL + "datacenter/datas/delete/";
-						that.datadata.create.url.move = "";
 
-						that.datadata.create.data = res.data.data;
+						that.listdata.data.url.preview = "/datacenter/";
+						that.listdata.data.url.edit = "/datacenter/init/";
+						that.listdata.data.url.share = "/datacenter/init/";
+						that.listdata.data.url.delete = this.$http.defaults.baseURL + "TBUSER000001/datacenter/datas/delete/";
+						that.listdata.data.url.move = "";
+
+						that.listdata.data.data = res.data.data;
 					}
 				});
 			},
 			deleteItem(id) {
 				var that = this;
-				var url = this.$http.defaults.baseURL + "datacenter/datas/delete/" + id;
+				var url = this.$http.defaults.baseURL + "TBUSER000001/datacenter/datas/delete/" + id;
 				that.$http.get(url).then((res) => {
 					if(res.data.result) {
 						this.$message({
@@ -326,60 +277,22 @@
 					}
 				});
 			},
-      deleteModel(id){
-
-        var that = this;
-        var url = "datamodel/" + id + "/daletedatamodel";
-        that.$http.get(url).then((res) => {
-          if(res.data.result) {
-            this.$message({
-              message: res.data.message,
-              type: 'success'
-            });
-            this.$bus.$emit("gettreedata");
-            this.init();
-//            this.updateListData(this.listdata.data.data, id);
-            this.updateListData(this.myModeldata.recently.data, id);
-          } else {
-            this.$message.error("删除失败");
-          }
-        });
-      },
-
 			designItem(id) {
-            var dialogdata = {
-              title: "编辑数据表",
-              description: "编辑我的数据表"
-            };
-            var model = {
-              name: "DBTableCreate",
-              data: {
-                tableid: id,
-                type: "update"
-              }
-            };
-              this.$bus.$emit('init_mwdialog', dialogdata, model);
-              this.$bus.$emit('initDBTableCreate', model.data.tableid);
-
-            //this.$emit("designItem", id);
+				var dialogdata = {
+					title: "编辑数据表",
+					description: "编辑我的数据表"
+				};
+				var model = {
+					name: "DBTableCreate",
+					data: {
+						tableid: id,
+						type: "update"
+					}
+				};
+				this.$bus.$emit('init_mwdialog', dialogdata, model);
+				this.$bus.$emit('initDBTableCreate', model.data.tableid);
+				//this.$emit("designItem", id);
 			},
-      designModel(id){
-
-        var dialogdata = {
-          title: "编辑数据模型",
-          description: "编辑我的数据模型"
-      };
-        var model = {
-          name: "DBModelCreate",
-          data: {
-            tableid: id,
-            type: "update"
-          }
-        };
-        this.$bus.$emit('init_mwdialog', dialogdata, model);
-        this.$bus.$emit('initDBModelCreate', model.data.tableid);
-
-      },
 			addItem() {
 				var dialogdata = {
 					title: "创建数据表",
@@ -419,7 +332,7 @@
 			init() {
 				//that.$bus.$emit("gettreedata");
 				var that = this;
-				var url = this.$http.defaults.baseURL + "datacenter/datas/inits";
+				var url = this.$http.defaults.baseURL + "TBUSER000001/datacenter/datas/inits";
 				that.$http.get(url).then((res) => {
 					if(res.data.result) {
 
@@ -430,35 +343,16 @@
 
 					}
 				});
-				var modelUrl="datamodel";
-        that.$http.get(modelUrl).then((res) => {
-          if(res.data.result) {
-
-            that.myModeldata.recently.data = res.data.data;
-          }
-        });
-			},
-
+			}
 		},
 		created() {
 
 		},
 		mounted() {
-			//this.addModelItem();
-
+			this.addModelItem();
 			this.init();
-      var tabHeader=document.getElementsByClassName("el-tabs__header");
-      tabHeader[0].style.display="none";
-      var tabLine=document.getElementsByClassName("el-tabs__active-bar");
-      tabLine[5].style.backgroundColor="transparent";
-      tabLine[3].style.backgroundColor="transparent";
-      var tabHeaderBg=document.getElementsByClassName("el-tabs__header");
-      tabHeaderBg[1].style.paddingTop="15px";
-      tabHeaderBg[1].style.backgroundColor="#fff";
-
 		}
 	}
-
 </script>
 
 <style>
@@ -492,47 +386,29 @@
 	}
 
 	.dc_tabs {
-		/*padding: 20px 0 0 0;*/
-		/*margin: 0 35px;*/
-    /*padding-left:35px;*/
-    background:#eee;
-    height:100%;
+		padding: 40px 0 0 0;
+		margin: 0 35px;
 	}
-  .dc_tab{
-    height:100%;
-  }
+
 	.data_content .el-tabs__active-bar {}
 
 	.data_content .el-tabs__item {
-		/*background: #eee;*/
+		background: #eee;
 	}
-.el-tabs__content{
 
-  /*overflow-y: auto !important;*/
-
-}
 	.data_content .el-tabs__item.is-active {
-		color: #009688;
-		/*background: #232c32 !important;*/
+		color: #fbfdff;
+		background: #232c32 !important;
 	}
 	/*.data_content .el-tabs__content {
 		margin-top: 30px;
 	}*/
 
-	.data_content1 {
-    background-color: #eee !important;
-  }
+	.data_content1 {}
 
 	.data_content2 {
-		display: none ;
+		display: none;
 	}
-  #data_content1{
-    display:block !important;
-    overflow-y:hidden;
-  }
-  #data_content2{
-    display: none !important;
-  }
 
 	.dct1_title {
 		font-size: 14px;
@@ -550,27 +426,21 @@
 
 	.dc_createdata {
 		text-align: center;
-		/*margin-top: 40px;*/
-    height:100%;
-    margin-top:20px;
-    padding-right:20px;
-    border-radius: 5px;
-	}
-
-	.dc_createdata .el-tabs__item {
-		background: #eee;
-	}
-  .el-tabs__content{
-    height:100% !important;
-  }
-	.dc_createdata .el-tabs__content {
-		border-top: 1px solid #d1dbe5;
 		margin-top: 20px;
 	}
 
+	.dc_createdata .el-tabs__item {
+		background: #f9f9f9;
+	}
+
+	.dc_createdata .el-tabs__content {
+		border-top: 1px solid #d1dbe5;
+		margin-top: 0px;
+	}
+
 	.dc_createdata .el-tabs__item.is-active {
-		color: #009688;
-		background: #eee !important;
+		color: #20a0ff;
+		background: #ffffff !important;
 	}
 
 	.dc_createdata .el-tabs__header {
@@ -583,19 +453,17 @@
 	}
 
 	.dc_commondata .el-tabs__item {
-		background: #eee;
+		background: #f9f9f9;
 	}
-  .el-tabs__content{
-    height:100% !important;
-  }
+
 	.dc_commondata .el-tabs__content {
 		border-top: 1px solid #d1dbe5;
 		margin-top: 0px;
 	}
 
 	.dc_commondata .el-tabs__item.is-active {
-		color: #009688;
-		background: #eee !important;
+		color: #20a0ff;
+		background: #ffffff !important;
 	}
 
 	.dc_commondata .el-tabs__header {
@@ -611,35 +479,4 @@
 		float: left;
 		color: #758697;
 	}
-  .el-tabs__active-bar{
-    background-color: #009688;
-  }
-  /*.el-tabs__content{*/
-    /*background-color: #eee;*/
-  /*}*/
-  .tabsTwo{
-    /*margin-top: 20px;*/
-    /*margin-left: 20px;*/
-    height: 100%;
-  }
-  .el-tabs{
-    height: 100%;
-  }
-  .el-tab-pane{
-    height:100%;
-  }
-  /*.el-tabs__header{*/
-    /*width: 0;*/
-    /*height: 0;*/
-    /*display: none;*/
-  /*}*/
-  .dc_tabs>div{
-    overflow-y: auto !important;
-  }
-  .updata{
-    padding-left:20px;
-  }
-
-
-
 </style>

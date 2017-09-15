@@ -158,33 +158,9 @@
 						</div>
 					</div>
 				</div>
-        <!--我的模型-->
-        <div v-if="item.type==31" class="new-form exchange_form">
-          <div class="myc_img" @mouseenter="handleMousrOver" @mouseleave="handleMousrOut">
-            <div class="myc_img_name">{{item.modeldes}}</div>
-            <!--<img :src="item.img">-->
-            <div class="myf_inst_vo">
-                <el-button type="info" @click="editItem(item)">编辑</el-button>
-              <!--<el-button type="info">移动</el-button>-->
-              <el-button type="info">预览</el-button>
-              <el-button @click="deleteModel(item.id)" type="danger">删除</el-button>
-
-            </div>
-          </div>
-          <div class="myf_text">
-            <p>
-              <a class="detail_model" service_id="124">{{item.modelname}}</a>
-              <span class="myft_type"></span>
-            </p>
-            <div class="myft_author">
-              <span class="myft_au">{{item.id}}</span>
-              <span class="myft_date">{{item.createdate}}</span>
-            </div>
-          </div>
-        </div>
 			</div>
 		</div>
-		<div v-else class="dmodel_content dmodel_content2" style="margin:0px; ">
+		<div v-else class="dmodel_content dmodel_content2" style="margin:30px;">
 
 			<el-table :data="childData.data" border style="width: 100%">
 				<el-table-column sortable prop="name" label="名称" min-width="200">
@@ -212,7 +188,9 @@
 						<el-tooltip effect="dark" placement="top" content="删除">
 							<el-button class="fa fa-trash" style="width: 30px;height: 30px;margin: 0 2px;" size="small" type="danger" @click="handleDelete(scope.$index, scope.row)"></el-button>
 						</el-tooltip>
+
 					</template>
+
 				</el-table-column>
 			</el-table>
 		</div>
@@ -258,32 +236,31 @@
 			</div>
 		</el-dialog>
 
-    <!--分享时的模态框-->
-    <div class="tip" v-show="sharebox">
-      <div class="model-bg">
-        <div class="model-box">
-          <div class="model-header">
-            <h3>请选择您需要分享的方式</h3>
-            <span class="close-model" @click="closeShare">X</span>
-          </div>
-          <div class="model-content">
-            <div class="c_top">
-              <el-checkbox v-model="issecret">{{issecret? "加密" : "不加密"}}</el-checkbox>
-            </div>
+		<!--分享时的模态框-->
+			<div class="tip" v-show="sharebox">
+	  			 <div class="model-bg">
+	  			 		<div class="model-box">
+	  			 			<div class="model-header">
+	  			 				<h3>请选择您需要分享的方式</h3>
+	  			 				<span class="close-model" @click="closeShare">X</span>
+	  			 			</div>
+	  			 			<div class="model-content">
+	  			 				<div class="c_top">
+	  			 					<el-checkbox v-model="issecret">{{issecret? "加密" : "不加密"}}</el-checkbox>
+	  			 				</div>
 
-            <div class="c_body" v-show="issecret">
-              <el-input v-model="sharePassword" placeholder="请输入您的分享密码"></el-input>
-            </div>
+	  			 				<div class="c_body" v-show="issecret">
+	  			 					<el-input v-model="sharePassword" placeholder="请输入您的分享密码"></el-input>
+	  			 				</div>
 
-          </div>
-          <div class="model-footer">
-            <el-button @click="closeShare">取消</el-button>
-            <el-button type="primary" @click="goShare">分享</el-button>
-          </div>
-        </div>
-      </div>
-    </div>
-
+	  			 			</div>
+	  			 			<div class="model-footer">
+	  			 				<el-button @click="closeShare">取消</el-button>
+								<el-button type="primary" @click="goshare">分享</el-button>
+	  			 			</div>
+	  			 		</div>
+	  			 </div>
+	  		</div>
 
 
 	</div>
@@ -299,10 +276,10 @@
 		name: 'datamodel',
 		data() {
 			return {
-        shareitem:{},
-        sharePassword:'',
-        issecret:false,
-        sharebox:false,
+				shareitem:{},
+				sharePassword:'',
+				issecret:false,
+				sharebox:false,
 				formPath: '/formDesign/init/',
 				title: "文件夹",
 				activeName: 'first',
@@ -319,7 +296,7 @@
 
 				datalistLoading: false,
 				data_list: null,
-				data_url: 'mapdesign/maps/layers',
+				data_url: '/mapdesign/maps/layers',
 				dataCurrentPage: 1,
 				dataTotal: null,
 				/* 创建地图dialog */
@@ -355,14 +332,15 @@
 				default: function() {
 					return false //这样可以指定默认的值
 				}
+
 			}
 		},
 		methods: {
 			...mapActions([
 				'setNewMapInfo', // 保存下创建新地图的基础信息
 				// 数据列表页，对用户勾选的数据进行id记录    添加， 删除， 重置
-				'addIdChecked', 'removeIdChecked', 'resetIdChecked',
-				'setCurrentId', 'setEditLog',
+				'addDataIdChecked', 'removeDataIdChecked', 'resetDataIdChecked',
+				'setCurrentDataId', 'setEditLog',
 			]),
 
 			/* 创建地图选择时选择数据 */
@@ -373,8 +351,8 @@
 			/* 用户数据列表展示 */
 			showDataView() {
 				this.isDataView = true;
-				this.resetIdChecked();
-				console.log(this.render.idChecked)
+				this.resetDataIdChecked();
+				console.log(this.render.dataIdChecked)
 				this.fetchData();
 			},
 
@@ -383,7 +361,7 @@
 				this.datalistLoading = true;
 
 				// var url = this.getLogin.userName + this.data_url; TODO
-				var url = this.data_url;
+				var url = 'TBUSER000001' + this.data_url;
 				this.$http.get(url).then((res) => {
 					if(!res.data.data) {
 						console.log('获取用户数据集: ' + res.data.data);
@@ -412,17 +390,17 @@
 			dataClick(item) {
 				item.checked = !item.checked;
 				if(item.checked) {
-					this.addIdChecked(item.layerid);
+					this.addDataIdChecked(item.layerid);
 				} else {
-					this.removeIdChecked(item.layerid);
+					this.removeDataIdChecked(item.layerid);
 				}
-				/*console.log(this.render.idChecked);
+				/*console.log(this.render.dataIdChecked);
 				 debugger*/
 			},
 
 			/* 选择好数据后跳至地图渲染页面 */
 			toRender() {
-				if(this.render.idChecked.length === 0) {
+				if(this.render.dataIdChecked.length === 0) {
 					this.$message({
 						showClose: true,
 						message: '请先选择图层',
@@ -446,16 +424,16 @@
 			},
 			/* 跳转至geo数据编辑界面 */
 			toEdit(id) {
-				this.setCurrentId(id); // 重置用户选择的数据id
+				this.setCurrentDataId(id); // 重置用户选择的数据id
 				this.setEditLog(false); // 重置编辑界面右侧条的伸缩
 				this.$router.push('/datacenter/edit/' + id);
 			},
 			deleteData() {
 
+
 			},
 
 			shareItem(item){
-
 				// 分享表单部分
 				console.log("share",item);
 				if(item.isshare){
@@ -465,23 +443,32 @@
 				          type: 'warning'
 				        }).then(() => {
 				           // 跳转到。。。
-                  // 判断是哪一种分享 跳转不同的路由
-                  this.$emit('lookShare',item.uuid);
+
 				        }).catch(() => {});
 				}else{
 					this.sharebox = true;
-          this.shareitem = item;
+					this.shareitem = item;
 				}
 			},
-			goShare(){
-        this.$emit('goShare',{
-          id :this.shareitem.id ,
-          issecret:this.issecret ,
-          code:this.sharePassword
-        });
-        this.sharebox = false;
-			},
+			goshare(){
+				var url = "form/share",
+					data = {
+						userid :'TBUSER000002' , // 这里的userid 是登录之后的用户
+						formid :this.shareitem.id ,
+						issecret:this.issecret ,
+						code:this.sharePassword
+					},
+			 		prams = encodeURI("data="+JSON.stringify(data));
+				console.log(prams);
 
+				this.$http.post(url,prams)
+		      	.then((res) => {
+		      		console.log(res);
+
+		      	}).catch((error) => {
+		      		console.log("出错了",error);
+		      	});
+			},
 			closeShare(){
 				this.sharebox = false;
 				this.sharePassword = '';
@@ -509,57 +496,29 @@
 			deleteItem(id) {
 				this.$emit("deleteItem", id);
 			},
-      deleteModel(id) {
-        this.$emit("deleteModel", id);
-      },
 			designItem(id) {
 				this.$emit("designItem", id);
 			},
-
 			editItem(id) {
 				this.$emit("editItem", id);
-
 			},
 			previewItem(item) {
 				this.$emit("previewItem", item);
 			},
 			addItem() {
 				this.$emit("addItem");
-
-				console.log(this.$router)
-
-        if(this.$route.name=="formDesign"){
-          this.$bus.$emit('hide_mwdialog');
-        }else if(this.$route.name=="mapDesign"){
-          this.$bus.$emit('hide_mwdialog');
-        }else{
-          this.$bus.$emit('show_mwdialog');
-        }
-
 			}
 		},
 		created() {
 			//console.log(this.childData);
 		},
 		mounted() {
-//      var newForm=document.getElementsByClassName("new-form");
-//		    for(var i=0;i<newForm.length;i++){
-//          (function(i) {
-//            newForm[i].addEventListener("mouseover", function () {
-//              setTimeout(function () {
-//                newForm[i].style.boxShadow = "0px 0px  10px 5px #aaa";
-//              }, 3000)
-//            })
-//          }(i))
-//        }
-
-
 			console.log(this.childData);
 		}
 	}
 </script>
 
-<style lang="less" scoped>
+<style lang="less">
 	@base_img: '../../../static/Index/img/';
 
 .model-bg{
@@ -628,11 +587,9 @@
 		font-size: 14px;
 		margin-top: 10px;
 		float: left;
-    box-sizing: border-box;
 		&:hover {
-			border: 1px solid #009688;
-			/*box-shadow: 0px 0px 5px rgba(0, 0, 0, .5);*/
-       box-shadow :0px 0px  10px 5px #aaa;
+			border: 1px solid #20a0ff;
+			box-shadow: 0px 0px 5px rgba(0, 0, 0, .5);
 			cursor: pointer;
 		}
 		img {
@@ -649,15 +606,9 @@
 	.add_dashboard {
 		color: #666;
 		display: block;
-		padding: 87px 0;
-    background: #fff;
-    width:233px;
-    box-sizing: border-box;
+		padding: 50px 0;
 	}
-  .add_dashboard img{
-    width:14% !important;
-    height:100% !important;
-  }
+
 	.exf_img {
 		width: 100%;
 		position: relative;
@@ -693,7 +644,6 @@
 		font-size: 35px;
 		font-weight: bold;
 		color: white;
-    overflow: hidden;
 	}
 
 	.myf_img img {
@@ -853,9 +803,8 @@
 	}
 
 	.dmodel_title {
-		width: 4%;
-    height:1200px;
-		float: right;
+		width: 100%;
+		float: left;
 	}
 
 	.datamodel {
@@ -943,8 +892,5 @@
 	.data-item:hover {
 		border: 1px solid #66CCFF;
 	}
-  .dmodel_content2{
-    width:96%;
-  }
 	/* 创建地图弹出框结束 */
 </style>

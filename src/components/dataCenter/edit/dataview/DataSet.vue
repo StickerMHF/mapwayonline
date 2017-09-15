@@ -59,7 +59,7 @@
     },
     methods: {
       ...mapActions([
-        'resetCurrentId', 'setSubmitFeature'
+        'resetCurrentDataId', 'setSubmitFeature'
       ]),
       reset () {
         this.attributes = {};
@@ -131,10 +131,10 @@
         submitFeature.attributes = this.attributes;
         delete submitFeature.geometry.spatialReference;
 
-        var layerid = this.edit.currentId, editType = this.edit.editType, url, layerid = 'TBDATA000002';
+        var layerid = this.edit.currentDataId, editType = this.edit.editType, url, layerid = 'TBDATA000002';
         switch (editType) {
-          case 'add': url = 'mapdesign/maps/layers/' + layerid + '/features/add'; break;
-          case 'update': url = 'mapdesign/maps/layers/' + layerid + '/features/update'; break;
+          case 'add': url = 'TBUSER000001/mapdesign/maps/layers/' + layerid + '/features/add'; break;
+          case 'update': url = 'TBUSER000001/mapdesign/maps/layers/' + layerid + '/features/update'; break;
         }
 
         var params = "data=" + JSON.stringify({
@@ -150,7 +150,7 @@
           }
           console.log('res', res);
 
-          this.resetCurrentId();
+          this.resetCurrentDataId();
           this.setSubmitFeature({});
           this.$bus.emit('data-view-refresh', '保存成功!');
         }).catch(err => {

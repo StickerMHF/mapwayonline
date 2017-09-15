@@ -374,6 +374,8 @@
 				}
 			},
 			handleUp: function(e) {
+        if(e.stopPropagation) e.stopPropagation()
+        if(e.preventDefault) e.preventDefault()
 				this.handle = null
 				if(this.resizing) {
 					this.resizing = false
@@ -421,60 +423,59 @@
 		width: 10px;
 		height: 10px;
 		font-size: 1px;
-		background: #FFF;
+		background: #EEE;
 		border: 1px solid #28B779;
-    border-radius: 50%;
 	}
 
 	.handle-tl {
-		top: -5px;
-		left: -5px;
+		top: -10px;
+		left: -10px;
 		cursor: nw-resize;
 	}
 
 	.handle-tm {
-		top: -5px;
+		top: -10px;
 		left: 50%;
 		margin-left: -5px;
 		cursor: n-resize;
 	}
 
 	.handle-tr {
-		top: -5px;
-		right: -5px;
+		top: -10px;
+		right: -10px;
 		cursor: ne-resize;
 	}
 
 	.handle-ml {
 		top: 50%;
 		margin-top: -5px;
-		left: -5px;
+		left: -10px;
 		cursor: w-resize;
 	}
 
 	.handle-mr {
 		top: 50%;
 		margin-top: -5px;
-		right: -5px;
+		right: -10px;
 		cursor: e-resize;
 	}
 
 	.handle-bl {
-		bottom: -5px;
-		left: -5px;
+		bottom: -10px;
+		left: -10px;
 		cursor: sw-resize;
 	}
 
 	.handle-bm {
-		bottom: -5px;
+		bottom: -10px;
 		left: 50%;
 		margin-left: -5px;
 		cursor: s-resize;
 	}
 
 	.handle-br {
-		bottom: -5px;
-		right: -5px;
+		bottom: -10px;
+		right: -10px;
 		cursor: se-resize;
 	}
 
@@ -483,15 +484,15 @@
 		width: 14px;
 		height: 14px;
 		line-height: 14px;
-		font-size: 12px;
+		font-size: 14px;
 		text-align: center;
 		position: absolute;
 		top: 0;
-		right: -17px;
+		right: -15px;
 		box-sizing: border-box;
+		border: 1px solid #EEEEEE;
 		cursor: pointer;
-		color: #FFF;
-    background-color: #009688;
+		color: #000000;
 	}
 
 </style>

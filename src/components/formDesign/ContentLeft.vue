@@ -1,27 +1,26 @@
 <template>
 	<div id="content-left">
 		<div class="cl_head clearfix">
-			<!--<h2 @click="backToFormList">表单</h2>-->
-			<!--<div class="cl_header_menu dropdown">-->
-				<!--<i class="fa fa-plus-circle"></i>-->
-			<!--</div>-->
+			<h2 @click="backToFormList">表单</h2>
+			<div class="cl_header_menu dropdown">
+				<i class="fa fa-plus-circle"></i>
+			</div>
 		</div>
 		<div class="folder_box">
 			<div class="tree" @click="getFormByCondition(0,'我的表单')">
-				<!--<ul>-->
-					<!--<li>-->
-						<!--<span class="view_allform">-->
-							<!--<div></div>-->
-							<!--<p>我的表单</p>-->
-							<!--<font class="form_count">({{formcount}})</font>-->
-						<!--</span>-->
-					<!--</li>-->
-				<!--</ul>-->
-        <TreeFolder @getByTreeId="getByTree" @updateTreeList="updateTreeList"></TreeFolder>
+				<ul>
+					<li>
+						<span class="view_allform">
+							<div></div>
+							<p>我的表单</p>
+							<font class="form_count">({{formcount}})</font>
+						</span>
+					</li>
+				</ul>
 			</div>
-			<!--<div class="folder_list">-->
-				<!--<TreeFolder @getByTreeId="getByTree" @updateTreeList="updateTreeList"></TreeFolder>-->
-			<!--</div>-->
+			<div class="folder_list">
+				<TreeFolder @getByTreeId="getByTree" @updateTreeList="updateTreeList"></TreeFolder>
+			</div>
 			<!--<div class="tree" @click="getFormByCondition(1,'已购买的表单')">
 				<ul>
 					<li>
@@ -32,7 +31,7 @@
 					</li>
 				</ul>
 			</div>-->
-			<div class="tree shared" @click="getFormByCondition(2,'已分享的表单')">
+			<div class="tree" @click="getFormByCondition(2,'已分享的表单')">
 				<ul>
 					<li>
 						<span class="view_allform">
@@ -89,7 +88,7 @@
 					"subitem": tdata
 				});
 
-				var url = 'formdesign/folder/update';
+				var url = this.$http.defaults.baseURL + 'TBUSER000001/formdesign/folder/update';
 				that.$http.post(url, params).then((r) => {
 					if(r.data.result) {
 						this.$message({
@@ -108,7 +107,7 @@
 			},
 			gettree() {
 				var that = this;
-				var url =  'formdesign/folder';
+				var url = this.$http.defaults.baseURL + 'TBUSER000001/formdesign/folder';
 				that.$http.get(url).then((r) => {
 					that.formcount = r.data.formcount;
 					if(r.data.treedata.length == 0) {
@@ -127,26 +126,6 @@
 				});
 			},
 			getFormByCondition(type, name) {
-
-        if(name=="已分享的表单"){
-          var shared=document.getElementsByClassName("shared")[0];
-          shared.style.backgroundColor="#009688";
-          shared.style.borderRadius="4px";
-          var sharedFont=document.getElementsByClassName("view_allform")[0];
-          sharedFont.style.color="#fff";
-          var treeNname =document.getElementsByClassName("treename");
-          for(var i=0;i<treeNname.length;i++){
-            treeNname[i].style.color="#5a5a5a";
-          }
-          var nodeContent =document.getElementsByClassName("el-tree-node__content");
-          for(var i=0;i<nodeContent.length;i++){
-            nodeContent[i].style.background="#fff";
-          }
-          var nodeContent2 =document.getElementsByClassName("el-tree-node__children");
-          for(var i=0;i<nodeContent2.length;i++){
-            nodeContent2[i].style.background="#fff";
-          }
-        }
 				this.$emit("getFormByCondition", type, name);
 			}
 		},
@@ -169,11 +148,10 @@
 		top: 0;
 		bottom: 0;
 		overflow-y: auto;
-		background: #fff !important;
+		background: #f9f9f9;
 		border-right: 1px solid #e5e9ed;
-    z-index:999;
 	}
-
+	
 	.clearfix:after {
 		display: block;
 		clear: both;
@@ -182,14 +160,14 @@
 		overflow: hidden;
 		content: ".";
 	}
-
+	
 	.cl_head {
 		padding: 20px 18px 19px 18px;
 		line-height: 22px;
 		right: 0;
 		left: 0;
 	}
-
+	
 	.cl_head h2 {
 		float: left;
 		font-size: 14px;
@@ -201,27 +179,27 @@
 		cursor: pointer;
 		min-width: 100px;
 	}
-
+	
 	.cl_header_menu {
 		float: right;
 		position: relative;
 		line-height: 16px;
 	}
-
+	
 	.cl_header_menu i {
 		font-size: 14px;
 		line-height: 22px;
 		color: #2093ef;
 	}
-
+	
 	.cl_header_menu i:hover {
 		cursor: pointer;
 	}
-
+	
 	.view_allform {
 		text-align: left;
 	}
-
+	
 	.tree {
 		background: transparent;
 		border: none;
@@ -229,7 +207,7 @@
 		box-shadow: none;
 		-webkit-box-shadow: none;
 	}
-
+	
 	.tree li {
 		list-style-type: none;
 		margin: 0;
@@ -238,14 +216,12 @@
 		line-height: 32px;
 		color: #333;
 	}
-
+	
 	.tree li span i {
 		margin-right: 5px;
 		color: #ccc;
 	}
-  .tree li span{
-    font-size: 14px !important;
-  }
+	
 	.tree li span {
 		padding: 3px 35px 3px 12px;
 		text-decoration: none;
@@ -257,16 +233,16 @@
 		text-overflow: ellipsis;
 		font-size: 12px;
 	}
-
+	
 	.tree:hover {
 		background: #E4E8F1;
 		cursor: pointer;
 	}
-
+	
 	.folder_list {
 		color: #5a5a5a;
 	}
-
+	
 	.view_allform div {
 		width: 16px;
 		height: 16px;
@@ -277,14 +253,11 @@
 		box-sizing: border-box;
 		margin-top: 8px;
 	}
-
+	
 	.view_allform p {
 		margin: 0;
 		padding: 0;
 		float: left;
 		margin-left: 8px;
 	}
-  .folder_box{
-    padding:0 10px;
-  }
 </style>

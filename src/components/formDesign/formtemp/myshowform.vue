@@ -1,15 +1,21 @@
 <template>
-	<div id="main">
-		首页内容
+	<div id="myshowform">
 		
 		
-	
+		
+		
+		
+		
+		
+		
+		
+		
 	</div>
 </template>
 
 <script>
 	export default {
-		name:'main',
+		name:'myshowform',
 		components:{},
 		data(){
 			return {

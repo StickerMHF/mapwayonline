@@ -25,8 +25,16 @@
 
       </el-tab-pane>
       <el-tab-pane label='新增数据' name='getDataSets' class='getDataSets'>
+
+        <!--<div class="tips" >
+          <div class="headerIcon">
+            <i class="el-icon-upload"></i>
+          </div>
+          <h2 style="font-weight: 400;">连接数据集</h2>
+          <p style="color: #979ea1;">从外部服务连接数据集或上传数据文件</p>
+        </div>-->
         <el-tabs v-model='activeName2'   class='getDataWays'  style="margin-top: 30px;">
-          <el-tab-pane label='MapWayServer' name='w1' class="mapwayServer">
+          <el-tab-pane label='MapWayServer' name='w1' >
             <mws-box v-on:refreshdata = 'gotab'></mws-box>
           </el-tab-pane>
           <el-tab-pane label='上传Excel' name='w2'>
@@ -35,10 +43,16 @@
           <el-tab-pane label='shapefile' name='w3'>
             <shapefile-box v-on:refreshdata = 'gotab'></shapefile-box>
           </el-tab-pane>
+          <!--数据库方式正在开发中。。。-->
+          <!-- <el-tab-pane label='数据库' name='w4'>
+              <datalibrary-box></datalibrary-box>
+          </el-tab-pane> -->
           <el-tab-pane label='自定义数据' name='w5'>
             <customdata-box v-on:refreshdata = 'gotab'></customdata-box>
           </el-tab-pane>
         </el-tabs>
+
+
       </el-tab-pane>
 
     </el-tabs>
@@ -63,7 +77,7 @@
     data () {
       return {
         data_list: null,
-        data_url: 'datacenter/datas',
+        data_url: '/datacenter/datas',
         activeName: 'myDataSets',
         activeName2: 'w1',
         currentPage:1,
@@ -80,7 +94,7 @@
     },
     methods:{
       ...mapActions([
-        'setCurrentId', 'setEditLog',
+        'setCurrentDataId', 'setEditLog',
       ]),
       handleCurrentChange(val){
         this.currentPage = val;
@@ -93,7 +107,7 @@
       fetchData () {
         // 获取用户数据集
         //var url = this.login.userName + this.data_url;
-        var url = this.data_url;
+        var url = 'TBUSER000001' + this.data_url;
         this.$http.get(url).then((res) => {
           if (!res.data.data) {
             console.log('获取用户数据集: ' + res.data.data);
@@ -106,18 +120,11 @@
 
       /* 跳转至geo数据编辑界面 */
       toEdit (id) {
-        this.setCurrentId(id); // 重置用户选择的数据id
+        this.setCurrentDataId(id); // 重置用户选择的数据id
         this.setEditLog(false); // 重置编辑界面右侧条的伸缩
         this.$router.push('/datacenter/' + id + '/edit');
       },
-
-    },
-    mounted() {
-//        var tabThree=document.getElementsByClassName("is-active");
-//        tabThree[2].style.background="#009688 !important";
-//        tabThree[2].style.color="#fff";
-//        tabThree[2].style.bordeRadius="7px";
-    },
+    }
   }
 </script>
 
@@ -191,8 +198,5 @@
   }
   .dataItem:hover{
     border:1px solid #66CCFF;
-  }
-  .mapwayServer{
-
   }
 </style>

@@ -1,43 +1,151 @@
 <template>
-	<div id="showformpreview">
-		 <!--展示表单-->
-			<div class="nav" >
+	<div id="formpreview">
+		
+		<div class="nav" >
 			<el-button :plain="true" type="success" @click="goEdit">编辑 </el-button>
 			<el-button :plain="true" type="success" @click = "isSave = true">保存</el-button>
-			<!--<el-button :plain="true" type="success" >发布</el-button>-->
-			<!--<el-button :plain="true" type="success" >分享</el-button>-->
+			<el-button :plain="true" type="success" >发布</el-button>
+			<el-button :plain="true" type="success" >分享</el-button>
 			<!--<el-button @click="getThumbnail" type="success">getThumbnail</el-button>-->
 		</div>
 		<div class="myform " id="myform" style="text-align: center;">
-			
 			<div class="form-header">
-				<h1></h1>
-				<p></p>
+				<h1>{{formConfig.name}}</h1>
+				<p>{{formConfig.description}}</p>
 			</div>
+			<div id="get_img" style="display: inline-block;">
+				
 			
-			<div id="get_showimg" style="display: inline-block;">		
-				<div class="form-main" id="form-main" :style="formConfig.style">
-					<!--解析展示表单的样子-->
+			<div class="form-main" id="form-main" :style="formConfig.style">
+				<form :action="toUrl" method="post">
+					
 					<div class="widget-item" 
 						v-for="(item,index) in widgetList"
 						:key = "item.tagname"
 						:style="{'width':item.layout.w,'height':item.layout.h,'top':item.layout.y,'left':item.layout.x}"
 						style="position: absolute;overflow: hidden;"
 						>
-						<label style="display: flex;height: 100%;width: 100%;">
-							<span style="display: inline-block;margin-right:5px;min-width: 75px;vertical-align: middle;box-sizing: border-box;">
-								{{item.label}}
-							</span>
-							<span
-								style="display: inline-block; padding-left:10px;flex-grow: 1;height: 100%;box-sizing: border-box;"
-								 :style="item.style" v-if="oneData[item.bindFiled]">
-								{{oneData[item.bindFiled]}}
-							</span>	
-						</label>
 						
-					</div>
+						<!--<div :is="item.tagname" 
+							:type='item.type ? item.src : ""' 
+							:style="item.style" 
+							:src="item.src ? item.src : ''"
+							style="width: 100%;height: 100%;box-sizing: border-box;	">
+							<option v-for="o in item.option" v-if="item.option" :key="o" :value="o">{{o}}</option>
+							
+						</div>-->
+						<!--根据类型渲染不同的控件-->	
+						<!--输入框-->
+						<label  v-if="item.tagname === 'input' && item.type === 'text'" style="display: flex;height: 100%;">
+							<span style="display: inline-block;margin-right:5px;min-width: 75px;vertical-align: middle;box-sizing: border-box;">{{item.label}}</span>
+							<div
+								:is="item.tagname" type='text'
+								:style="item.style"	
+								:name = "item.bindFiled"
+								style="flex-grow: 1;height: 100%;box-sizing: border-box;outline: hidden;"
+								>
+							</div>					
+						</label>
+						<!--密码框-->
+						<label  v-if="item.tagname === 'input' && item.type === 'password'"  style="display: flex;height: 100%;">
+							<span style="display: inline-block;margin-right:5px;min-width: 75px;vertical-align: middle;box-sizing: border-box;">{{item.label}}</span>
+							<div
+								:is="item.tagname" type='password'
+								:style="item.style"	
+								:name = "item.bindFiled"
+								style="flex-grow: 1;height: 100%;box-sizing: border-box;outline: hidden;"
+								>
+							</div>						
+						</label>
+						<!--文件上传-->
+						<label  v-if="item.tagname === 'input' && item.type === 'file'" style="display: flex;height: 100%;">
+							<span style="display: inline-block;margin-right:5px;min-width: 75px;vertical-align: middle;box-sizing: border-box;">{{item.label}}</span>
+							<div
+								:is="item.tagname" type='file'
+								:style="item.style"	
+								:name = "item.bindFiled"
+								style="flex-grow: 1;height: 100%;box-sizing: border-box;"
+								>
+							</div>						
+						</label>
+						<!--文本域-->
+						<label  v-if="item.tagname === 'textarea'" style="display: flex;height: 100%;">
+							<span style="display: inline-block;margin-right:5px;min-width: 75px;vertical-align: middle;box-sizing: border-box;">{{item.label}}</span>
+							<div
+								:is="item.tagname"
+								:style="item.style"	
+								:name = "item.bindFiled"
+								style="flex-grow: 1;height: 100%;box-sizing: border-box;"
+								>
+							</div>						
+						</label>
+						<!--下拉选择框-->
+						<label  v-if="item.tagname === 'select'" style="display: flex;height: 100%;">
+							<span style="display: inline-block;margin-right:5px;min-width: 75px;vertical-align: middle;box-sizing: border-box;">{{item.label}}</span>
+							<div
+								:is="item.tagname"
+								:style="item.style"		
+								:name = "item.bindFiled"
+								style="flex-grow: 1;height: 100%;box-sizing: border-box;"
+								>
+								<option v-for="o in item.option" :key = "o" :value="o" >{{o}}</option>
+							</div>						
+						</label>	
+						<!--复选框-->
+						<div v-if="item.tagname === 'input' && item.type === 'checkbox'"
+							 style="height: 100%;width: 100%; display: flex;box-sizing: border-box;">	
+							<span style="display: inline-block;margin-right:5px;min-width: 75px;">{{item.label}}</span>
+							<div :style="item.style" style="flex-grow: 1;height: 100%;box-sizing: border-box;">
+								<label  v-for="o in item.option" :key="o" >
+									<div :is="item.tagname" :value="o" type='checkbox' :name = "item.bindFiled + '[]'"></div>
+									{{o}}
+								</label>
+							</div>
+						</div>
+						<!--单选框-->
+						<div v-if="item.tagname === 'input' && item.type === 'radio'" 
+							 style="height: 100%;width: 100%; display: flex;box-sizing: border-box;">
+							 <span style="display: inline-block;margin-right:5px;min-width: 75px;">{{item.label}}</span>
+							 <div :style="item.style" style="flex-grow: 1;height: 100%;box-sizing: border-box;">
+							 	<label  v-for="o in item.option" :key="o">
+									<div :is="item.tagname" :value="o" type='radio' :name = "item.bindFiled"></div>
+									{{o}}
+								</label>
+							 </div>
+						</div>
+						<!--按钮-->
+						<div
+							:is="item.tagname"
+							:type='item.type'
+							v-if="item.tagname === 'button'" style="width: 100%;height: 100%;" :style="item.style">
+							{{item.label}}
+						</div>
+						<!--标题-->
+						<div :is ="item.tagname" v-if="item.tagname === 'h1'" :style="item.style" style="width: 100%;height: 100%;box-sizing: border-box;"> 
+							{{item.description}}
+						</div>
+						<!--段落-->
+						<div :is="item.tagname" v-if="item.tagname === 'p'" :style="item.style" 
+							style="width: 100%;height: 100%;box-sizing: border-box;">
+							{{item.description}}
+						</div>
+						<!--图片-->
+						<div :is="item.tagname" v-if="item.tagname === 'img'" 
+							:style="item.style" 
+							:src="item.src ? item.src : ''"
+							:alt = "item.description"
+							style="width: 100%;height: 100%;box-sizing: border-box;">
+							
+						</div>
 					
-				</div>
+					
+					
+					
+					</div>
+	
+				</form>
+				
+			</div>
 			</div>
 			<div class="form-footer">
 				
@@ -58,7 +166,8 @@
 						<div v-if="hasNull">还有字段未绑定数据。。。balabala</div>	
 						
 						<p>确定要保存吗？</p>
-					
+							
+						
 					</div>
 					<div class="model-footer">
 						<el-button type="success" @click="saveForm">确定</el-button>
@@ -71,38 +180,29 @@
 			</div>
 		</transition> 
 		
-		
-		
-		
-		
-		
-		
-		
 	</div>
 </template>
 
 <script>
 	import {mapGetters, mapActions } from 'vuex'
 	export default {
-		name:'showformpreview',
-		components:{},
+		name:'formpreview',
 		computed: {
 			...mapGetters([
 				'getForm'
 			])
 		},
+		components:{},
 		data(){
 			return {
 				isSave:false, // 保存数据模态框显示/隐藏
 				hasNull:true, // 过滤保存的数据时的提醒 
 				oneForm:{},
 				thumbnail:'',// base64 的缩略图 
+				toUrl:"", // 数据提交的接口地址
 				formConfig:{},
 				widgetList:[],
-				oid:'new',
-				detail:'new',
-				oneData:{}
-	
+				oid:''
 			}
 		},
 		methods:{
@@ -112,28 +212,16 @@
         	]),
         	goEdit(){
         		this._setCurrent({attr:'isSaveInPreview',value:false});
-        		this._setCurrent({attr:'hasData',value:true});
-        		this.$router.replace({name: 'formdesigninit', params: {id:this.oid,hasEdit:true}});
+        		this.$router.replace({name: 'formdesigninit', params: {id:this.oid}});
         	},
-        	getDataInfo(){ // 获取具体的某一条数据 用于展示
-        		var that = this;
-        		let url = "TBUSER000001/formdesign/forms/"+this.formConfig.tablename +"/byField?field="+this.formConfig.selectfiled +"&value=" + this.detail;
-        		this.$http.get(url).then((res)=>{
-        			if(res.data.result){
-        				console.log('onedata',res);
-			        	that.oneData = res.data.data;
-        			}else{
-        				console.log(res.data.message);
-        			}			      	
-			    }).catch((err)=>{
-			    	console.log(err)
-			    });	
-			
-        	},
-        	getFormInfo(){ // 获取具体的某一个表单样式
-						
+			getFormInfo(){
+				
+				var that = this;
+				console.log(this.oid);
+				
 				var that = this;
 				let url = 'TBUSER000002/formdesign/forms/'+this.oid;
+//					let url = 'http://localhost:80/fz/json.php?f=oneform';
 				this.$http.get(url).then((res)=>{
 			      	console.log('oneform',res);  
 			      	let odata = res.data.data;
@@ -142,40 +230,24 @@
 			      	odata.style = JSON.parse(odata.style);
 			      	
 			      	let data = {widgetList:widgetList,formConfig:odata};	
-			      	that.oneForm = data;
+			      	that.oneform = data;
 			      	console.log('preview',data)	
 			        that.restoreCanvas();
 					that.restoreWidget();
-					that.getDataInfo();
-					
+			        	
 			    }).catch((err)=>{
 			    	console.log(err)
 			    });	
 				
 
 			},
-			cloneObj(obj){  // 深拷贝
-			    var str, newobj = obj.constructor === Array ? [] : {};
-			    if(typeof obj !== 'object'){
-			        return;
-			    } else if(window.JSON){
-			        str = JSON.stringify(obj), //系列化对象
-			        newobj = JSON.parse(str); //还原
-			    } else {
-			        for(var i in obj){
-			            newobj[i] = typeof obj[i] === 'object' ? 
-			            this.cloneObj(obj[i]) : obj[i]; 
-			        }
-			    }
-			    return newobj;
-			},
 			getThumbnail(){
 				var that = this;
 				that.$nextTick(function(){
-					let box = document.getElementById('get_showimg');
+					let box = document.getElementById('get_img');
 					
-					that.$Tools.html2images(box, function(canvas) {
-						var imageData = canvas.toDataURL();
+					this.$Tools.html2images(box, function(canvas) {
+						var imageData = canvas.toDataURL(1);
 						that.$Tools.dealImage(imageData,function(base){ // 压缩 
 							that.thumbnail = base;
 							that._setCanvas({attr:'img',value:base}); // 存储到state中
@@ -268,8 +340,13 @@
 				      		}     		
 				      	).catch((error) => {
 				      		console.log(error);	
-				      	});			
-					}			      
+				      	});
+			      	
+						
+						
+					}
+					
+			      
 				}else{
 					that.$notify.error({
 			          title: '请求失败！',
@@ -281,6 +358,8 @@
 			restoreCanvas(){
 				// 还原布局的画布
 				this.formConfig = this.oneForm.formConfig;
+//				this.toUrl =  'http://192.168.0.217:8082/mapwayonline/TBUSER000001/datacenter/datas/'+this.formConfig.bindTable + "/insert";	
+				this.toUrl = "http://localhost:80/fz/submit.php"
 			},
 			restoreWidget(){
 				// 还原控件
@@ -295,25 +374,44 @@
 					// option字符串 转化为对应的数组
 					if(wl[i].option){
 						wl[i].option = wl[i].option.split(',');
-					}	
-				}	
+					}
+	
+				}
+				
+//				console.log(wl);
+				
+				
+			},
+			cloneObj(obj){  // 深拷贝
+			    var str, newobj = obj.constructor === Array ? [] : {};
+			    if(typeof obj !== 'object'){
+			        return;
+			    } else if(window.JSON){
+			        str = JSON.stringify(obj), //系列化对象
+			        newobj = JSON.parse(str); //还原
+			    } else {
+			        for(var i in obj){
+			            newobj[i] = typeof obj[i] === 'object' ? 
+			            this.cloneObj(obj[i]) : obj[i]; 
+			        }
+			    }
+			    return newobj;
 			},
 		},
 		created(){
-				
-			this.oid = this.$route.params.id;
-			this.detail = this.$route.params.detail;
-			console.log('oid', this.oid,"detail",this.detail);
 			// 在预览之前  清除上一次注册的事件 
 			this.$bus.off('add-widget');
 			this.$bus.off('set-grid');
 			this.getThumbnail();// 生成缩略图 并保存 
-		
-			
+			debugger	
 			if(this.getForm.editState.isSaveInPreview){
 				this.isSave = true;
 				// 需要预览 并生成缩略图保存
+			
 			}
+			
+//			console.log(this.$router)
+			this.oid = this.$route.params.id;
 			
 			if(this.oid === 'new' || this.getForm.editState.hasData){
 				console.log('new');
@@ -326,7 +424,6 @@
 				return ;
 			}else{
 				this.getFormInfo(); // 获取用户指定的某一条form数据
-				
 			}
 			
 			
@@ -337,8 +434,9 @@
 	}
 </script>
 
-<style scoped lang="less">
-#showformpreview{
+<style lang="less" scoped>
+#formpreview{
+	
 	.nav{
 		height: 40px;
 		background-color: rgba(0,0,0,0.5);
@@ -397,6 +495,5 @@
 			
 		}
 	}	
-}
-
+}		
 </style>

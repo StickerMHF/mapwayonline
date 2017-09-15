@@ -20,29 +20,26 @@ var Tools = {
 		var img = new Image();
 		img.src = path;
 		img.onload = function() {
-			//默认按比例压缩
+			//默认按比例压缩    
 			var w = 235,
 				h = 165; //w * (this.height / this.width);//this.height;
-			var quality = 0.7; // 默认图片质量为0.7
+			var quality = 0.7; // 默认图片质量为0.7    
 
-			//生成canvas
+			//生成canvas    
 			var canvas = document.createElement('canvas');
 			var ctx = canvas.getContext('2d');
 
-			// 创建属性节点
+			// 创建属性节点    
 			canvas.setAttribute("width", w);
 			canvas.setAttribute("height", h);
 
 			ctx.drawImage(this, 0, 0, w, h);
-			// quality值越小，所绘制出的图像越模糊
+			// quality值越小，所绘制出的图像越模糊    
 			var base64 = canvas.toDataURL('image/png', quality);
-			// 回调函数返回base64的值
+			// 回调函数返回base64的值    
 			callback(base64);
 		};
 	},
-  getUrlKey(name){
-       return decodeURIComponent((new RegExp('[?|&]'+name+'='+'([^&;]+?)(&|#|;|$)').exec(location.href)||[,""])[1].replace(/\+/g,'%20'))||null;
-   },
 	cloneObj(obj) { // 深拷贝
 		var str, newobj = obj.constructor === Array ? [] : {};
 		if(typeof obj !== 'object') {
@@ -58,7 +55,7 @@ var Tools = {
 		}
 		return newobj;
 	},
-	compileStr(code) { //对字符串进行加密
+	compileStr(code) { //对字符串进行加密         
 		var c = String.fromCharCode(code.charCodeAt(0) + code.length);
 		for(var i = 1; i < code.length; i++) {
 			c += String.fromCharCode(code.charCodeAt(i) + code.charCodeAt(i - 1));

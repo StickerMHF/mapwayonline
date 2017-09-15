@@ -188,8 +188,8 @@
       ]),
 
       initEvent () {
-        this.$bus.on('grade-render', () => {
-          this.gradeRender();
+        this.$bus.on('init-grade', () => {
+          this.initGrade();
         });
 
         /* 对当前图层的渲染保存 */
@@ -202,7 +202,7 @@
           this.notUpdateCurrentStyle();
         });
 
-        this.$bus.on('grade-renderSet-restore', (obj) => {
+        this.$bus.on('grade-renderSet-change', (obj) => {
           this.restoreRenderSet(obj)
         });
 
@@ -212,7 +212,7 @@
       },
 
       destroyEvent () {
-        this.$bus.off('grade-render');
+        this.$bus.off('init-grade');
 
         /* 对当前图层的渲染保存 */
         this.$bus.off('save-current-grade-render');
@@ -220,23 +220,9 @@
         /* 对当前图层的渲染不保存 */
         this.$bus.off('not-save-current-grade-render');
 
-        this.$bus.off('grade-renderSet-restore');
+        this.$bus.off('grade-renderSet-change');
 
         this.$bus.off('reset-grade-data');
-      },
-
-      currentLayerIsAdded () {
-        var currentLayerId = this.render.currentLayerId, layers = this.render.layers, isAdded = false;
-
-        layers.some((item) => {
-          if (item.id === currentLayerId) {
-            isAdded = item.isAdded;
-          }
-        });
-
-        debugger
-
-        return isAdded;
       },
 
       /* 第二次点击分级渲染，将之前分级的配置项覆盖当前data */
@@ -246,7 +232,7 @@
       },
 
       /* 第一次点击分级渲染，需要判断能否分级 */
-      gradeRender () {
+      initGrade () {
         this.reset();
 
         var currentData, datas = this.render.geoJsons;
@@ -301,7 +287,7 @@
         this.setRenderType(null);
         this.reset();
         overLayersStyle.some((item) => {
-          if (currentLayerId === item.id) {
+          if (currentLayerId === item.data_id) {
             this.$bus.$emit('restore-render',item.render)
           }
         });

@@ -42,15 +42,15 @@
       fetchData () {
         this.previewLoading = true;
         var mapid = this.$route.params.mapid;
-        var url = 'mapdesign/maps/'+ mapid;
+        var url = 'TBUSER000001/mapdesign/maps/'+ mapid;
 
         this.$http.get(url).then((res) => {
-          if (!res.data.data.layers) {
-            console.log('ajax 数据结构变化, res.data: ', res.data);
+          if (!res.data.data) {
+            console.log('ajax 有问题, res.data: ', res.data);
             return;
           }
 
-          let layers = JSON.parse(res.data.data.layers);
+          let layers = JSON.parse(res.data.data.data.layers);
           this.hasData = true;  // 显示PreviewMap组件
           this.layersData = layers;
         }).catch((err) => { console.log(err) });

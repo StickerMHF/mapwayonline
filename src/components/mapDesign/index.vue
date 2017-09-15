@@ -8,10 +8,10 @@
         <h3>{{listdata.title}}</h3>
       </div>
       <div class="fc_content" >
-        <DataShowModel :child-data="defaultAddData.data" @deleteItem="deleteItem" @addItem="showCreateDialog"></DataShowModel>
+        <!--<DataShowModel :child-data="defaultAddData.data"></DataShowModel>-->
       </div>
       <div class="fc_content">
-        <DataShowModel :child-data="listdata.data" @lookShare="lookShare"  @goShare="shareItem" @deleteItem="deleteItem" @previewItem="previewMap" @editItem="editMap"></DataShowModel>
+        <DataShowModel :child-data="listdata.data" @deleteItem="deleteItem" @previewItem="previewMap" @editItem="editMap"></DataShowModel>
       </div>
     </div>
     <div id="map_content1" class="map_content map_content1">
@@ -31,7 +31,7 @@
     </div>
 
     <!-- 创建地图选择弹出框dialog -->
-    <el-dialog :title="isDataView ? '添加数据' : '创建地图'" :visible.sync="dialogCreateMapVisible" :close-on-press-escape="false" :close-on-click-modal="false">
+    <el-dialog title="创建地图" :visible.sync="dialogCreateMapVisible" :close-on-press-escape="false" :close-on-click-modal="false">
       <div class="data-map-main">
         <div class="edit-log">
           <el-row :gutter="10" v-if="!isDataView">
@@ -49,20 +49,20 @@
           <div v-if="isDataView">
             <!-- 数据列表 -->
             <div class="data-list" v-loading="datalistLoading">
-              <div :class="[ 'data-container', item.checked ? 'data-checked' : '', item.geotype ? 'geo-data-container' : 'not-geo-data-container' ]"  v-for="item in data_list" :key="item.name"  @click="dataClick(item)">
-                <div class="data-items" :class="item.layertype"><img :src="choseDataIcon(item)" alt=""></div>
-                <div class="data-items">{{item.name}}</div>
-                <div class="data-items">{{item.pubdate || '未知'}}</div>
-              </div>
+              <ul >
+                <li :class="[ item.checked ? 'data-checked' : '', 'data-item' ]"  v-for="item in data_list" :key="item.name"  @click="dataClick(item)">
+                  <i class="datatype" :class="item.layertype"></i>
+                  <span>{{item.name}}</span>
+                  <span>{{item.pubdate}}</span>
+                </li>
+              </ul>
 
               <el-pagination
-                @size-change="handleSizeChange"
                 @current-change="currentDataChange"
                 :current-page.sync="pagination.currentPage"
-                :page-sizes="pagination.pageSizes"
                 :page-size="pagination.pageSize"
-                layout="total, sizes, prev, pager, next, jumper"
-                :total="pagination.total" class="data-pagination">
+                layout="total,  prev, pager, next, jumper"
+                :total="pagination.total" style="text-align: center">
               </el-pagination>
             </div>
             <!-- 数据列表结束 -->
@@ -122,7 +122,7 @@
               preview: "/formDesign/preview",
               edit: "/formDesign/edit",
               share: "/formDesign/init",
-              delete: "formdesign/forms/delete/",
+              delete: this.$http.defaults.baseURL + "TBUSER000001/formdesign/forms/delete/",
               move: ""
             },
             data: []
@@ -134,7 +134,7 @@
               preview: "/formDesign/init",
               edit: "/formDesign/init",
               share: "/formDesign/init",
-              delete: "formdesign/forms/delete/",
+              delete: this.$http.defaults.baseURL + "TBUSER000001/formdesign/forms/delete/",
               move: ""
             },
             data:[]
@@ -144,7 +144,7 @@
               preview: "/formDesign/init",
               edit: "/formDesign/init",
               share: "/formDesign/init",
-              delete: "formdesign/forms/delete/",
+              delete: this.$http.defaults.baseURL + "TBUSER000001/formdesign/forms/delete/",
               move: ""
             },
             data:[]
@@ -154,31 +154,31 @@
               preview: "/formDesign/init",
               edit: "/formDesign/init",
               share: "/formDesign/init",
-              delete: "formdesign/forms/delete/",
+              delete: this.$http.defaults.baseURL + "TBUSER000001/formdesign/forms/delete/",
               move: ""
             },
             data:[]
           }
         },
-        /* 创建新地图基本信息 */
+        /* 创建地图dialog */
+        dialogCreateMapVisible: false,
         mapInfo: {
           name: '',
           description: '',
           tag: '',
         },
-
-        /* 创建地图dialog */
-        dialogCreateMapVisible: false,
         isDataView: false,
+
         datalistLoading: false,
+        data_list_array: [],
         data_list: null,
         //  分页的配置
         pagination: {
           currentPage: 1,
           total: 0,
-          pageSizes: [5, 10, 15],
-          pageSize: 5,
+          pageSize: 10
         },
+        data_url: '/datacenter/datas',
         /* 创建地图dialog */
       }
     },
@@ -190,19 +190,11 @@
     methods: {
       ...mapActions([
         'setNewMapInfo', // 保存下创建新地图的基础信息
-        'addIdChecked', 'removeIdChecked', 'resetIdChecked', // 数据列表页，对用户勾选的数据进行id记录    添加， 删除， 重置
-        'setCurrentId', 'setEditLog',
+        'addDataIdChecked', 'removeDataIdChecked', 'resetDataIdChecked',  // 数据列表页，对用户勾选的数据进行id记录    添加， 删除， 重置
+        'setCurrentDataId', 'setEditLog',
         'setNotFirstRender', 'setFirstRender', // 设置成非首次渲染     首次渲染
         'setCurrentMapId',   // 设置当前选中的mapid
-        'setCurrentLayerId', // 正在渲染的图层id
-        'resetOverLayer', // 清空vuex中
-        'resetSavedLayers', // 清空vuex中
-        'resetRender', // 清空vuex中存储主要的数据
       ]),
-
-      lookShare(uuid){
-        this.$router.replace({name: 'sharemap', params: {uuid}});
-      },
 
       /* 显示创建地图弹出框 */
       showCreateDialog () {
@@ -220,94 +212,90 @@
 
       /* 用户数据列表展示 */
       showDataView () {
-        if (!this.mapInfo.name) {
-          this.$message({
-            showClose: true,
-            message: '地图名称不能为空',
-            type: 'warning',
-          });
-          return;
-        }
-
         this.isDataView = true;
-        this.resetIdChecked();
-        console.log(this.render.idChecked)
-        this.fetchData(this.pagination.pageSize, this.pagination.currentPage);
+        this.resetDataIdChecked();
+        console.log(this.render.dataIdChecked)
+        this.fetchData();
       },
 
       /* 获取用户数据集 */
-      fetchData (pageSize, currentPage) {
+      fetchData () {
         this.datalistLoading = true;
-        var url = 'mapdesign/maps/layers?limit='+ pageSize + '&page='+ currentPage;
+        // var url = this.getLogin.userName + this.data_url; TODO
+        var url = 'TBUSER000001' + this.data_url;
         this.$http.get(url).then((res) => {
           this.datalistLoading = false;
           if (!res.data.data) {
-            console.log('ajax 获取数据集 接口数据结构变化: ' + res.data);  //  清空数据，并且重置数据条数为0、默认显示第一页，
-            this.data_list = [];
+            console.log('ajax 获取数据集 接口数据结构变化: ' + res.data);
+
+            console.info("暂无数据");
+            //  清空数据，并且重置数据条数为0、默认显示第一页，
+            this.data_list = null;
             this.pagination.total = 0;
             this.pagination.currentPage = 1;
             return;
           }
 
-          var temArray = []; // temArray = 用户数据列表，为每一个列表加checked字段，初始为false，用于判断是否勾选
+          var temArray = [];
+          // temArray = 用户数据列表，为每一个列表加checked字段，初始为false，用于判断是否勾选
           res.data.data.forEach((item) => {
             item.checked = false;
             temArray.push(item);
           });
 
+          // 将服务列表分组，每组10个
+          this.data_list_array = this.groupData(temArray, this.pagination.pageSize);
           this.pagination.total = temArray.length;
-          this.data_list = temArray;
+          this.data_list = this.data_list_array[0];
+          this.tableLoading = false;
         }).catch((err) => { console.log(err) });
       },
 
-      /* 数据列表每页总数改变 */
-      handleSizeChange (size) {
-        this.fetchData(size, this.pagination.currentPage);
+      /* 分页 */
+      groupData: function (array, gap) {
+        let result = [];
+        for(let i = 0, len = array.length; i < len; i += gap) {
+          result.push( array.slice(i, i+gap) );
+        }
+        return result;
       },
 
       /* 数据列表当前页数改变 */
-      currentDataChange(currentPage){
-        this.fetchData(this.pagination.pageSize, currentPage);
-      },
-
-      /* 根据数据类型给不同的icon */
-      choseDataIcon (item) {
-        var type = Tool.gType(item.geotype), imgSrc = '';
-        if (!item.geotype) {
-          imgSrc = '/static/mapDesign/img/table.png';
-          return imgSrc;
-        }
-        switch (type) {
-          case 'point':
-            imgSrc = '/static/mapDesign/img/esriGeometryPoint.png';
-            break;
-
-          case 'line':
-            imgSrc = '/static/mapDesign/img/esriGeometryPolyline.png';
-            break;
-
-          case 'polygon':
-            imgSrc = '/static/mapDesign/img/esriGeometryPolygon.png';
-            break;
-        }
-
-        return imgSrc;
+      currentDataChange(val){
+        this.dataCurrentPage = val;
+        this.data_list = this.data_list_array[val-1];
       },
 
       dataClick (item) {
-        if (!item.geotype) return;
-
         item.checked = !item.checked;
         if (item.checked) {
-          this.addIdChecked( Tool.clone(item) );
+          this.addDataIdChecked(item.id);
         } else {
-          this.removeIdChecked( Tool.clone(item) );
+          this.removeDataIdChecked(item.id);
         }
-        console.log('进入渲染界面前this.render.idChecked ', this.render.idChecked);
+        /*console.log(this.render.dataIdChecked);
+         debugger*/
       },
 
       /* 转至地图渲染页面(首次渲染) */
       toRender () {
+        if (this.render.dataIdChecked.length === 0) {
+          this.$message({
+            showClose: true,
+            message: '请先选择图层',
+            type: 'warning',
+          });
+          return;
+        }
+
+        /* 进入地图渲染页面之前，在vuex中先保存下新地图的基础信息 */
+        for (let i in this.mapInfo) {
+          let _temObj = { key: '', value: ''};
+          _temObj.key = i;
+          _temObj.value = this.mapInfo[i];
+          this.setNewMapInfo(_temObj);
+        }
+
         this.beforeToRender();
         this.$router.push('/mapdesign/new');
       },
@@ -316,19 +304,11 @@
       beforeToRender () {
         this.setFirstRender(); // 渲染状态改为首次渲染
 
-        this.setCurrentLayerId(''); // 没有图层正在渲染
-
-        this.resetSavedLayers(); // 将vuex中数据清空
-
-        /* 在vuex中先保存下新地图的基础信息 */
-        this.setNewMapInfo(this.mapInfo);
       },
+
 
       /********************************************* 二次编辑 **************************************************/
       editMap (id) {
-        // 先清空vuex中状态
-        this.resetRender();
-
         this.setCurrentMapId(id);
         this.setNotFirstRender(); // 非首次渲染
         this.$router.push(this.listdata.data.url.render  + id);
@@ -348,10 +328,10 @@
         document.getElementById("map_content2").style.display = "block";
         this.listdata.title = data.name;
         if(data.id == "999") {
-          var url = 'mapdesign/maps';
+          var url = 'TBUSER000001/mapdesign/maps';
           this.getMapByUrl(url, 0);
         } else {
-          var url = 'mapdesign/maps/folder/' + data.id;
+          var url = 'TBUSER000001/mapdesign/maps/folder/' + data.id;
           this.getMapByUrl(url, 0);
         }
         this.getMapByUrl(url, 28);
@@ -362,10 +342,10 @@
         document.getElementById("map_content1").style.display = "none";
         document.getElementById("map_content2").style.display = "block";
         if(type == 0) { //我的地图
-          var url = 'mapdesign/maps';
+          var url = 'TBUSER000001/mapdesign/maps';
           this.getMapByUrl(url, type);
         }  else if(type == 2) { //已分享的表单
-          var url = 'mapdesign/maps/share';
+          var url = 'TBUSER000001/mapdesign/maps/share';
           this.getMapByUrl(url, type);
         }
       },
@@ -384,14 +364,17 @@
               this.listdata.data.url.preview = "/mapdesign/preview/";
               this.listdata.data.url.render = "/mapdesign/render/";
               this.listdata.data.url.share = "/mapdesign/init/";
-              this.listdata.data.url.delete = "mapdesign/maps/delete/";
+              this.listdata.data.url.delete = this.$http.defaults.baseURL + "TBUSER000001/mapdesign/maps/delete/";
               this.listdata.data.url.move = "";
               break;
             case 2:
               break;
             default:
+
+              break;
           }
           this.listdata.data.data = res.data;
+          //debugger
         });
       },
 
@@ -400,10 +383,8 @@
         document.getElementById("map_content1").style.display = "block";
       },
 
-
-      /* 删除地图 */
       deleteItem(id) {
-        var url = "mapdesign/maps/delete/" + id;
+        var url = this.$http.defaults.baseURL + "TBUSER000001/mapdesign/maps/delete/" + id;
         this.$http.get(url).then((res) => {
           if(res.data.result) {
             this.$message({
@@ -420,32 +401,6 @@
         });
       },
 
-      /* 分享地图 */
-      shareItem(odata){
-        let url = "map/share",
-          data ={
-            mapid: odata.id,
-            issecret: odata.issecret,
-            code: odata.code
-          },
-          prams = encodeURI("data="+JSON.stringify(data));
-        console.log(prams);
-
-        this.$http.post(url,prams).then((res) => {
-          let uuid = res.data.data.uuid;
-          console.log('分享成功',uuid);
-
-          this.$confirm('分享成功！', '提示', {
-            confirmButtonText: '去看看',
-            cancelButtonText: '知道了',
-            type: 'success'
-          }).then(() => {
-            this.$router.replace({name: 'sharemap', params: {uuid}});
-          }).catch(() => {  });
-
-        }).catch((error) => { console.log("出错了",error); });
-      },
-
       updateListData(list, id) {
         var data = [];
         for(var item in list) {
@@ -458,7 +413,7 @@
 
       init() {
         var that = this;
-        var url = "mapdesign/maps/inits";
+        var url = "TBUSER000001/mapdesign/maps/inits";
         that.$http.get(url).then((res) => {
           if(res.data != null) {
             that.mapdata.recently.data = res.data.data.Modify;
@@ -467,6 +422,8 @@
           }
         });
       },
+
+
 
       /* 跳转至geo数据编辑界面 */
       toEdit(id) {
@@ -516,19 +473,19 @@
   }
 
   .fc_tabs {
-    padding: 15px 0 0 0;
-    /*margin: 0 35px;*/
+    padding: 40px 0 0 0;
+    margin: 0 35px;
   }
 
   .map_content .el-tabs__active-bar {}
 
   .map_content .el-tabs__item {
-    /*background: #eee;*/
+    background: #eee;
   }
 
   .map_content .el-tabs__item.is-active {
-    color: #009688;
-    /*background: #232c32 !important;*/
+    color: #fbfdff;
+    background: #232c32 !important;
   }
 
   .map_content1 {}
@@ -537,45 +494,7 @@
     display: none;
   }
 
-  .data-list {
-
-  }
-
-  .data-container {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 5%;
-    cursor: pointer;
-    box-sizing: border-box;
-    -webkit-border-radius: 5px;
-    -moz-border-radius: 5px;
-    border-radius: 5px;
-  }
-
-  .data-items img {
-    width: 50px;
-    height: 50px;
-  }
-
-  .data-checked {
-    border: 1px solid #AAA;
-  }
-
-  .geo-data-container:hover {
-    border: 1px solid #AAA;
-  }
-
-  .not-geo-data-container:hover {
-    border: 1px solid darkred;
-  }
-
-  .data-pagination {
-    text-align: center;
-    margin-top: 25px;
-  }
-
-/*  .fct1_title {
+  .fct1_title {
     font-size: 14px;
     line-height: 30px;
     padding: 0 20px;
@@ -589,7 +508,5 @@
     margin-top: 20px;
     width: 100%;
     float: left;
-  }*/
-
-
+  }
 </style>

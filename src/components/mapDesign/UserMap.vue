@@ -64,7 +64,7 @@
         map_list: null,
         data_list: null,
         map_url: '/mapdesign/map',
-        data_url: 'mapdesign/map/layers',
+        data_url: '/mapdesign/map/layers',
         mapCurrentPage: 1,
         dataCurrentPage: 1,
         mapTotal: null,
@@ -92,7 +92,7 @@
     methods: {
       ...mapActions([
         // 数据列表页，对用户勾选的数据进行id记录    添加， 删除， 重置
-        'addIdChecked', 'removeIdChecked', 'resetIdChecked'
+        'addDataIdChecked', 'removeDataIdChecked', 'resetDataIdChecked'
       ]),
 
       /* 获取用户地图集 */
@@ -117,7 +117,7 @@
       /* 获取用户数据集 */
       fetchData () {
         // var url = this.getLogin.userName + this.data_url; TODO
-        var url = this.data_url;
+        var url = 'TBUSER000001' + this.data_url;
         this.$http.get(url).then((res) => {
           if (!res.data.data) {
             console.log('获取用户数据集: ' + res.data.data);
@@ -149,7 +149,7 @@
       /* 页面跳转到数据列表页面 */
       showDataList () {
         this.dataList = !this.dataList;
-        this.resetIdChecked();
+        this.resetDataIdChecked();
       },
 
       /* 页面跳到地图列表页面 */
@@ -166,20 +166,20 @@
         // TODO
         /*item.checked = !item.checked;
          if (item.checked) {
-         this.addIDChecked(item.layerid);
+         this.addDataIDChecked(item.layerid);
          } else {
-         this.removeIDChecked(item.layerid);
+         this.removeDataIDChecked(item.layerid);
          }*/
       },
 
       dataClick (item) {
         item.checked = !item.checked;
         if (item.checked) {
-          this.addIdChecked(item.layerid);
+          this.addDataIdChecked(item.layerid);
         } else {
-          this.removeIdChecked(item.layerid);
+          this.removeDataIdChecked(item.layerid);
         }
-        /*console.log(this.render.idChecked);
+        /*console.log(this.render.dataIdChecked);
         debugger*/
       },
     },

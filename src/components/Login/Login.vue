@@ -1,4 +1,3 @@
-
 <template>
 	<div class="container demo-1">
 		<div class="content">
@@ -40,7 +39,7 @@
 						<form action="#" name="f" method="post">
 							<div class="input_outer">
 								<span class="u_user"></span>
-								<input name="logname" autocomplete="off" class="text" v-model="forget.logname" style="color: #FFFFFF !important" type="text" @blur="check1('logname')" placeholder="请输入账户">
+								<input name="logname" class="text" v-model="forget.logname" style="color: #FFFFFF !important" type="text" @blur="check1('logname')" placeholder="请输入账户">
 								<i class="el-icon-circle-check" v-show="button1" style="position: absolute;right: 10px;top: 14px;"></i>
 							</div>
 							<div class="fg1">
@@ -167,7 +166,7 @@
 				disabled1:false,
 				disabled2:false,
 				disabled:false,
-				loginurl: '',
+				loginurl: "user/login",
 				loginForm: {
 					username: '',
 					password: ''
@@ -223,6 +222,9 @@
 		},
 		created() {
 			this.loginurl = this.$http.defaults.baseURL + this.loginurl;
+			console.log(this.loginurl);
+				
+			//debugger
 		},
 		
 		methods: {
@@ -268,12 +270,9 @@
 				}else{
 						this.setUserName(this.loginForm.username);
 						var param = "data=" + JSON.stringify(this.loginForm);
-						this.$http.post(this.$http.defaults.url+'userinfo/login', param).then((res) => {
+						this.$http.post("http://192.168.0.217:8082/mapwayonline/userinfo/login", param).then((res) => {
 							if(res.data.result){
 								this.setUserInfo(res.data.data);
-								this.$http.defaults.baseURL=this.$http.defaults.url+res.data.data.id+'/'
-								this.setCookies("userid",res.data.data.id)
-								this.setCookies("username",res.data.data.username)
 								this.$router.replace('/index')
 							}else{
 								this.tishi2 = res.data.message
@@ -283,12 +282,6 @@
 //		
 //				this.$router.push('/user/' + this.loginForm.username);  
 				}
-			},			 
-			setCookies(name,value){
-				   var Day = 1;
-				   var exp= new Date(); 
-				   exp.setTime(exp.getTime() + Day*24*60*60*1000);
-				   document.cookie = name + "="+ escape(value) +";expires="+ exp.toGMTString();
 			},
 			signUp() {
 				// 跳转到注册页
@@ -332,7 +325,7 @@
 					this.button3=true
 			        let data = {'username':this.forget.logname,'password1':this.forget.logpass1,'password2':this.forget.logpass2};
 			        var params = "data="+JSON.stringify(data);
-			        this.$http.post(this.$http.defaults.url+'userinfo/retrieve',params).then((res)=>{
+			        this.$http.post('http://192.168.0.217:8082/mapwayonline/userinfo/retrieve',params).then((res)=>{
 			            console.log(res)
 			            if(res.data.result){
 			                showTishi1: false
@@ -481,7 +474,7 @@
 			    	this.button3=true
 			        let data = {'username':this.register.logname,'password1':this.register.logpass1,'password2':this.register.logpass2};
 			        var params = "data="+JSON.stringify(data);
-			        this.$http.post(this.$http.defaults.url+'userinfo/register',params).then((res)=>{
+			        this.$http.post('http://192.168.0.217:8082/mapwayonline/userinfo/register',params).then((res)=>{
 			            console.log(res)
 			            if(res.data.result){
 			                showTishi1: false
@@ -576,7 +569,7 @@
 					case this.register.logname:
 						let data = {'username':username};
 					    var params = "data="+JSON.stringify(data);
-					    this.$http.post(this.$http.defaults.url+'userinfo/register/islogin',params).then((res)=>{
+					    this.$http.post('http://192.168.0.217:8082/mapwayonline/userinfo/register/islogin',params).then((res)=>{
 					            console.log(res);					            
 					           	if(res.data.result){
 					           		this.tishi1 = "该手机号已被注册！"
@@ -591,7 +584,7 @@
 					case this.forget.logname:
 						let data1 = {'username':username};
 					    var params = "data="+JSON.stringify(data1);
-					    this.$http.post(this.$http.defaults.url+'userinfo/register/islogin',params).then((res)=>{
+					    this.$http.post('http://192.168.0.217:8082/mapwayonline/userinfo/register/islogin',params).then((res)=>{
 					            console.log(res);					            
 					           	if(res.data.result){
 					           		this.showTishi1 = false

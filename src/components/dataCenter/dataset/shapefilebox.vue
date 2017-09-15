@@ -98,7 +98,7 @@
         let prams = new FormData();
         prams.append('data',shapefilevalue);
 
-        this.$http.post('datacenter/datas/add/ShapeFile',prams, {
+        this.$http.post('TBUSER000001/datacenter/datas/add/ShapeFile',prams, {
           headers: {
             'Content-Type': 'multipart/form-data'
           }
@@ -216,16 +216,15 @@
 
 <style>
   .shapefilebox{
-    background-color: #fff;
+    background-color: #F9F9F9;
     padding-top: 40px;
     position: relative;
-    padding-bottom: 75px;
   }
   #inputBox{
     margin-top: 30px;
     border: 1px dashed #D3D4D6;
     display: inline-block;
-    background-color: #eee;
+    background-color: #FFFFFF;
     padding-top: 30px;
     width: 350px;
     height: 180px;
@@ -238,7 +237,6 @@
     border: none;
     border-radius: 3px;
     margin: 0 auto;
-    color: #009688;
   }
   .showShape{
     height: 550px;

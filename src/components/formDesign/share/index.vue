@@ -1,10 +1,10 @@
 <template>
 	<div id="share" v-loading.body="loading">
-
-		<!--<h2 style="text-align: center;">-->
-			<!--{{form_title}}-->
-		<!--</h2>-->
-
+		
+		<h2 style="text-align: center;">
+			{{form_title}}
+		</h2>
+		
 		<div class="tips" v-if="isPassword">
 			<!--如果是加密表单 需要输入密码才能使用 -->
 			<div class="model-box">
@@ -20,50 +20,43 @@
 					<el-button @click="sharePassword = ''">重置</el-button>
 				</div>
 			</div>
-
-
-
+			
+			
+			
 		</div>
-
-
+		
+		
 		<div class="main" v-if="ready">
 			<!--这里还原表单-->
-			<my-app-form v-if="isAppform" :formdata = "formdata"></my-app-form>
-      <my-show-form v-else :selected = 'true' :formdata = "formdata" :showdata="data_souce" ></my-show-form>
+			<my-app-form :formdata = "formdata"></my-app-form>
+			
 		</div>
-
-
+	
+		
 	</div>
 </template>
 
 <script>
-	import myAppForm from '@/components/formDesign/preview/temp/myappform.vue'
-  import myShowForm from '@/components/formDesign/preview/temp/myshowform.vue'
-
-
+	import myForm from '@/components/formDesign/formtemp/myappform.vue'
 	export default {
 		name:'',
 		components:{
-			"myAppForm": myAppForm,
-      "myShowForm": myShowForm
+			"myAppForm": myForm
 		},
 		data(){
 			return {
-        isAppform:true,
 				form_title:'',
-        appform:true,
 				isPassword : false,
 				ready : false,
 				loading: true,
 				sharePassword : '' ,
-				formdata:{},
-        data_souce:''
+				formdata:{}
 			}
 		},
 		methods:{
 			closeBox(){
 				this.isPassword = false;
-				this.$router.replace({name:'main'});
+				this.$router.replace({name:'main'});	
 			},
 			checkPassword(){
 				// 检查密码 获取加密表单数据
@@ -77,7 +70,7 @@
 					let uuid = this.$route.params['uuid'],
 					    url = 'form/share/' + uuid +"/code",
 					    prams = encodeURI("data="+JSON.stringify({code:this.sharePassword}));
-
+					   
 					this.$http.post(url,prams).then((res)=>{
 						console.log(res);
 						if(res.data.result){
@@ -92,34 +85,27 @@
 					        });
 							this.sharePassword = "";
 						}
-
-
+						
+						
 					}).catch((err)=>{
 						console.log(err);
 					})
-
+					
 				}
-
-
+				
+				
 			},
 			showForm(res){
 				let odata = res;
-        let widgetList = JSON.parse(odata.formcontent);
-        delete odata.formcontent;
-        odata.style = JSON.parse(odata.style);
-        let data = {widgetList:widgetList,formConfig:odata};
-
-        if(data.formConfig.isinputform){
-            this.isAppform = true;
-        }else{
-            this.isAppform = false;
-        }
-
-        this.formdata = data;
-				this.ready = true;
+		      	let widgetList = JSON.parse(odata.formcontent);
+		      	delete odata.formcontent;
+		      	odata.style = JSON.parse(odata.style);		      	
+		      	let data = {widgetList:widgetList,formConfig:odata};	
+		      	this.formdata = data;
+				this.ready = true;	
 				this.isPassword = false;
 				this.loading = false;
-//				this.form_title = data.formConfig.formname;
+				this.form_title = data.formConfig.formname;
 				console.log(data);
 			},
 			initData(){
@@ -128,15 +114,15 @@
 					url = "form/share/" + uuid;
 				this.$http.get(url).then((res)=>{
 					console.log(res);
-					// 返回结果是否为加密分享
+					// 返回结果是否为加密分享 
 					if(res.data.result){
-						// 没有加密
+						// 没有加密 
 						this.showForm(res.data.data);
 					}else{
 						if(res.data.message === "分享加密,需要密码"){
 							// 加密
 							this.isPassword = true;
-							this.ready = false;
+							this.ready = false;						
 						}else{
 							// uuid 错误
 							 this.$alert('未找到指定分享的内容！', '加载失败', {
@@ -145,10 +131,10 @@
 					            this.$router.replace({name:'main'});
 					          }
 					        });
-
+							
 						}
-					}
-
+					} 
+					
 				}).catch((err)=>{
 					this.$alert('未找到分享的内容！', '加载失败', {
 			          confirmButtonText: '再去试试',
@@ -158,30 +144,27 @@
 			        });
 					console.log(err);
 				})
-
-
-
-
-
+				
+				
+				
+				
+				
 			}
-
+			
 		},
 		created(){
-      let k = this.$Tools.getUrlKey('detail');
-      this.data_souce = k;
 			this.initData(); // 获取表单数据 创建应用表
-
 		},
 		mounted(){
-
+			
 		}
 	}
 </script>
 
 <style lang="less" scoped>
-	#share{
+	#share{		
 		.main{
-
+			
 		}
 		.tips{
 			width: 100%;
@@ -210,17 +193,17 @@
 						top:5px;
 						right: 5px;
 						text-align: center;
-						line-height:15px;
+						line-height:15px;  
 						cursor:pointer;
-
+						  
 						&:hover{
 							background-color: #EEEEEE;
-						}
+						}	
 					}
-
+					
 				}
 				.model-content{
-
+					
 					text-align: center;
 					padding: 10px 30px ;
 					width: 200px;
@@ -232,13 +215,13 @@
 					bottom: 40px;
 					right: 70px;
 					text-align: right;
-
+				
 				}
 			}
-
-
+			
+			
 		}
-
+		
 	}
 
 </style>

@@ -1,7 +1,7 @@
 <template>
   <div>
     <!--点  面 填充-->
-    <div class="setLine mb10" v-if="renderSet.isPoint || renderSet.isPolygon">
+    <div class="setLine mb10" v-if="!renderSet.isLine">
       <div class="renderLabel">填充</div>
       <div class="renderDetail">
         <div class="setLine">
@@ -62,8 +62,7 @@
           isLine: false,
           isPolygon: false,
           isPoint: false,
-        },
-
+        }
       };
     },
     created () {
@@ -94,12 +93,12 @@
           this.renderSet.fill.color = fillColor;
         });
 
-        this.$bus.on('simple-renderSet-restore', (obj) => {
+        this.$bus.on('simple-renderSet-change', (obj) => {
           this.restoreRenderSet(obj)
         });
 
-        this.$bus.on('simple-render', () => {
-          this.simpleRender();
+        this.$bus.on('init-simple', () => {
+          this.initSimple();
         });
 
         this.$bus.on('reset-simple-data', () => {
@@ -116,22 +115,16 @@
           this.notUpdateCurrentStyle();
         });
 
-        /* 执行RenderSet中触发的'init-render'事件，并触发在RenderMap中注册的'run-init-simple'事件 */
-        this.$bus.on('init-render', (type, geojson) => {
-          switch (type) {
-            case 'initData':
-              this.$bus.$emit('run-initData-simple', Tool.clone(this.renderSet)); break
-            case 'addData':
-              this.$bus.$emit('run-addData-simple', Tool.clone(this.renderSet), geojson); break
-          }
+        this.$bus.on('init-render', (_geoJson) => {
+          this.$bus.$emit('run-init-simple', this.renderSet, _geoJson);
         });
       },
 
       destroyEvent () {
         this.$bus.off('simple-color-change');
         this.$bus.off('simple-fill-color-change');
-        this.$bus.off('simple-renderSet-restore');
-        this.$bus.off('simple-render');
+        this.$bus.off('simple-renderSet-change');
+        this.$bus.off('init-simple');
         this.$bus.off('reset-simple-data');
 
         /* 对当前图层的渲染保存 */
@@ -143,7 +136,6 @@
         this.$bus.off('init-render');
       },
 
-      /* 更新vuex中当的样式，以便于保存 */
       updateCurrentStyle () {
         this.updateOverLayer({
           rtype: this.render.renderType,
@@ -158,7 +150,7 @@
         var overLayersStyle =  this.render.savedLayers.over_layer;
 
         overLayersStyle.some((item) => {
-          if (currentLayerId === item.id) {
+          if (currentLayerId === item.data_id) {
             this.$bus.$emit('restore-render',item.render)
           }
         });
@@ -167,14 +159,15 @@
         this.reset();
       },
 
-      /* 点击RenderConfig中的图层，将之前分级的配置项覆盖当前data */
+      /* 第二次点击简单渲染，将之前分级的配置项覆盖当前data */
       restoreRenderSet (obj) {
         var renderSet = Tool.clone(obj.render.style); // 深拷贝vuex中的数据到此
         this.renderSet = renderSet;
       },
 
-      simpleRender () {
+      initSimple () {
         this.reset();
+
         var currentData, datas = this.render.geoJsons;
         var currentLayerId = this.render.currentLayerId;
 
@@ -188,7 +181,6 @@
 
         var geometryType = currentData.features[0].geometry.type;
         Tool.initIsType(geometryType, this.renderSet);
-        console.log('this.renderSet.isPoint', this.renderSet.isPoint)
       },
 
       reset () {

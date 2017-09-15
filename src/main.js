@@ -11,11 +11,11 @@ import ElementUI from 'element-ui'
 import 'element-ui/lib/theme-default/index.css'
 Vue.use(ElementUI)
 
-import $ from 'jquery'
+
+
 
 // 导入font-awesome
 import 'font-awesome/css/font-awesome.css'
-
 // fade/zoom 等
 /*import 'element-ui/lib/theme-defaut/base.css';*/
 // collapse 展开折叠
@@ -33,42 +33,24 @@ Vue.use(VueBus);
 
 // 全局导航钩子
 router.beforeEach((to, from, next) => {
+
   if (to.meta.requireAuth) {
-//	&&!isEmptyObject(store.getters.getLogin.user.username)
-  if(!GetCookie('userid') && !GetCookie('username')) {
-  	next({
+  // console.log(isEmptyObject(store.state.user))
+  if(store.getters.getLogin.user!=null&&!isEmptyObject(store.getters.getLogin.user.userinfo.username)) {
+    next();
+  }
+  else {
+    next({
       path: '/login',
       query: {redirect: to.fullPath}  // 将跳转的路由path作为参数，登录成功后跳转到该路由
     })
-
-  }
-  else {
-  	axios.defaults.baseURL=axios.defaults.url+GetCookie('userid')+"/"
-  	console.log(axios.defaults.baseURL);
-    next();
   }
 }
 else {
   next();
 }
 })
-function GetCookie(name){
-				    var cookieValue = "";
-				    var search = escape(name) + "=";
-				    if(document.cookie.length > 0)
-				    {
-				        var offset = document.cookie.toString().indexOf(search);
-				        if (offset != -1)
-				        {
-				            offset += search.length;
-				            var end = document.cookie.indexOf(";", offset);
-				            if (end == -1)
-				                end = document.cookie.length;
-				            cookieValue = decodeURIComponent((document.cookie.substring(offset, end)))
-				        }
-				    }
-				    return cookieValue;
-			}
+
 
 function isEmptyObject(obj) {
   for (var key in obj) {

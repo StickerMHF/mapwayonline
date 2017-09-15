@@ -1,6 +1,3 @@
-// 在开头引入webpack，后面的plugins那里需要
-var webpack = require('webpack')
-
 var path = require('path')
 var utils = require('./utils')
 var config = require('../config')
@@ -25,19 +22,9 @@ module.exports = {
     extensions: ['.js', '.vue', '.json'],
     alias: {
       'vue$': 'vue/dist/vue.esm.js',
-      '@': resolve('src'),
-      'static': resolve('static'),
-    },
-
+      '@': resolve('src')
+    }
   },
-  // 增加一个plugins （添加jquery）
-  plugins: [
-    new webpack.optimize.CommonsChunkPlugin('common.js'),
-    new webpack.ProvidePlugin({
-      $: "jquery",
-      jQuery: "jquery"
-    })
-  ],
   module: {
     rules: [
       {

@@ -4,10 +4,8 @@
 <script>
   import Leaflet from 'leaflet'
   import { mapActions, mapGetters, mapMutations } from 'vuex'
-  import LBaseMap from 'static/mapDesign/js/leaflet-basemap/L.Control.Basemaps.js'
   import Tool from '@/components/tool.vue'
   require('../../../../node_modules/leaflet/dist/leaflet.css');
-  require('static/mapDesign/js/leaflet-basemap/L.Control.Basemaps.css');
   // TODO  以后MAP_IMAGE_PATH这个图片地址要改成node_modules中的地址
   const MAP_IMAGE_PATH = "http://cdn.bootcss.com/leaflet/1.0.3/images/";
 
@@ -26,7 +24,6 @@
         baseLayer: null,
         renderLayer: null,
         labelLayer: null,
-        labelClass: 'render-label',
         /*  */
         field: '',
         fieldValueArray: [],
@@ -34,11 +31,6 @@
         geoJsons: [],
         currentLayerId: '',
       }
-    },
-    computed: {
-      ...mapGetters([
-        'render'
-      ])
     },
     created () {
 
@@ -51,9 +43,6 @@
       this.addLayers(this.layers);
     },
     methods: {
-      ...mapActions([
-          'addSavedLayersBaseLayer'
-      ]),
       initMap() {
         L.Icon.Default.imagePath = MAP_IMAGE_PATH;
         this.map = L.map("preview-map",{
@@ -75,9 +64,6 @@
         this.addBaseLayer(layers.base_layer);
         var over_layers = layers.over_layer;
 
-        console.log(this.render.savedLayers.base_layer)
-        debugger
-        this.addWidget(layers.widget);
 
         over_layers.forEach((item) => {
           this.getGeojson(item);
@@ -85,8 +71,8 @@
       },
 
       getGeojson (obj) {
-        var id = obj.id,  gtype = obj.gtype, gtype = obj.gtype, render = obj.render;
-        var url = 'mapdesign/maps/layers/'+ id + '/query?f=geojson&outSr=4326&returnGeometry=true';
+        var data_id = obj.data_id,  gtype = obj.gtype, gtype = obj.gtype, render = obj.render;
+        var url = 'TBUSER000001/mapdesign/maps/layers/'+ data_id + '/query?f=geojson&outSr=4326&returnGeometry=true';
 
         this.$http.get(url).then((res) => {
           let features = res.data;
@@ -94,64 +80,24 @@
           this.addOverLayer(features, gtype, render);
 
           this.geoJsons.push({
-            id: id,
+            id: data_id,
             data: features,
           });
 
-          this.currentLayerId = id;
+          this.currentLayerId = data_id;
+
           if ( !Tool.isEmptyObject(obj.label) ) {
             this.changeToLabel(obj.label);
           }
-        }).catch((err) => {
-            console.log(err)
-        });
+
+        }).catch((err) => { console.log(err) });
       },
 
-      addWidget (widgetArray) {
-        this.createWidget();
-        if (widgetArray.length === 0) {
-          return;
-        }
-
-        var vm = this;
-        widgetArray.forEach(item => {
-          switch (item.name) {
-            case 'scale':
-              this.scale.addTo(this.map);
-              break;
-            case 'basemap':
-              this.basemap.addTo(this.map);
-            case 'measure':
-              break;
-            case 'legend':
-              break;
-          }
-        });
-      },
-
-      createWidget () {
-        this.scale = L.control.scale({imperial: false});
-
-        var basemaps = [];
-        this.render.savedLayers.base_layer.forEach(item => {
-          basemaps.push(L.tileLayer(item.url));
-        });
-
-        console.log()
-        debugger
-        this.basemap = L.control.basemaps({basemaps});
-      },
-
-      addBaseLayer (array) {
-        var vm = this;
-        array.forEach(item => {
-            vm.addSavedLayersBaseLayer(item);
-        });
-        this.baseLayer = L.tileLayer(array[0].url).addTo(this.map);
+      addBaseLayer (url) {
+        this.baseLayer = L.tileLayer(url).addTo(this.map);
       },
 
       addOverLayer(features, gtype, render) {
-
         // 添加的geojson数据到图层上
         var vm = this, geojsonLayer, rtype = render.rtype;
 
@@ -160,9 +106,6 @@
           case 'MultiPoint':
             geojsonLayer = L.geoJson(features, {
               pointToLayer: function (feature, latlng) {
-               // if (!) {
-
-               // }
                 return vm.style(feature, latlng, gtype, vm, render);
               }
             });
@@ -171,10 +114,6 @@
           default:
             geojsonLayer = L.geoJson(features, {
               style: function (feature, layer) {
-                  if (!feature.geometry.coordinates[0]) {
-                      return;
-                  }
-                console.log(feature.geometry.coordinates[0])
                 return vm.style(feature, layer, gtype, vm, render);
               }
             });
@@ -189,19 +128,6 @@
         var rtype = render.rtype, style;
 
         switch (rtype) {
-          case 'simple':
-            vm.fieldStyleArray.push({
-              radius: render.style.fill.radius,
-              fillColor: render.style.fill.color,
-              color: render.style.border.color,
-              weight: render.style.border.weight,
-              opacity: render.style.border.opacity,
-              fillOpacity: render.style.fill.opacity
-            });
-            style = vm.getStyle(feature, latlng, rtype,  gtype);
-
-            break;
-
           case 'grade':
             vm.field = render.style.field.value;
             render.style.field.fields.forEach((item) => {
@@ -221,6 +147,19 @@
               vm.fieldStyleArray.push(Tool.clone(item));
             });
             style = vm.getStyle(feature, latlng, rtype, gtype);
+
+            break;
+
+          case 'simple':
+            vm.fieldStyleArray.push({
+              radius: render.style.fill.radius,
+              fillColor: render.style.fill.color,
+              color: render.style.border.color,
+              weight: render.style.border.color.weight,
+              opacity: render.style.border.color.opacity,
+              fillOpacity: render.style.fill.color.opacity
+            });
+            style = vm.getStyle(feature, latlng, rtype,  gtype);
 
             break;
         }
@@ -285,8 +224,6 @@
 
             break;
         }
-
-        //console.log(style)
 
         if (gType != 'point') {
           return style;
@@ -366,10 +303,5 @@
   #preview-map {
     width: 100%;
     height: 100%;
-  }
-
-  .render-label {
-    display: block;
-    text-align: center;
   }
 </style>
