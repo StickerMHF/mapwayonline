@@ -27,11 +27,11 @@
 
     },
     methods: {
-      getName (dataid) {
+      getName (id) {
         let uid = this.$route.params.userid;
         this.GLOBAL.obj.uid = uid;
-        console.log(dataid);
-        this.$router.push('/user/' + uid + '/data/' + dataid + '/edit');
+        console.log(id);
+        this.$router.push('/user/' + uid + '/data/' + id + '/edit');
       }
     }
   }

@@ -1,6 +1,6 @@
 <template>
 	<div v-show="showdialog" class="mapway-dialog" id="mapway-dialog">
-		<button class="mwdialog_close el-icon-close" @click="hidemwdialog"></button>
+		<!--<button class="mwdialog_close el-icon-close" @click="hidemwdialog"></button>-->
 		<div class="mwdialog_header">
 			<div class="mwd_h_content">
 				<div class="mwd_hc_icon">
@@ -69,22 +69,23 @@
 	.mapway-dialog {
 		width: 100%;
 		height: 100%;
-		z-index: 2000;
+		z-index: 999;
 		position: fixed;
 		top: 0;
-		left: 0;
+		/*left: 62px;*/
 		right: 0;
 		background: linear-gradient(to bottom, #ffffff 0%, rgba(255, 255, 255, 0.95) 50%, rgba(255, 255, 255, 0.9) 100%);
 	}
-	
+
 	.mwdialog_header {
 		border-bottom: 1px solid #ddd;
 		text-align: center;
 		padding: 28px 0;
 		max-height: 100px;
 		min-height: 100px !important;
+    display: none;
 	}
-	
+
 	.mwdialog_close {
 		width: 16px;
 		height: 16px;
@@ -100,18 +101,18 @@
 		outline: none;
 		color: #1181FB;
 	}
-	
+
 	.mwdialog_close:hover {
 		cursor: pointer;
 	}
-	
+
 	.mwd_h_content {
 		margin-right: 0;
 		display: inline-block;
 		width: auto;
 		min-width: 130px;
 	}
-	
+
 	.mwd_hc_icon {
 		border-color: #666;
 		position: relative;
@@ -133,11 +134,11 @@
 		margin-bottom: 12px;
 		display: flex;
 	}
-	
+
 	.mwdicon {
 		color: #666;
 	}
-	
+
 	.mwd_hc_title {
 		font-size: 16px;
 		line-height: 22px;
@@ -148,7 +149,7 @@
 		padding: 0;
 		font-weight: bold;
 	}
-	
+
 	.mwd_hc_desc {
 		font-size: 12px;
 		line-height: 16px;
@@ -157,10 +158,11 @@
 		margin: 0;
 		padding: 0;
 	}
-	
+
 	.mwdialog_content {
-		background: #f9f9f9;
+		background: #eee;
 		position: relative;
 		height: 100%;
+    width:100%;
 	}
 </style>

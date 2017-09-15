@@ -4,7 +4,7 @@
 			<div class="sqlbh_name">{{sqldata.name}}</div>
 			<div class="sqlbh_group"><span class="sqlbhspan" @click="addcondition"><i class="fa fa-plus"></i>条件</span><span class="sqlbhspan"> <i class="fa fa-plus"></i>分组</span></div>
 		</div>
-		<div class="sqlb_content" v-for="(con,index) in wherelist" :key="index">
+		<div class="sqlb_content" v-for="(con, key, index) in wherelist" :key="index">
 			<div class="sqlbc_col">
 
 				<el-row v-if="index==0" :gutter="20">
@@ -27,7 +27,7 @@
 				</el-row>
 				<el-row v-else :gutter="20">
 					<el-col :span="2" class="sqlbh_col">
-						<el-switch class="sqlbh_switch" @change="sqlblur" v-model="con.selectparataxis" on-color="#13ce66" off-color="#ff4949" on-text="AND" off-text="OR">
+						<el-switch class="sqlbh_switch" @change="sqlblur" v-model="con.selectparataxis" on-color="#009688" off-color="#FEC106" on-text="AND" off-text="OR">
 						</el-switch>
 					</el-col>
 					<el-col :span="6">
@@ -47,7 +47,7 @@
 						<el-input class="full-width" v-model="con.selectvalue" placeholder="请输入内容" @blur="sqlblur"></el-input>
 					</el-col>
 					<el-col :span="2" class="sqlbh_col">
-						<el-button type="primary" @click="delcondition(index)" icon="delete" ></el-button>
+						<button type="primary" @click="delcondition(index)" class="deleteX" >X</button>
 					</el-col>
 				</el-row>
 
@@ -66,21 +66,22 @@ var squel = require("squel");
 				type: Object,
 				default: function() {
 					return {
-						"name": "",
-						"order": 1,
-						"fixed": false
-					}
-				}
-			}
+
+          }
+				},
+        require: true
+			},
+
 		},
 		data() {
 			return {
-
-				wherelist: [{
-					selectfield: '',
-					selectcondition: '',
-					selectvalue: '',
-				}],
+        wherelist: [
+          {
+            selectfield: "",
+            selectcondition: "",
+            selectvalue: "",
+          }
+        ],
 				conditions: [{
 					"name": "大于",
 					"value": "> ?"
@@ -97,40 +98,66 @@ var squel = require("squel");
 			}
 		},
 		methods: {
+      initEvent() {
+          debugger
+        var that = this;
+        this.$bus.on('initSQLBuilder', (obj) => {
+          that.wherelist=that.sqldata.wherelist;
+        });
+
+      },
 			//根据表名获取所有字段
 			getFieldsById(tid) {
 				var that = this;
-				var url = this.$http.defaults.baseURL + 'TBUSER000001/datacenter/datas/' + tid + '/field';
+				var url = this.$http.defaults.baseURL + 'datacenter/datas/' + tid + '/field';
 				that.$http.get(url).then((r) => {
 					if(r.data.result) {
 						that.$set(that.sqldata, "fields", r.data.data);
 					}
 				});
 			},
+      //添加新的条件
 			addcondition() {
+          debugger
 				this.wherelist.push({
-					selectfield: '',
-					selectcondition: '',
-					selectvalue: '',
-					selectparataxis: true
+					selectfield: "",
+					selectcondition: "",
+					selectvalue: "",
+					selectparataxis: true,
+          isAnd:true
 				});
 			},
+      //添加新数据表以后的添加新条件
+      addnewcondition(){
+        debugger
+      },
+      //删除某个条件组列表
 			delcondition(index){
 				this.wherelist.splice(index,1);
 			},
+      //条件语句选择完成 失去焦点事件
 			sqlblur(){
-				console.log("失去焦点："+this.wherelist);
-			}
+				console.log("失去焦点："+this.wherelist[0].selectfield);
+				console.log("失去焦点："+this.wherelist[0].selectcondition);
+				console.log("失去焦点："+this.wherelist[0].selectvalue);
+				console.log("表名："+this.sqldata.id);
+			},
 		},
 		computed: {
 
 		},
 
 		created() {
+
 		},
+    //页面初始化根据表名查询字段
 		mounted() {
+		    debugger
+      this.wherelist=this.sqldata.wherelist;
 			this.getFieldsById(this.sqldata.id)
-			console.log("SQL构建mounted" + this.sqldata.id)
+      console.log(this.sqldata)
+      this.initEvent();
+
 		}
 	}
 </script>
@@ -138,26 +165,30 @@ var squel = require("squel");
 <style scoped>
 	.sqlbuilder {
 		padding: 10px 10px 6px;
-		border: 1px solid #DCC896;
-		background: rgba(250, 240, 210, .5);
-		margin: 5px;
+		/*border: 1px solid #DCC896;*/
+		/*background: rgba(250, 240, 210, .5);*/
+		/*margin: 5px;*/
 	}
-	
+
 	.sqlb_head {
-		height: 30px;
+		height: 48px;
 		width: 100%;
-		line-height: 30px;
-		position: relative;
+		line-height: 48px;
+		/*position: relative;*/
+    background: #f8f8f8;
+    border-radius: 4px;
 	}
-	
+
 	.sqlbh_name {
 		float: left;
+    margin-left:10px;
 	}
-	
+
 	.sqlbh_group {
 		float: right;
+    margin-right:10px;
 	}
-	
+
 	.sqlbh_group span {
 		display: inline-block;
 		margin: 0 5px;
@@ -168,41 +199,56 @@ var squel = require("squel");
 		height: 25px;
 		line-height: 25px;
 	}
-	
+
 	.sqlbhspan {
 		color: #fff;
-		background-color: #20a0ff;
+		background-color: #009688;
 	}
-	
+
 	.sqlbh_group span:hover {
 		cursor: pointer;
 	}
-	
+
 	.sqlbh_group i {
 		margin: 0 2px;
 	}
-	
+
 	.el-select-dropdown__item.selected {
 		color: black !important;
 		background-color: #fff !important;
 	}
-	
+
 	.sqlbc_col {
-		background: white;
-		padding: 5px;
-		border-radius: 3px;
-		border: 1px solid #dad9d9;
+    height: 48px;
+    width: 100%;
+    line-height: 48px;
+    /* position: relative; */
+    background: #f8f8f8;
+    border-radius: 4px;
+    /* background: #f8f8f8; */
+    margin-top: 5px;
 	}
-	
+
 	.sqlbh_col {
-		line-height: 35px;
+		line-height: 48px;
 		text-align: center;
 	}
-	
+
 	.sqlbh_switch {
 		line-height: 35px;
 	}
 	.sqlb_content{
-		margin: 5px;
+		/*margin: 5px;*/
 	}
+  .deleteX{
+    outline: none;
+    border: 0;
+    background: #f8f8f8;
+    color: #009688;
+    font-weight: bold;
+    font-size: 18px;
+  }
+  .dbm_table{
+    margin-top:8px;
+  }
 </style>

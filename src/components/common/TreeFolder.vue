@@ -1,8 +1,9 @@
 <template>
-	<div class="folder_list" id="tree-folder">
-		<div class="sub_ui_title">
-			<h3>分类目录</h3></div>
-		<el-tree style="" :data="treedata" node-key="id" default-expand-all :expand-on-click-node="false" :render-content="renderContent">
+
+	<div class="folder_list" id="tree-folder" >
+		<!--<div class="sub_ui_title">-->
+			<!--<h3>分类目录</h3></div>-->
+		<el-tree style="" :data="treedata" node-key="id" @click="getDataByCondition" default-expand-all :expand-on-click-node="false" :render-content="renderContent">
 
 		</el-tree>
 
@@ -45,7 +46,7 @@
 				isleaveli: false,
 			}
 		},
-		
+
 		computed: {
 			...mapGetters([
 				'getFormList'
@@ -55,6 +56,46 @@
 			...mapActions([
 				'_setTreeData'
 			]),
+      getDataByCondition(store, data, evt){
+
+			  this.$emit('getDataByCondition',0,"我的数据");
+        var treeNname =document.getElementsByClassName("treename");
+        for(var i=0;i<treeNname.length;i++){
+          treeNname[i].style.color="#5a5a5a";
+        }
+			  var nodeContent =document.getElementsByClassName("el-tree-node__content");
+			  for(var i=0;i<nodeContent.length;i++){
+			      nodeContent[i].style.background="#fff";
+        }
+        var nodeContent2 =document.getElementsByClassName("el-tree-node__children");
+        for(var i=0;i<nodeContent2.length;i++){
+          nodeContent2[i].style.background="#fff";
+        }
+			  if(evt.target.className=="treename"){
+          evt.target.parentElement.parentElement.parentElement.parentElement.style.background="#009688";
+          evt.target.parentElement.parentElement.parentElement.parentElement.style.borderRadius="4px";
+          evt.target.style.color="#fff";
+        }
+        var shared=document.getElementsByClassName("shared")[0];
+        if(shared!=undefined){
+
+
+        shared.style.backgroundColor="#fff";
+        shared.style.borderRadius="0px";
+        var sharedFont=document.getElementsByClassName("view_allform")[0];
+        sharedFont.style.color="#5a5a5a";
+        }
+
+        var shareMap=document.getElementsByClassName("shareMap")[0];
+        if(shareMap!=undefined){
+          shareMap.style.backgroundColor="#fff";
+          shareMap.style.borderRadius="0px";
+          var mapFont=document.getElementsByClassName("view_allmap")[0];
+          mapFont.style.color="#5a5a5a";
+        }
+
+
+      },
 			initEvent() {
 				this.$bus.on('initTreeList', (obj) => {
 					this.treedata = obj;
@@ -70,6 +111,7 @@
 
 			},
 			update(store, data, type) {
+        debugger;
 				this.dialogTreeNameVisible = true;
 				this.form.store = store;
 				this.form.data = data;
@@ -82,11 +124,13 @@
 				}
 			},
 			getByTreeId(node, store, data) {
+
 				var childids = [];
 				this.getChildIDs(node, childids);
 				this.$emit("getByTreeId", node, store, data, childids);
 			},
 			getChildIDs(node, arr) {
+
 				if(node.childNodes.length == 0) {
 					if(arr != null) arr.push(node.data.id);
 				} else {
@@ -135,6 +179,7 @@
 				this.$emit("updateTreeList", this.treedata);
 			},
 			updateFormData(formdata, nodes) {
+          debugger
 				for(var item in nodes) {
 					var obj = {};
 					obj.id = nodes[item].data.id;
@@ -167,7 +212,7 @@
 				this.$emit("updateTreeList", this.treedata);
 			},
 			mouseOver(store, data, evt) {
-
+//        evt.target.parentElement.parentElement.style.background="#E4E8F1";
 				evt.target.children[1].style.display = 'block';
 			},
 
@@ -183,6 +228,7 @@
 					evt.target.children[1].style.display = 'none';
 					evt.target.children[2].style.display = 'none';
 				}
+//        evt.target.parentElement.parentElement.style.background="#fff";
 
 			},
 			mouseOutUl(store, data, evt) {
@@ -200,7 +246,7 @@
 				store
 			}) {
 				return(
-					 <ul class="tree_folder">
+					 <ul class="tree_folder" on-click={ (evt) => this.getDataByCondition(store, data,evt) }>
 					 <li style=" box-sizing:border-box;"  on-mouseenter={ (evt) => this.mouseOver(store, data,evt) } on-mouseleave={ (evt) => this.mouseOutLi(store, data,evt) }>
                         <span>
                              <span class="treename" on-click={ () => this.getByTreeId(node,store,data) }>{node.data.name}</span>
@@ -228,7 +274,11 @@
 			this.initEvent();
 		},
 		mounted() {
-
+//      var treeNname =document.getElementsByClassName("treename");
+//      treeNname[0].style.color="#fff";
+//      var nodeContent =document.getElementsByClassName("el-tree-node__content");
+//      nodeContent[0].style.backgroundColor="#009688";
+//      nodeContent[0].style.borderRadius="7px";
 		}
 	}
 </script>
@@ -236,25 +286,25 @@
 <style>
 	.el-tree {
 		cursor: default;
-		background: #f9f9f9;
-		border: 0px;
+		background: #ffffff;
+		border: 0px solid transparent !important;
 		font-size: 12px;
 	}
-	
+
 	.treename {
 		font-size: 12px;
 		display: block;
-		width: 100px;
+		width: 100%;
 		overflow: hidden;
 		text-overflow: ellipsis;
 	}
-	
+
 	.treename {}
-	
+
 	.el-tree-node>.el-tree-node__children {
 		overflow: visible;
 	}
-	
+
 	.sub_ui_title {
 		border-bottom: 1px solid #e5e9ed;
 		height: 35px;
@@ -262,17 +312,17 @@
 		margin-bottom: 10px;
 		text-align: left;
 	}
-	
+
 	.tree_folder {
 		float: left;
 		width: 79%;
 		box-sizing: border-box;
 	}
-	
+
 	.el-tree-node__content {
 		position: relative;
 	}
-	
+
 	.el-tree-node__expand-icon {
 		float: left;
 		margin: 0;
@@ -280,8 +330,12 @@
 		margin-right: 8px;
 		margin-left: 12px;
 	}
-	
-	.sub_ui_title h3 {
+
+  .tree_folder li span{
+    font-size: 14px !important;
+  }
+
+  .sub_ui_title h3 {
 		display: inline-block;
 		line-height: 33px;
 		border-bottom: 3px solid #333;
@@ -290,20 +344,24 @@
 		color: #333;
 		margin: 0;
 	}
-	
+
+  /*.tree_menu{*/
+    /*z-index: 9999;*/
+  /*}*/
+
 	.tree_menu li i {
 		margin-right: 8px;
 	}
-	
+
 	.tree_menu li:hover {
 		background: #E4E8F1;
 	}
-	
+
 	.el-tree-node__expand-icon {
 		border: none;
 	}
 	/*替换下三角*/
-	
+
 	.el-tree-node__expand-icon {
 		display: block;
 		width: 16px;
@@ -312,9 +370,13 @@
 		background-size: 250px 160px;
 		background-position: -148px -6px;
 	}
-	
+
 	.expanded {
 		background-position: -181px -6px;
 		transform: rotate(0deg) !important;
 	}
+  .el-tree-node__content:hover{
+    background-color:#E4E8F1;
+  }
+
 </style>

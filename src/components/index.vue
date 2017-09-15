@@ -2,9 +2,7 @@
   <div class="index">
     <nav-bar class="nav-bar"></nav-bar>
     <div id="whole_content">
-  
     	<router-view class="route-view"></router-view>
-  
     </div>
     <MapwayDialogManager></MapwayDialogManager>
   </div>
@@ -24,6 +22,7 @@ import MapwayDialogManager from './common/MapwayDialogManager.vue';
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style>
+
   .index{
     padding-left: 60px;
     overflow: hidden;
@@ -37,6 +36,8 @@ import MapwayDialogManager from './common/MapwayDialogManager.vue';
   	right: 0;
   	left: 60px;
     overflow-y: auto;
+    height: 100%;
+
   }
 
 .el-button {

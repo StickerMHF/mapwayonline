@@ -60,6 +60,11 @@
       ]),
       toMapView: function () {
         if (!!this.edit.editType) {
+          this.$message({
+            showClose: true,
+            message: '数据视图当前有数据正在编辑，请先保存',
+            type: 'warning'
+          });
           return;
         }
         this.setEditLog(false);
@@ -69,6 +74,11 @@
 
       toDataView: function () {
         if (!!this.edit.editType) {
+          this.$message({
+            showClose: true,
+            message: '地图当前有数据正在编辑，请先保存',
+            type: 'warning'
+          });
           return;
         }
         this.setEditLog(false);

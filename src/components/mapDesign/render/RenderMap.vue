@@ -8,7 +8,10 @@
   import leafletImage from 'leaflet-image'
 
   import Leaflet from 'leaflet'
+  import esri_leaflet from 'esri-leaflet'
+  import LBaseMap from 'static/mapDesign/js/leaflet-basemap/L.Control.Basemaps.js'
   require('../../../../node_modules/leaflet/dist/leaflet.css');
+  require('static/mapDesign/js/leaflet-basemap/L.Control.Basemaps.css');
   // TODO  以后MAP_IMAGE_PATH这个图片地址要改成node_modules中的地址
   const MAP_IMAGE_PATH = "http://cdn.bootcss.com/leaflet/1.0.3/images/";
 
@@ -19,8 +22,8 @@
         map: null,
         layerTree: [], // 图层树的管理
         /*layerTree: [{
-           id: id,
-           layer: layer
+         id: id,
+         layer: layer
          }],*/
         currentLayerId: null,
         markers: null,
@@ -42,6 +45,9 @@
         /* 二次编辑 */
         fieldStyleArray: [],
         fieldValueArray: [],
+
+        /* 组件 */
+        widgetTree: [],
       }
     },
     computed: {
@@ -61,7 +67,8 @@
     },
     methods: {
       ...mapActions([
-        'setLayers', 'setBaseLayer', 'addOverlayerStyle', 'setCurrentStyle', 'updateOverLayer', 'updateOverLayerLabel', 'addGeoJsons', 'setCurrentLayerId',
+        'setLayers', 'addOverlayerStyle', 'setCurrentStyle', 'updateOverLayer', 'updateOverLayerLabel',
+        'addGeoJsons', 'setCurrentLayerId', 'addSavedLayersWidget', 'changeSavedLayersBaseLayerIndex', 'addSavedLayersBaseLayer', 'removeSavedLayersBaseLayer'
       ]),
       initEvent () {
         this.$bus.on('create-map-image', () => {
@@ -72,8 +79,12 @@
           }
         });
 
-        this.$bus.on('run-init-simple', (obj, _geoJson) => {
-          this.changeToRenderSimple(obj, _geoJson);
+        this.$bus.on('run-initData-simple', (obj) => {
+          this.initDefaultRenderSimple(obj);
+        });
+
+        this.$bus.on('run-addData-simple', (obj, addGeojson) => {
+          this.addDefaultRenderSimple(obj, addGeojson);
         });
 
         this.$bus.on('simple-render-change', (obj) => {
@@ -164,13 +175,13 @@
 
         this.$bus.on('add-label', () => {
 
-          var temObj; // 临时存放label对象
+          var temObj = {}; // 临时存放label对象
           this.currentLayerId = this.render.currentLayerId;
 
           var over_layer = this.render.savedLayers.over_layer;
 
           over_layer.forEach((item) => {
-            if (item.data_id === this.currentLayerId) {
+            if (item.id === this.currentLayerId) {
               temObj = Tool.clone(item.label);
             }
           });
@@ -181,22 +192,52 @@
           this.changeToLabel(temObj);
         });
 
-        this.$bus.on('remove-layer', (id) => {
-          this.removeLayer(id);
+        this.$bus.on('hide-layer', (id) => {
+          this.hideLayer(id);
         });
 
-        this.$bus.on('add-layer', (id) => {
-          this.addLayer(id);
+        this.$bus.on('show-layer', (id) => {
+          this.showLayer(id);
+        });
+
+        this.$bus.on('hide-label', () => {
+          this.hideLabel();
+        });
+
+        this.$bus.on('show-label', () => {
+          this.showLabel();
         });
 
         this.$bus.on('restore-map-render', (obj) => {
           this.restoreMapRender(obj);
         });
+
+        this.$bus.on('render-map-resize', () => {
+          this.map.invalidateSize()
+        });
+
+        this.$bus.on('create-map-widget', () => {
+          this.createWidget();
+        })
+
+        this.$bus.on('add-map-widget', obj => {
+          this.addWidget(obj);
+        });
+
+        this.$bus.on('remove-map-widget', obj => {
+          this.removeWidget(obj);
+        });
+
+        this.$bus.on('get-map-basemap', () => {
+          console.log(this.map.currentBasemap._url); // 通过底图插件暴露出的当前底图url，改变vuex render.savedLayers.base_layer 顺序
+          this.changeSavedLayersBaseLayerIndex(this.map.currentBasemap._url);
+        });
       },
 
       destroyEvent () {
         this.$bus.off('create-map-image');
-        this.$bus.off('run-init-simple');
+        this.$bus.off('run-initData-simple');
+        this.$bus.off('run-addData-simple');
         this.$bus.off('simple-render-change');
         this.$bus.off('restore-render');
         /* 分级开始 */
@@ -214,9 +255,14 @@
         this.$bus.off('label-change');
         this.$bus.off('remove-label');
         this.$bus.off('add-label');
-        this.$bus.off('remove-layer');
-        this.$bus.off('add-layer');
+        this.$bus.off('hide-layer');
+        this.$bus.off('show-layer');
         this.$bus.off('restore-map-render');
+        this.$bus.off('render-map-resize');
+        this.$bus.off('create-map-widget');
+        this.$bus.off('add-map-widget');
+        this.$bus.off('remove-map-widget');
+        this.$bus.off('get-map-basemap');
       },
 
       initMap() {
@@ -232,98 +278,250 @@
         });
       },
 
+      createWidget () {
+        this.scale = L.control.scale({imperial: false});
+
+        var vm = this, basemaps = [], tempArray = [{
+          url: 'http://cache1.arcgisonline.cn/arcgis/rest/services/ChinaOnlineStreetGray/MapServer/tile/{z}/{y}/{x}',
+          attribute: '',
+          id: 1
+        },  {
+          url: 'http://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+          attribute: '',
+          id: 2
+        },
+          {
+            url: 'http://cache1.arcgisonline.cn/arcgis/rest/services/ChinaOnlineStreetColor/MapServer/tile/{z}/{y}/{x}',
+            attribute: '',
+            id: 3
+          }];
+
+
+        tempArray.forEach(item => {
+          basemaps.push(L.tileLayer(item.url));
+          vm.addSavedLayersBaseLayer(item);
+        });
+
+
+        this.basemap = L.control.basemaps({basemaps});
+      },
+
+      /* 组件添加到map */
+      addWidget (obj) {
+        let temArray = []; // 存放name
+
+        this.widgetTree.forEach((item) => {
+          temArray.push(item.name);
+        });
+        var index = temArray.indexOf(obj.name);
+        if (index < 0) {
+          this.widgetTree.push(obj);
+        }
+
+        switch (obj.name) {
+          case 'scale':
+            this.scale.addTo(this.map);
+            break;
+          case 'basemap':
+            this.basemap.addTo(this.map);
+          case 'measure':
+            break;
+          case 'legend':
+            break;
+        }
+      },
+
+      /* 组件从map移除 */
+      removeWidget (obj) {
+        var vm = this;
+        this.widgetTree.some((item, index) => {
+          if (obj.name === item.name) {
+            vm.widgetTree.splice(index, 1);
+            return;
+          }
+        });
+
+        switch (obj.name) {
+          case 'scale':
+            this.scale.removeFrom(this.map);
+            break;
+          case 'basemap':
+            debugger
+            this.basemap.removeFrom(this.map);
+            debugger
+            break
+          case 'measure':
+            break;
+          case 'legend':
+            break;
+        }
+      },
+
       addDefaultLayer() {
-        this.baseLayer = L.tileLayer('http://cache1.arcgisonline.cn/arcgis/rest/services/ChinaOnlineStreetGray/MapServer/tile/{z}/{y}/{x}').addTo(this.map);
-        this.setBaseLayer('http://cache1.arcgisonline.cn/arcgis/rest/services/ChinaOnlineStreetGray/MapServer/tile/{z}/{y}/{x}');
+        console.log(this.render.savedLayers.base_layer);
+
+        if (this.render.savedLayers.base_layer.length > 0) {
+          this.baseLayer = L.tileLayer(this.render.savedLayers.base_layer[0].url).addTo(this.map);
+        }
+
         this.renderLayer = L.layerGroup().addTo(this.map);
         this.labelLayer = L.layerGroup().addTo(this.map);
       },
 
       /* 图层隐藏 */
-      removeLayer (id) {
-        this.layerTree.forEach((item) => {
+      hideLayer (id) {
+        this.layerTree.some((item) => {
           if (item.id === id) {
-            this.renderLayer.removeLayer(item.layer);
+            item.layer.setStyle({ opacity: 0, fillOpacity: 0 });
+            return;
           }
         });
       },
 
       /* 图层显示 */
-      addLayer (id) {
-        this.layerTree.forEach((item) => {
+      showLayer (id) {
+        this.layerTree.some((item) => {
           if (item.id === id) {
-            this.renderLayer.addLayer(item.layer);
+            item.layer.setStyle({ opacity: 1, fillOpacity: 1 });
+            return;
           }
         });
       },
 
-      /* 移除标注图层 */
+
       removeLabel () {
-        var layerId;
+        var layerId = '';
         this.currentLayerId = this.render.currentLayerId;
         var over_layer = this.render.savedLayers.over_layer;
         over_layer.some((item) => {
-          if (item.data_id === this.currentLayerId) {
+          if (item.id === this.currentLayerId) {
             if (!!item.label) {
-              var layerId = item.label.layerId;
+              layerId = item.label.layerId;
               this.labelLayer.removeLayer(layerId);
+              return;
             }
+          }
+        });
+      },
+
+      /* 标注图层隐藏 */
+      hideLabel () {
+        var layerId = '', vm = this;
+        this.currentLayerId = this.render.currentLayerId;
+        var over_layer = this.render.savedLayers.over_layer;
+        over_layer.some((item) => {
+          if (item.id === this.currentLayerId) {
+            var iDivs = document.getElementsByClassName(item.id);
+
+            //debugger
+            for (let i = 0, len = iDivs.length; i < len; i++ ) {
+
+              iDivs[i].style.display = 'none';
+            }
+
+            return;
+          }
+        });
+      },
+
+      /* 标注图层显示 */
+      showLabel () {
+        var layerId = '', vm = this;
+        this.currentLayerId = this.render.currentLayerId;
+        var over_layer = this.render.savedLayers.over_layer;
+        over_layer.some((item) => {
+          if (item.id === this.currentLayerId) {
+            var iDivs = document.getElementsByClassName(item.id);
+
+            for (let i = 0, len = iDivs.length; i < len; i++ ) {
+              iDivs[i].style.display = 'block';
+            }
+            return;
           }
         });
       },
 
       /*********************************************** 二次编辑开始 ***************************************************/
       restoreMapRender (layers) {
+        var vm = this, _layers = [],
+          temArray = []; // 每循环一次，往temArray中存入一个overlayer，当len === temArray.length, 说明所有数据请求成功，触发'hide-render-loading'事件
         this.addBaseLayer(layers.base_layer);
         var over_layer = layers.over_layer;
 
+        this.restoreWidget(layers.widget);
+
         over_layer.forEach((item) => {
-          this.getGeojson(over_layer, item);
+          temArray.push('0');
+          vm.getGeojson(over_layer, item, temArray, _layers);
         });
       },
 
-      getGeojson (over_layer, obj) {
-        var data_id = obj.data_id;
-        var url = 'TBUSER000001/mapdesign/maps/layers/'+ data_id + '/query?f=geojson&outSr=4326&returnGeometry=true';
-        var vm = this,
-          len = over_layer.length, temArray = []; // 每循环一次，往temArray中存入一个overlayer，当len === temArray.length, 说明所有数据请求成功，触发'hide-render-loading'事件;
+      /* 还原组件 */
+      restoreWidget (widgetArray) {
+        if (widgetArray.length === 0) {
+          return;
+        }
+
+        this.$bus.emit('reset-render-config-widget-tree');
+        var vm = this;
+        widgetArray.forEach(item => {
+          vm.addWidget(item);
+          vm.$bus.emit('add-render-config-widget-tree', item);
+          vm.addSavedLayersWidget(Tool.clone(item));  // 添加组件到vuex
+        });
+      },
+
+      getGeojson (over_layer, obj, temArray, layers) {
+
+        var _geoJson = {}, temObj = {},
+          url = 'mapdesign/maps/layers/'+ obj.id + '/query?f=geojson&outSr=4326&returnGeometry=true',
+          len = over_layer.length;
 
         this.$http.get(url).then((res) => {
-          let features = res.data, layers = [], _geoJson = null;
-
+          let features = res.data;
           this.addOverLayer(features, obj);
 
-          layers.push({
-            data_id: data_id,
-            isAdded: true,
-          });
-          this.setLayers(layers);
-          this.$bus.$emit('update-layers', layers);
+          for (let i in obj) {
+            if (obj.hasOwnProperty(i)) {
+              temObj[i] = obj[i];
+            }
+          }
+          /* 渲染界面对图层显隐，是否编辑的控制 */
+          temObj.isAdded = true;
+          temObj.isRendering = false;
+          layers.push(temObj);
+          this.$bus.$emit('update-layers', Tool.clone(temObj) );
 
           _geoJson = {
-            id: data_id,
+            id: obj.id,
             data: features,
           };
           this.addGeoJsons( Tool.clone(_geoJson) ); // 所有图层的数据
 
-          this.setCurrentLayerId(data_id);
+          //this.setCurrentLayerId(id);
 
           /* 还原label */
-          if ( !Tool.isEmptyObject(obj.label) ) {
-            this.changeToLabel(obj.label);
+          if ( !Tool.isEmptyObject(obj.label)  && !!obj.label.value ) {
+            console.log()
+            this.changeToLabel(obj.label, obj.id);
           }
 
-          temArray.push(data_id);
           if (len === temArray.length) {
             console.log('所有图层已经加完了')
-            vm.$bus.emit('hide-render-loading');
+            this.setLayers(layers);
+            this.$bus.emit('hide-render-loading');
           }
 
         }).catch((err) => { console.log(err) });
       },
 
-      addBaseLayer (url) {
-        this.baseLayer = L.tileLayer(url).addTo(this.map);
+      addBaseLayer (array) {
+        var vm = this;
+        array.forEach(item => {
+          vm.addSavedLayersBaseLayer(item);
+        });
+        this.baseLayer = L.tileLayer(array[0].url).addTo(this.map);
+        this.createWidget();
       },
 
       addOverLayer(features, obj) {
@@ -332,7 +530,7 @@
           gtype = obj.gtype,
           render = obj.render,
           label = obj.label,
-          id = obj.data_id;
+          id = obj.id;
 
         switch (gtype) {
           case 'Point':
@@ -358,18 +556,18 @@
           layer: geojsonLayer,
         });
 
-        console.log(render);
-        //debugger
+        /*console.log(render);
+         debugger*/
         /* 二次编辑构造 */
         this.addOverlayerStyle({
-          data_id: id,
+          id: id,
           gtype: gtype,
           render: Tool.clone(render),
           label: Tool.clone(label),
         });
 
         console.log({
-          data_id: id,
+          id: id,
           gtype: gtype,
           render: Tool.clone(render),
           label: Tool.clone(label),
@@ -378,7 +576,6 @@
         this.renderLayer.addLayer(geojsonLayer);
         this.mapLoading = false;
       },
-
 
       style (feature, latlng, gtype, vm, render) {
         var rtype = render.rtype, style;
@@ -410,9 +607,9 @@
               radius: render.style.fill.radius,
               fillColor: render.style.fill.color,
               color: render.style.border.color,
-              weight: render.style.border.color.weight,
-              opacity: render.style.border.color.opacity,
-              fillOpacity: render.style.fill.color.opacity
+              weight: render.style.border.weight,
+              opacity: render.style.border.opacity,
+              fillOpacity: render.style.fill.opacity
             });
             style = vm.getStyle(feature, latlng, rtype,  gtype);
 
@@ -482,6 +679,8 @@
             break;
         }
 
+        //console.log(style)
+
         if (gType != 'point') {
           return style;
         } else {
@@ -491,15 +690,100 @@
 
       /* 二次编辑结束 */
 
+      /************************************首次默认简单渲染***********************************/
+      /* 在创建地图添加数据 */
+      initDefaultRenderSimple (obj) {
+        var geoJsons = this.render.geoJsons;
+        console.log('geoJsons', geoJsons);
+        this.geojsonAddToMap(obj, geoJsons);
+      },
 
-      /****************************************** 简单渲染（包括首次渲染） *******************************************/
-      changeToRenderSimple (obj, _geoJson) {
-        var layers = [], geoJsons =  this.render.geoJsons, _this = this, layers = [], currentLayer;
-        this.currentLayerId = this.render.currentLayerId;
+      /* 在渲染页面添加数据 */
+      addDefaultRenderSimple (obj, addGeojson) {
+        this.geojsonAddToMap(obj, addGeojson);
+      },
 
-        if (!!this.currentLayerId) {
+      /* geojson数据初次默认简单渲染加载到地图上 */
+      geojsonAddToMap (obj, geoJsons) {
+        var layers = [];
+        /*  初始默认简单渲染，并加载到地图上 */
+        geoJsons.forEach((item) => {
+          var geometryType = item.data.features[0].geometry.type, layer = {}, temObj1 = {}, temObj2 = {}; // TODO 需要后台传过来
+          var style = Tool.createInitStyle(geometryType, obj);
+          console.log(style);
+          //debugger
+
+          if (geometryType === 'LineString' || geometryType === 'MultiLineString') {
+            layer = L.geoJson(item.data, {
+              style: function () {
+                return style;
+              },
+            });
+            obj.isPoint = false; obj.isLine = true; obj.isPolygon = false;  // 确定Simple.vue组件 中的isLine(不该变组件的值, 主要为了保存到vuex中)
+            this.$bus.$emit('simple-color-change', style.color);
+
+          } else if (geometryType === 'Point' || geometryType === 'MultiPoint') {
+            layer = L.geoJson(item.data, {
+              pointToLayer: function (feature, latlng) {
+                return L.circleMarker(latlng, style);
+              }
+            });
+            obj.isPoint = true; obj.isLine = false; obj.isPolygon = false;  // 确定Simple.vue组件 中的isPoint(不该变组件的值, 主要为了保存到vuex中)
+            this.$bus.$emit('simple-fill-color-change', style.fillColor);
+
+          } else if (geometryType === 'Polygon' || geometryType === 'MultiPolygon') {
+
+            layer = L.geoJson(item.data, {
+              style: function () {
+                return style;
+              }
+            });
+            obj.isPoint = false; obj.isLine = false; obj.isPolygon = true;  // 确定Simple.vue组件 中的isPolygon(不该变组件的值, 主要为了保存到vuex中)
+            this.$bus.$emit('simple-fill-color-change', style.fillColor);
+          }
+
+          this.renderLayer.addLayer(layer);
+
+          for (let i in item) {
+            if (item.hasOwnProperty(i)) {
+              temObj1[i] = item[i];
+              temObj2[i] = item[i];
+            }
+          }
+
+          temObj1.layer = layer;
+          this.layerTree.push(temObj1);
+
+          /* 渲染界面对图层显隐，是否编辑的控制 */
+          temObj2.isAdded = true;
+          temObj2.isRendering = false;
+          layers.push(temObj2);
+          this.$bus.$emit('update-layers', temObj2 );
+
+
+          this.addOverlayerStyle({
+            id: item.id,
+            gtype: geometryType,
+            render: {
+              style: Tool.clone(obj),
+              rtype: this.render.renderType,
+            },
+            label: null,
+            widget: [],
+          });
+          console.log('初次默认渲染this.render.renderType', this.render.renderType);
+        });
+
+        this.setLayers(Tool.clone(layers));
+        this.$bus.emit('hide-render-loading');
+      },
+
+      /****************************************** 简单渲染*******************************************/
+      changeToRenderSimple (obj) {
+        var currentLayer, currentLayerId = this.render.currentLayerId;
+        if (!!currentLayerId) {
           this.layerTree.forEach((item) => {
-            if (this.currentLayerId == item.id) {
+            if (currentLayerId == item.id) {
               currentLayer = item.layer;
             }
           });
@@ -510,66 +794,6 @@
           }
           return;
         }
-        console.log('geoJsons', geoJsons);
-
-        geoJsons.forEach((item, index) => {
-          var geometryType = item.data.features[0].geometry.type, layer; // TODO 需要后台传过来
-          var style = Tool.createInitStyle(geometryType, index);
-          console.log(style)
-          //debugger
-          if (geometryType === 'LineString' || geometryType === 'MultiLineString') {
-            layer = L.geoJson(item.data, {
-              style: function () {
-                return style;
-              },
-            });
-            this.$bus.$emit('simple-color-change', style.color);
-
-          } else if (geometryType === 'Point' || geometryType === 'MultiPoint') {
-            layer = L.geoJson(item.data, {
-              pointToLayer: function (feature, latlng) {
-                return L.circleMarker(latlng, style);
-              }
-            });
-            this.$bus.$emit('simple-fill-color-change', style.fillColor);
-
-          } else if (geometryType === 'Polygon' || geometryType === 'MultiPolygon') {
-
-            layer = L.geoJson(item.data, {
-              style: function () {
-                return style;
-              }
-            });
-            this.$bus.$emit('simple-fill-color-change', style.fillColor);
-          }
-
-          this.renderLayer.addLayer(layer);
-
-          this.layerTree.push({
-            id: item.id,
-            layer,
-          });
-
-          /* 渲染界面对图层显隐，是否编辑的控制 */
-          layers.push({
-            data_id: item.id,
-            isAdded: true,
-          });
-
-          this.addOverlayerStyle({
-            data_id: item.id,
-            gtype: geometryType,
-            render: {
-              style: Tool.clone(obj),
-              rtype: this.render.renderType,
-            },
-            label: null
-          });
-        });
-
-        this.setLayers(Tool.clone(layers));
-        this.$bus.emit('hide-render-loading');
-        this.$bus.$emit('update-layers', layers);
       },
 
       restoreRender (obj) {
@@ -677,8 +901,8 @@
           for (var i in currentLayer._layers) {
             let graphic = currentLayer._layers[i];
             let index = Tool.getIndexInArray(nowStyleArray, graphic.feature.properties[currentField]);
-            console.log(index);
-            //debugger
+            /*console.log(index);
+             debugger*/
             if (geometryType === 'Point' || geometryType === 'MultiPoint') {
               graphic.setStyle({
                 radius: nowStyleArray[index].radius,
@@ -1086,15 +1310,17 @@
         }
       },
 
-      /* 添加标注图层 */
-      changeToLabel (obj) {
+      /*
+       * 添加标注图层
+       * @param id 如果id === undefined ？ 首次渲染 : 二次编辑
+       * */
+      changeToLabel (obj, id) {
         //this.removeLabel(); // 先清空之前的labelLayer
         var temLabelLayer = L.layerGroup();
-        //console.log(this.labelLayer);
 
         var datas = this.render.geoJsons, data;
         var _this = this;
-        this.currentLayerId = this.render.currentLayerId;
+        this.currentLayerId = this.render.currentLayerId || id;
 
         datas.forEach((item) => {
           if (item.id === this.currentLayerId) {
@@ -1107,12 +1333,13 @@
           size = obj.size,
           value = obj.value,
           labelClass = this.labelClass,
+          labelId = '',
           width  = obj.value.length*size + 20,
           height = size + 2;
 
         var over_layer = this.render.savedLayers.over_layer;
         over_layer.some((item) => {
-          if (item.data_id === _this.currentLayerId) {
+          if (item.id === _this.currentLayerId) {
             // 如果当前图层已经包含标注，先清除，再添加一次
             if (item.label) {
               var layerId = item.label.layerId;
@@ -1120,35 +1347,54 @@
             }
             // 对当前图层添加标注
 
-            _this.addLabel(geometryType, data,  { color, size, value, labelClass, width, height}, temLabelLayer, _this.labelLayer);
+            labelId = item.id; // 将data id作为标注的class，以便以后控制label显示隐藏
+            _this.addLabel(geometryType, data,  { color, size, value, labelClass, labelId, width, height}, temLabelLayer, _this.labelLayer);
             obj.layerId = this.labelLayer.getLayerId(temLabelLayer);
 
             this.updateOverLayerLabel(Tool.clone(obj));
+            /*console.log('obj', obj)
+             debugger*/
             return;
           }
         });
+        console.log('this.render.savedLayers.over_layer', this.render.savedLayers.over_layer)
       },
 
       addLabel (geometryType, data, obj, temLabelLayer, labelLayer) {
         if (geometryType === 'Point' || geometryType === 'MultiPoint') {
           L.geoJson(data, {
             onEachFeature: function(feature, layer) {
-              var label = L.marker(layer._latlng, {
+              //console.log(layer)
+              var latlng;
+              switch (geometryType) {
+                case 'Point':
+                  latlng = L.latLng(layer.feature.geometry.coordinates[1], layer.feature.geometry.coordinates[0]);
+                  break;
+                case 'MultiPoint':
+                  latlng = L.latLng(layer.feature.geometry.coordinates[0][1], layer.feature.geometry.coordinates[0][0]);
+                  break;
+              }
+
+              var label = L.marker(latlng, {
                 icon: L.divIcon({
-                  className: obj.labelClass,
+                  className: obj.labelClass + ' ' + obj.labelId,
                   html: '<label class="hover" style="color: ' + obj.color +'; font-size:'+ obj.size + 'px">' + feature.properties[obj.value] + '</label>',
                   iconSize: [obj.width, obj.height],
                 })
               });
               temLabelLayer.addLayer(label);
+
             }
           });
         } else {
           L.geoJson(data, {
             onEachFeature: function(feature, layer) {
+              if (layer.feature.geometry.coordinates.length <= 0) {
+                return;
+              }
               var label = L.marker(layer.getBounds().getCenter(), {
                 icon: L.divIcon({
-                  className: obj.labelClass,
+                  className: obj.labelClass + ' ' + obj.labelId,
                   html: '<label class="hover" style="color: ' + obj.color +'; font-size:'+ obj.size + 'px">' + feature.properties[obj.value] + '</label>',
                   iconSize: [obj.width, obj.height]
                 })
@@ -1171,6 +1417,7 @@
   }
 
   .render-label {
+    display: block;
     text-align: center;
   }
 </style>

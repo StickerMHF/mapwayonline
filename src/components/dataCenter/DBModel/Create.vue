@@ -1,19 +1,49 @@
 <template>
 	<div class="dbmodel-create" id="dbmodel-create">
+    <div class="dbtableTop">
+      <p class="dbtableTop_p">创建数据表</p>
+      <button class="closeBtn" @click="closeButton">X</button>
+    </div>
 		<div class="dbtc_top">
 			<div class="dbtct_title">
-				<input class="dbtc_name" v-model="model.name">
-				<el-button type="primary" class="dbtc_save">保存</el-button>
+        <div style="float: left; width:30%;">
+          <p style="margin:0;">
+            <p style="margin:0; width:100%; float:left;">
+              <input class="dbtc_name dbtc_name_model" v-model="model.name">
+            </p>
+            <span class="dbtc_time"><span class="createTime">CREATE</span>&nbsp &nbsp &nbsp{{model.updatedate}}</span>
+          </p>
+        </div>
+        <el-button type="primary" class="selectSql" @click="btnSql">SQL</el-button>
+        <el-button type="primary" class="selectModel" @click="btnModel">建模</el-button>
+
+        <el-button type="primary" class="dbtc_save" @click="btnSave">保存</el-button>
+        <!--<input class="dbtc_name dbtc_name_model" v-model="model.name">-->
+
 			</div>
-			<div class="dbtct_date">
-				<button v-if="datas.type=='UPDATE'" class="dbtc_pub" style="background: #ffb308;border: 1px solid #ffb308;">UPDATE</button>
-				<button v-else class="dbtc_pub">CREATE</button>
-				<span class="dbtc_time">时间</span>
-			</div>
+			<!--<div class="dbtct_date">-->
+				<!--<button v-if="datas.type=='UPDATE'" class="dbtc_pub" style="background: #ffb308;border: 1px solid #ffb308;">UPDATE</button>-->
+				<!--<button v-else class="dbtc_pub">CREATE</button>-->
+				<!--<span class="dbtc_time">时间</span>-->
+			<!--</div>-->
 		</div>
-		<el-row style="height: 100%;">
-			<el-tabs v-model="activeName" @tab-click="handleClick" style="height: 100%;">
-				<el-tab-pane label="SQL" name="first" style="height: 100%;">
+    <div class="dbmodel_left">
+      <div class="dbml_top">
+        <p class="modelTitle">我的数据表</p>
+        <i class="modelTitleLine"></i>
+      </div>
+      <draggable class="list-group" element="ul" v-model="list" :options="dragOptions" :move="onMove" @start="dragStart" @end="dragEnd">
+        <transition-group type="transition" :name="'flip-list'">
+          <li class="list-group-item" v-for="element in list" :key="element.id" :id="element.id">
+            <i :class="element.fixed? 'fa fa-anchor' : 'glyphicon glyphicon-pushpin'" @click=" element.fixed=! element.fixed" aria-hidden="true"></i>
+            {{element.name}}
+          </li>
+        </transition-group>
+      </draggable>
+    </div>
+		<div style="height: 100%;" class="modelRight">
+			<div v-model="activeName" @tab-click="handleClick" style="height: 100%;">
+				<div label="SQL" name="first" style="height: 100%;" class="createSql">
 					<div class="dbtc_sqlhead">
 						<span @click="clearsql"><i class="fa fa-eraser"></i></span>
 						<span @click="runsql"><i class="fa fa-caret-right"></i></span>
@@ -26,42 +56,44 @@
 					<div class="dbtc_sqlresult" style="height: 100%">
 						<TableList :tabledata="tabledata"></TableList>
 					</div>
-				</el-tab-pane>
-				<el-tab-pane label="建模" name="second" style="height: 100%;">
-					<el-col :span="4" style="height: 100%;">
-						<div class="dbmodel_left">
-							<div class="dbml_top">
-								<h5>我的数据表</h5>
-							</div>
-							<draggable class="list-group" element="ul" v-model="list" :options="dragOptions" :move="onMove" @start="dragStart" @end="dragEnd">
-								<transition-group type="transition" :name="'flip-list'">
-									<li class="list-group-item" v-for="element in list" :key="element.id" :id="element.id">
-										<i :class="element.fixed? 'fa fa-anchor' : 'glyphicon glyphicon-pushpin'" @click=" element.fixed=! element.fixed" aria-hidden="true"></i> {{element.name}}
-									</li>
-								</transition-group>
-							</draggable>
-						</div>
-					</el-col>
-					<el-col :span="20" style="height: 100%;">
+				</div>
+				<div label="建模" name="second" style="" class="createModel">
+					<div style="">
+						<!--<div class="dbmodel_left">-->
+							<!--<div class="dbml_top">-->
+								<!--<h5>我的数据表</h5>-->
+							<!--</div>-->
+							<!--<draggable class="list-group" element="ul" v-model="list" :options="dragOptions" :move="onMove" @start="dragStart" @end="dragEnd">-->
+								<!--<transition-group type="transition" :name="'flip-list'">-->
+									<!--<li class="list-group-item" v-for="element in list" :key="element.id" :id="element.id">-->
+										<!--<i :class="element.fixed? 'fa fa-anchor' : 'glyphicon glyphicon-pushpin'" @click=" element.fixed=! element.fixed" aria-hidden="true"></i> {{element.name}}-->
+									<!--</li>-->
+								<!--</transition-group>-->
+							<!--</draggable>-->
+						<!--</div>-->
+					</div>
+					<div  style="height: 100%;">
 						<div class="dbmodel_content">
 							<draggable element="span" v-model="dbmodeldata.list2" :options="dragOptions" :move="onMove" @start="dragStart" @end="dragEnd" style="width: 100%;height: 100%;">
 								<transition-group name="no" class="list-group" tag="div" style="width: 100%;height: 100%;">
 									<div class="dbm_table" v-for="element in dbmodeldata.list2" :key="element.id" :id="element.id">
-										<!--<i :class="element.fixed? 'fa fa-anchor' : 'glyphicon glyphicon-pushpin'" @click=" element.fixed=! element.fixed" aria-hidden="true"></i> {{element.name}}-->
-										<SQLBuilder :sqldata="element"></SQLBuilder>
+										<i :class="element.fixed? 'fa fa-anchor' : 'glyphicon glyphicon-pushpin'" @click=" element.fixed=! element.fixed" aria-hidden="true"></i>
+										<SQLBuilder ref="sql" :sqldata="element"></SQLBuilder>
 									</div>
 								</transition-group>
 							</draggable>
 						</div>
-					</el-col>
-					
-				</el-tab-pane>
-			</el-tabs>
+					</div>
 
-		</el-row>
+				</div>
+			</div>
+
+		</div>
 	</div>
+  <!--<el-button :plain="true" @click="open6"></el-button>-->
 </template>
 <script>
+  import Tool from '@/components/tool'
 	import draggable from 'vuedraggable'
 	import TableList from '../../common/TableList.vue';
 	import SQLBuilder from '../../common/SQLBuilder.vue';
@@ -75,6 +107,8 @@
 		},
 		data() {
 			return {
+        hasdata: false,
+        noUpdata:true,
 				listtest: message.map((name, index) => {
 					return {
 						name: name,
@@ -83,9 +117,10 @@
 					};
 				}),
 				model: {
-					name: "名称"
+					name: "名称",
+          updatedate: this.$Tools.getNowFormatDate(),
 				},
-				datas: {
+        datas: {
 					tableid: null,
 					type: "add"
 				},
@@ -104,6 +139,11 @@
 						"isgeom": true,
 						"author": "管理员",
 						"type": 4,
+            "wherelist":[{
+              "selectcondition":"",
+              "selectfield":"",
+              "selectvalue":"",
+            }],
 						"fields": [{
 							"aliasname": "日期",
 							"type": "timestamp without time zone",
@@ -126,7 +166,7 @@
 				editable: true,
 				isDragging: false,
 				delayedDragging: false,
-				activeName: 'second',
+				activeName: 'first',
 				tabledata: {
 					data: [],
 					fields: []
@@ -152,12 +192,36 @@
 			}
 		},
 		methods: {
-
 			initEvent() {
-				var that = this;
-				this.$bus.on('initDBModelCreate', (obj) => {
-
-				});
+        var that=this;
+        this.$bus.on('initDBModelCreate', (obj) => {
+          debugger
+          if(!!obj && !!obj.id){
+            console.log('obj', obj.id)
+            that.datas.tableid = obj.id;
+            var url =that.$http.defaults.baseURL +"datamodel/"+obj.id;
+            console.log(url);
+            that.$http.get(url).then((model) => {
+              console.log(model);
+                debugger
+              if(model.data.result) {
+                that.isUpdata=false;
+                //判断是建模还是sql语句
+                if(model.data.data.iscustom){
+                  var modelDate = JSON.parse(model.data.data.restore);
+                  that.dbmodeldata.list2=modelDate.list2;
+                  that.$bus.$emit('initSQLBuilder');
+                  that.activeName="second";
+                }else{
+                    that.dbmodeldata.textareasql=model.data.data.modelsql;
+                }
+              }
+            });
+          }
+        });
+        this.$bus.on('test', (x) => {
+            console.log(x)
+        });
 			},
 			orderList() {
 				this.list = this.list.sort((one, two) => {
@@ -180,16 +244,20 @@
 					this.$message('删除表' + e.item.id);
 				}
 				this.isDragging = false;
+
+
+
 			},
 			//开始拖拽
 			dragStart() {
+
 				this.tablenum = this.$Tools.cloneObj(this.dbmodeldata.list2).length;
 				this.isDragging = true
 			},
 			//根据表名获取所有字段
 			getFieldsById(tid) {
 				var that = this;
-				var url = this.$http.defaults.baseURL + 'TBUSER000001/datacenter/datas/' + tid + '/field';
+				var url = this.$http.defaults.baseURL + 'datacenter/datas/' + tid + '/field';
 				that.$http.get(url).then((r) => {
 					if(r.data.result) {
 						that.addFieldsToList(tid, r.data.data);
@@ -199,6 +267,7 @@
 			//将查询的表字段添加到tablelist中
 			addFieldsToList(tid, fields) {
 				var that = this;
+        debugger
 				this.dbmodeldata.list2.map((item, index) => {
 					if(item.id === tid) {
 						item.fields = fields;
@@ -210,7 +279,7 @@
 			},
 			init() {
 				var that = this;
-				var url = this.$http.defaults.baseURL + 'TBUSER000001/datacenter/datas';
+				var url = this.$http.defaults.baseURL + 'datacenter/datas';
 				that.$http.get(url).then((r) => {
 					if(r.data.result) {
 						that.list = r.data.data;
@@ -245,7 +314,7 @@
 				var params = "data=" + JSON.stringify({
 					sql: this.dbmodeldata.textareasql
 				});
-				var url = this.$http.defaults.baseURL + 'TBUSER000001/datamodel/runsql';
+				var url = this.$http.defaults.baseURL + 'datamodel/runsql';
 				that.$http.post(url, params).then((r) => {
 					if(r.data.result) {
 						that.tabledata = r.data.data;
@@ -253,7 +322,174 @@
 						this.$message.error(r.data.message);
 					}
 				});
-			}
+			},
+      open6() {
+        this.$message({
+          showClose: true,
+          message: '恭喜你，保存成功',
+          type: 'success'
+        });
+      },
+      btnSave(){
+			    console.log(this.$refs.sql[0].wherelist[0]);
+			    //判断是自定义建模还是自己手写sql
+            //如果是手写sql，需要
+              //判断sql语句语法是否正确
+                //this.runsql();
+        debugger;
+        if(this.noUpdata){
+          if(this.$data.activeName=="second") {
+            this.$data.dbmodeldata.list2[0].wherelist = this.$refs.sql[0].wherelist;
+            //选择了多个数据表时候需要循环
+            var that = this;
+            var url = "datamodel/adddatamodel";
+            var params = "data=" + JSON.stringify({
+                "modelname": "产业模型",
+                "modeldes": "产业模型描述",
+                "modelsql": "select * from [" + that.$refs.sql[0].sqldata.id + "]",
+                "havepara": false,
+                "paraobj": "",
+                "iscustom": true,
+                "restore": JSON.stringify(that.$data.dbmodeldata),
+                "fields": [{
+                  "aliasname": "日期",
+                  "type": "timestamp without time zone",
+                  "name": "date_5",
+                  "notnull": false,
+                  "typename": "Date",
+                  "typecnname": "日期"
+                }, {
+                  "aliasname": "浮点型_",
+                  "type": "numeric",
+                  "name": "double_1",
+                  "notnull": false,
+                  "typename": "Double",
+                  "typecnname": "浮点型"
+                }]
+              });
+            that.$http.post(url, params).then((r) => {
+              if (r.data.result) {
+                this.$message({
+                  message: '恭喜你，保存成功',
+                  type: 'success'
+                });
+              }
+            });
+          }
+          else{
+            this.runsql();
+            var that = this;
+            var url = "datamodel/adddatamodel";
+            var params = "data=" + JSON.stringify({
+                "modelname": "产业模型",
+                "modeldes": "产业模型描述",
+                "modelsql": that.$data.dbmodeldata.textareasql,
+                "havepara": false,
+                "paraobj": "",
+                "iscustom": false,
+                "restore": "",
+                "fields": [{
+                  "aliasname": "日期",
+                  "type": "timestamp without time zone",
+                  "name": "date_5",
+                  "notnull": false,
+                  "typename": "Date",
+                  "typecnname": "日期"
+                }, {
+                  "aliasname": "浮点型_",
+                  "type": "numeric",
+                  "name": "double_1",
+                  "notnull": false,
+                  "typename": "Double",
+                  "typecnname": "浮点型"
+                }]
+              });
+            that.$http.post(url, params).then((r) => {
+              if (r.data.result) {
+                this.$message({
+                  message: '恭喜你，保存成功',
+                  type: 'success'
+                });
+              }
+            });
+          }
+        }
+        else{
+            //更新接口
+          debugger
+          if(this.$data.activeName=="second"){
+            this.$data.dbmodeldata.list2[0].wherelist = this.$refs.sql[0].wherelist;
+            //选择了多个数据表时候需要循环
+            var that = this;
+            var url = "datamodel/updatadatamodel"+that.datas.tableid;
+            var params = "data=" + JSON.stringify({
+                "modelname": "产业模型",
+                "modeldes": "产业模型描述",
+                "modelsql": "select * from [" + that.$refs.sql[0].sqldata.id + "]",
+                "havepara": false,
+                "paraobj": "",
+                "iscustom": true,
+                "restore": JSON.stringify(that.$data.dbmodeldata),
+                "fields": [{
+                  "aliasname": "日期",
+                  "type": "timestamp without time zone",
+                  "name": "date_5",
+                  "notnull": false,
+                  "typename": "Date",
+                  "typecnname": "日期"
+                }, {
+                  "aliasname": "浮点型_",
+                  "type": "numeric",
+                  "name": "double_1",
+                  "notnull": false,
+                  "typename": "Double",
+                  "typecnname": "浮点型"
+                }]
+              });
+            that.$http.post(url, params).then((r) => {
+              if (r.data.result) {
+                this.$message({
+                  message: '恭喜你，保存成功',
+                  type: 'success'
+                });
+              }
+            });
+          }
+        }
+        this.$bus.$emit('hide_mwdialog');
+      },
+      btnSql(){
+        var isSql=document.getElementsByClassName("selectSql")[0];
+        isSql.style.background="#009688";
+        isSql.style.color="#fff";
+
+        var isModel=document.getElementsByClassName("selectModel")[0];
+        isModel.style.background="#f8f8f8";
+        isModel.style.color="#666666";
+
+        var sqlContent=document.getElementsByClassName("createSql")[0]
+        sqlContent.style.display="block";
+
+        this.activeName="first";
+
+      },
+      btnModel(){
+        var isSql=document.getElementsByClassName("selectSql")[0];
+        isSql.style.background="#f8f8f8";
+        isSql.style.color="#666666";
+
+        var isModel=document.getElementsByClassName("selectModel")[0];
+        isModel.style.background="#009688";
+        isModel.style.color="#fff";
+
+        var sqlContent=document.getElementsByClassName("createSql")[0]
+        sqlContent.style.display="none";
+
+        this.activeName="second";
+      },
+      closeButton(){
+        this.$bus.$emit('hide_mwdialog');
+      }
 		},
 		watch: {
 			isDragging(newValue) {
@@ -287,37 +523,140 @@
 </script>
 
 <style>
-	.dbmodel-create {
+  .dbtc_name_model{
+    /*left:52%;*/
+    height: 28px;
+    /*position: relative !important;*/
+    z-index: 999;
+  }
+  .dbtc_pub{
+    display: none;
+  }
+  .dbtc_save{
+    position: relative !important;
+    z-index: 999;
+  }
+  .dbmodel-create {
 		width: 100%;
 		margin: 0 auto;
 		height: 100%;
 	}
-	
+
 	.dbmodel_left {
 		height: 100%;
 		border-right: 1px solid #ddd;
+    width: 25%;
+    float: left;
+    z-index: 999;
+    margin: 15px;
+    background: #fff;
+    padding:15px;
+    border-radius:4px;
 	}
-	
+
+
+  .modelRight{
+    width: 71%;
+    float: right;
+  }
+
+  .modelTitle{
+    margin:0;
+  }
+  .modelTitleLine{
+    display: block;
+    border-bottom: 1px solid #d8d8d8;
+    width: 100%;
+  }
+
+
+  .createModel{
+    height: 100%;
+    /* height: 465px; */
+    width: 97.5%;
+    margin: 15px;
+    margin-left: 0;
+    padding: 15px;
+    background: #fff;
+    /* padding-right: 0px; */
+    border-radius: 4px;
+  }
+
+  .createSql{
+    margin-top:15px;
+    height: 115%;
+    /* display: none; */
+    position: absolute;
+    width: 97%;
+    left: 13px;
+    background: #fff;
+    border-radius: 4px;
+    top: 146px;
+    z-index: 999;
+    padding: 15px;
+
+  }
+
+  .selectSql{
+    position: relative !important;
+    z-index: 9999999 !important;
+    width: 182px;
+    height: 35px;
+    background-color: #009688;
+    border-color: transparent !important;
+    margin-left:7%;
+  }
+  .selectSql:hover{
+    background-color: #009688;
+    border-color: transparent ;
+  }
+  .selectModel{
+    position: relative !important;
+    z-index: 9999999 !important;
+    width: 182px;
+    height: 35px;
+    background-color: #f8f8f8;
+    border-color: transparent !important;
+    color: #666666;
+  }
+  .selectModel:hover{
+    background-color: #f8f8f8;
+    border-color: transparent;
+    color: #666666;
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
 	.dbml_top {
-		background: #d1dbe5;
+		/*background: #d1dbe5;*/
 		height: 35px;
 		line-height: 35px;
-		text-align: center;
+		text-align: left;
 	}
-	
+
 	.dbml_top h5 {
 		margin: 0px;
 		padding: 0px;
 	}
-	
+
 	.dbmodel_content {
 		height: 100%;
 	}
-	
+
 	.dbmodel-create .el-tabs__content {
 		height: 100%;
 	}
-	
+
 	.sql_text {
 		height: 100%;
 		border: 1px solid #000000;
@@ -325,35 +664,35 @@
 		border-radius: 0;
 		color: white;
 	}
-	
+
 	.sql_text:hover {
 		border: 1px solid #000000;
 	}
-	
+
 	.sql_text textarea {
 		height: 100% !important;
 		border: 1px solid #000000;
 		color: white;
 		background: black;
 	}
-	
+
 	.sql_text textarea:hover {
 		border: 1px solid #000000;
 	}
-	
+
 	.dbtc_sqlhead {
 		height: 30px;
 		padding: 0 20px;
 	}
-	
+
 	.dbtc_sqltext {
 		height: 150px;
 	}
-	
+
 	.dbtc_sqltext_content {
 		outline: none;
 	}
-	
+
 	.dbtc_sqlhead span {
 		width: 30px;
 		height: 30px;
@@ -361,20 +700,27 @@
 		text-align: center;
 		line-height: 30px;
 	}
-	
+
 	.dbtc_sqlhead span:hover {
 		cursor: pointer;
 		background: #ccc;
 	}
-	
+
 	.list-group-item {
 		height: 35px;
 		line-height: 35px;
-		padding: 0 10px;
+		padding: 4px 10px;
+    margin-top: 10px;
+    background: #f8f8f8;
+    border-radius: 4px;
+
 	}
-	
-	.list-group-item:hover {
-		cursor: pointer;
-		background: #d7e2ec;
-	}
+
+	/*.list-group-item:hover {*/
+		/*cursor: pointer;*/
+		/*background: #d7e2ec;*/
+	/*}*/
+  .list-group{
+    margin-top:10px;
+  }
 </style>

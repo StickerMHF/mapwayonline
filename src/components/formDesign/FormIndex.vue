@@ -2,8 +2,7 @@
   <div class="FormIndex">
   		<!--主体编辑部分-->
   		<transition name="el-zoom-in-top">
-  		<div>
-  				<div>
+  		<div style="height: 100%;width: 100%">
 			   		<div class="form-header">
               <form-side  :oid = 'oid' ></form-side>
 			   			<form-header :oid = 'oid'></form-header>
@@ -16,7 +15,6 @@
 
               <form-set ref="formSet"  :oid = 'oid'></form-set>
             </div>
-		   		</div>
 
   		</div>
   	</transition>
@@ -64,19 +62,13 @@ export default {
           this.$refs.formSet.mainset = true;
       },
 			initEvent(){
-				var that = this;
-
-
-			},
-			choose(type){
-				this.chooseForm = false;
+        let that = this;
 
 
 			},
 			initData(){
-
-					var that = this;
-					let url = 'TBUSER000002/formdesign/forms/'+this.oid;
+        let that = this;
+					let url = 'formdesign/forms/'+this.oid;
 //					let url = 'http://localhost:80/fz/json.php?f=oneform';
 					this.$http.get(url).then((res)=>{
 		      	console.log('oneform',res);
@@ -101,7 +93,7 @@ export default {
 				// 保存数据
 
 				let that = this;
-				let addUrl = 'TBUSER000002/formdesign/forms/add' // 添加的接口
+				let addUrl = 'formdesign/forms/add' // 添加的接口
 
 					let prams = 'data='+JSON.stringify({
 						widgetList:that.getForm.widgetList,
@@ -118,7 +110,7 @@ export default {
 			      	.then(
 			      		(res) => {
 			      			console.log(res.data.message);
-			      			if(res.data.result == true){
+			      			if(res.data.result === true){
 			      				// 上传成功
 			      				// 跳转到。。。。
 			      				that.$notify.success({
@@ -141,46 +133,32 @@ export default {
 			      	});
 
 			},
-			chooseType(type){
-				if(type === 'app'){
-//					console.log('app');
-					// 选择了录入/应用表单
-					this._setCanvas({attr:'isinputform',value:true});
-				}
-				if(type === 'show'){
-//					console.log('show');
-					// 选择了展示表单
-					this._setCanvas({attr:'isinputform',value:false});
-				}
 
-			}
 	},
 		created(){
-			var that = this;
+      let that = this;
 			this.oid = this.$route.params.id;
-			var type = this.$route.params.type
+			let type = this.$route.params.type
 
-			console.log(type);
-			console.log(this.$route.params.hasEdit);
-			console.log(this.oid,this.getForm.editState.currentOid);
+//			console.log(type);
+//			console.log(this.$route.params.hasEdit);
+//			console.log(this.oid,this.getForm.editState.currentOid);
 
-			this.chooseType(type);
+
 			this._setCurrent({attr:'hasData',value:true});
 			this.initEvent();
 			if(this.getForm.editState.currentOid !== this.oid && this.oid !== 'new'){
 					this.initData();
 			}
 
-
-
 	},
 	mounted(){
 
 	},
 	beforeRouteLeave(to, from, next){
-		var that = this;
+		let that = this;
 		if(to.name !== "appformpreview" && to.name !== "showformpreview" ){
-			next(true);
+
 			// 自定义一个提示框
 
 			this.$confirm('是否保存已编辑的数据?', '提示', {
@@ -190,14 +168,13 @@ export default {
 		   }).then(() => {
 
 		   		// 保存数据之后 跳转路由
-		   	//	that.saveForm();
+		   	that.saveForm();
 		     next(true);
 
 		   }).catch(() => {
 		    	// 取消保存 清空路由之后跳转
-		    that._cleanUp();
-
-					next(false);
+		      that._cleanUp();
+          next(true);
 		    });
 
 		}else{
@@ -285,29 +262,31 @@ export default {
 	.FormIndex{
 		font-family: "Microsoft YaHei";
 		color: #333333;
+    position: relative;
 		text-align: center;
 		overflow: hidden;
-		flex-grow: 1;
-		position: relative;
-		height: 100%;
-
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: stretch;
 		.form-header{
-			padding-left:100px;
 			border-bottom: 1px solid #BFCBD9;
-			height: 100px;
+			height: 60px;
 			box-sizing: border-box;
       display: flex;
       justify-content: space-between;
       align-items: center;
 		}
 		.form-main{
-			height: calc(100% - 100px);
+      width: 100%;
 			display: flex;
 			overflow: hidden;
+      height: 100%;
 			justify-content: space-between;
 			align-items: flex-start;
 			min-height: 700px;
-
 		}
 
 

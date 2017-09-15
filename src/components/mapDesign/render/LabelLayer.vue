@@ -55,8 +55,14 @@
         'render'
       ]),
     },
-    mounted () {
+    created () {
       this.initEvent();
+    },
+    mounted () {
+
+    },
+    beforeDestroy () {
+      this.destroyEvent();
     },
     methods: {
       ...mapActions([
@@ -66,6 +72,15 @@
         this.$bus.$on('init-label', () => {
           this.initLabel();
         });
+
+        this.$bus.on('label-restore', (obj) => {
+          this.restoreLabel(obj);
+        });
+      },
+
+      destroyEvent () {
+        this.$bus.$on('init-label');
+        this.$bus.on('label-renderSet-change');
       },
 
       initLabel () {
@@ -76,13 +91,15 @@
         this.reset();
 
         datas.forEach((item) => {
+
           if (currentLayerId === item.id) {
+
             currentData = item.data;
           }
         });
 
         over_layer.some((item) => {
-          if (currentLayerId === item.data_id) {
+          if (currentLayerId === item.id) {
             //debugger
             if (!!item.label) {
               let label = Tool.clone(item.label);
@@ -95,6 +112,11 @@
             return;
           }
         });
+      },
+
+      restoreLabel (obj) {
+        var label = Tool.clone(obj.label); // 深拷贝vuex中的数据到此
+        this.label = label;
       },
 
       reset () {
@@ -114,17 +136,25 @@
         this.labelFieldShow = isShow;
       },
 
-      /* 标注 */
+      /* 标注字段改变 */
       labelFieldChange (field) {
         if (!this.labelFieldShow) {
           return;
         }
+        debugger
 
-        if (field === 'none') {
+        if (field === 'none' || field === '') {
           this.labelSet = false;
           this.$bus.$emit('remove-label');
+          this.label.value = '';
+          this.updateOverLayerLabel(this.label);
+          console.log(this.render.savedLayers.over_layer)
           return;
         }
+        console.log('********')
+        debugger
+
+
         this.labelSet = true;
         this.$bus.$emit('label-change', this.label);
       },

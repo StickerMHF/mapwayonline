@@ -77,8 +77,6 @@
         this.cancelEditState();
         this.featureGroup.clearLayers();
         this.fetchData(tip);
-
-        //console.log('this.now_layer gengxinhao', this.now_layer)
       },
 
       initMap: function () {
@@ -101,8 +99,8 @@
 
       fetchData: function (tip) {
         this.mapLoading = true;
-        var dataid = this.$route.params.dataid;
-        var url = 'TBUSER000001/mapdesign/maps/layers/'+ dataid + '/query?f=geojson&outSr=4326&returnGeometry=true';
+        var id = this.$route.params.id;
+        var url = 'mapdesign/maps/layers/'+ id + '/query?f=geojson&outSr=4326&returnGeometry=true';
 
         this.$http.get(url).then((res) => {
           let data = res.data;
@@ -122,8 +120,8 @@
       },
 
       fetSchema () {
-        var dataid = this.$route.params.dataid;
-        var url = 'TBUSER000001/datacenter/datas/' + dataid + '/field';
+        var id = this.$route.params.id;
+        var url = 'datacenter/datas/' + id + '/field';
 
         this.$http.get(url).then((res) => {
           let field = res.data.data;
@@ -239,6 +237,7 @@
             break;
           case 'update':
             this.$bus.emit('map-view-update-property', Tool.clone(this.schemaAddValueField(feature)));
+
             break;
         }
       },
@@ -289,22 +288,17 @@
             console.log('点击之后vm.now_layer', vm.now_layer)
           } else {
             if (vm.now_layer != layer) {  // 当前点击的feature和上次的不一样
-              if ( vm.edit.isSave === false ) {
-                vm.$confirm('当前有未保存的数据', '提示', {
-                  type: 'warning'
-                }).then(() => {
-                  vm.cancelEditState();
-                  vm.initEditState(layer, feature);
-                  console.log('点击别的feature', vm.now_layer)
-                }).catch((err) => { console.log(err); });
-              }
+              vm.$bus.emit('save-edit-feature'); // 保存之前的编辑结果
+              vm.cancelEditState();
+              vm.initEditState(layer, feature);
+              console.log('点击别的feature', vm.now_layer);
             }
           }
         });
       },
 
       schemaAddValueField (feature) {
-        var proObj = Tool.clone(this.fieldSchema), proArr = [];
+        var proObj = this.fieldSchema, proArr = [];
 
         for (let i in proObj) {
           proArr.push(proObj[i]);
@@ -408,15 +402,21 @@
           var layer = drawLayer.getLayers()[0], feature = layer.feature;
 
           if (vm.now_layer) { //如果有正在编辑的feature
-            vm.$confirm('当前有未保存的数据?', '提示', {
+            /*vm.$confirm('当前有未保存的数据?', '提示', {
               type: 'warning'
             }).then(() => {
-              vm.cancelEditState();
+
               vm.initEditState(layer, feature);
               console.log('添加新的feature', vm.now_layer)
             }).catch(() => {
               drawItem.removeLayer(drawLayer);
-            });
+            });*/
+
+
+            vm.$bus.emit('save-edit-feature'); // 保存之前的编辑结果
+            vm.cancelEditState();
+            vm.initEditState(layer, feature);
+            console.log('添加新的feature', vm.now_layer)
           } else {
             vm.initEditState(layer, feature);
           }

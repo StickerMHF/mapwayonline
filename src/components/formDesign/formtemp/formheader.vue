@@ -3,15 +3,15 @@
 
     <div class="form-set">
       <div class="form-name">
-          <span>表名：</span>
-          <el-input size="small" class="input" v-model="this.formName" @blur="updataformname"></el-input>
+          <span style="white-space: nowrap;padding-left: 20px">表名：</span>
+          <el-input size="small" class="input" v-model="this.formName" @change="updataformname"></el-input>
       </div>
 
     </div>
 
-		<div class="header-tool" >
-			<el-button :plain="true" type="success" @click = "previewForm">预览</el-button>
-			<el-button :plain="true" type="success" @click = "goPreview">保存</el-button>
+		<div class="header-tool" style="white-space: nowrap">
+			<el-button class="tool-button" :plain="true" type="success" @click = "previewForm">预览</el-button>
+			<el-button class="tool-button" :plain="true" type="success" @click = "goPreview">保存</el-button>
 		</div>
 
 
@@ -57,9 +57,10 @@
 
 
 			},
-      updataformname(){
-			  if(this.formName!==''){
-          this._setCanvas({attr:'formname',value:this.formName});
+      updataformname(state){
+//			  console.log('biaoming',state);
+			  if(state!==''){
+          this._setCanvas({attr:'formname',value:state});
         }else{
           this.$message({
             message: '表名不能为空！',
@@ -74,10 +75,10 @@
 
 				if(this.getForm.formConfig.isinputform){
 					// 预览应用界面
-					this.$router.replace({name: 'appformpreview', params: {id:this.oid}});
+					this.$router.replace({name: 'appformpreview', params: {id:this.oid,onlypre:true}});
 				}else{
 					// 预览展示界面
-					this.$router.replace({name:'showformpreview',params:{id:this.oid,detail:'new'}});
+					this.$router.replace({name:'showformpreview',params:{id:this.oid,detail:'new',onlypre:true}});
 				}
 
 			},
@@ -90,9 +91,7 @@
 			},
 			saveForm(){
 				let that = this;
-
 				// 保存数据
-
 				if(this.fifterForm(this.getForm)){
 					// 过滤一部分数据  比如：一些字段不为空之类的
 					let prams = 'data='+JSON.stringify({
@@ -101,7 +100,7 @@
 					});
 	//				console.log(prams);
 					prams = encodeURI(prams);
-			      	that.$http.post('TBUSER000002/formdesign/forms/add',prams)
+			      	that.$http.post('formdesign/forms/add',prams)
 			      	.then(
 			      		(res) => {
 			      			console.log(res);
@@ -135,17 +134,15 @@
 			        });
 
 				}
-
-
-
-
 			}
+
+
 		},
 		created(){
-        this.formName = this.getForm.formConfig.formname;
+
 		},
 		mounted(){
-
+      this.formName = this.getForm.formConfig.formname;
 		}
 	}
 </script>
@@ -156,8 +153,7 @@
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	padding-right: 260px;
-
+	padding-right: 10px;
   flex-grow: 1;
 	ul,li{
 		list-style: none;
@@ -167,6 +163,7 @@
 	}
   .form-set{
     flex-grow: 1;
+    text-align: left;
     justify-content: flex-start;
     align-items: center;
     span{
@@ -204,9 +201,12 @@
 	}
 	.header-tool{
 		display: inline-block;
-		margin-left: 150px;
+		margin-left: 20px;
 	}
-
+  .tool-button{
+    background-color: #00958F;
+    color: white;
+  }
 
 }
 

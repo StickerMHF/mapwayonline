@@ -104,21 +104,18 @@
 			fifter(item){
 				let arr = ['text','textarea','password'];
 				if(!this.getForm.formConfig.isinputform){
-					if(arr.indexOf(item.type)>=0){
-						return true;
-					}
-					return false;
+				  return arr.indexOf(item.type)>=0;
 				}else{
 					return true
 				}
 
 			},
 			addWidget(type){
-				 var type = type || {};
+				 let otype = type || {};
 
 				// 触发组件content中的添加组件的事件
 
-				this.$bus.emit('add-widget',type);
+				this.$bus.emit('add-widget',otype);
 
 			}
 
@@ -135,13 +132,14 @@
 </script>
 
 <style lang="less" scoped>
-  @icon-base:'../../../assets/formDesign/img/';
+  @icon-base:'../../../assets/formDesign/icon/';
+
 #formside{
   text-align: left;
-  height: 100px;
+  height: 100%;
   width: 400px;
   position: relative;
-  z-index: 99999999999999999;
+  z-index: 1800;
   box-sizing: border-box;
 	ul,li,h3{
 		list-style: none;
@@ -155,32 +153,32 @@
     height: 100%;
     display: flex;
     align-items: center;
+    padding-left: 10px;
 		.formlist{
-			background:url("@{icon-base}form.png")  no-repeat center 2px;
+			//background:url("@{icon-base}form.png")  no-repeat center 2px;
 			background-size: 40px 40px;
 		}
 		.formlist:hover{
-			background-image:url("@{icon-base}form-hover.png");
+			//background-image:url("@{icon-base}form-hover.png");
 		}
 		.commonlist{
-			background:url("@{icon-base}html.png") no-repeat center 4px;
+			//background:url("@{icon-base}html.png") no-repeat center 4px;
 			background-size: 35px 35px;
 		}
 		.commonlist:hover{
-			background-image:url("@{icon-base}html-hover.png");
+			//background-image:url("@{icon-base}html-hover.png");
 		}
 		.list-item{
 			&:hover{
-				box-shadow: 2px 6px 12px rgba(0, 0, 0, .175);
-				background-color: #FFF;
-				color: #1296DB;
+				/*box-shadow: 2px 6px 12px rgba(0, 0, 0, .175);*/
+				background-color: #EEEEEE;
+				/*color: #1296DB;*/
+
 			}
 			border-radius: 5px;
 			position: relative;
-			width:70px;
-			height:70px;
-      margin-left: 15px ;
-			border: 1px solid #DFDFDF;
+			width:60px;
+			height:100%;
 			text-align: center;
 			display: flex;
 			align-items: flex-end;
@@ -191,117 +189,117 @@
 				background-color: #FFFFFF;
 				color: #333;
 				border: 1px solid #DFDFDF;
-        width: 550px;
+        width: 302px;
 				box-sizing: border-box;
 				position: absolute;
-			  top: 70px;
-				padding: 20px;
-        left: 0;
-				z-index: 99999999999999999;
-				background-color: #fff;
+			  top: 60px;
+				/*padding: 20px;*/
+        left: -10px;
+				z-index: 9999;
 				text-align: left;
 				border-radius: 5px;
+        font-size: 0;
 				.widget-item{
 					font-size: 12px;
-					margin-bottom:5px;
-					margin-left: 10px;
-					width: 72px;
-					height: 75px;
+					/*margin-bottom:5px;*/
+					/*margin-left: 10px;*/
+					width: 60px;
+					height: 60px;
 					box-sizing: border-box;
-					padding-top: 50px;
+					padding-top: 35px;
 					display: inline-block;
 					text-align: center;
 					border: 1px solid #EEEEEE;
 					cursor: pointer;
 					overflow: hidden;
-					background-position: center 14px;
-					background-size: 25px 25px;
+					background-position: center 8px;
+					background-size: 18px 18px;
 					background-repeat: no-repeat;
 					&:hover{
-						/*background-color: azure;*/
-						color:#1296DB ;
-						border: 1px solid #66ccff ;
-						box-shadow: 2px 6px 6px rgba(0, 0, 0, .175);
+						background-color: #EEEEEE;
+						/*color:#1296DB ;*/
+						/*border: 1px solid #66ccff ;*/
+						/*box-shadow: 2px 6px 6px rgba(0, 0, 0, .175);*/
 					}
 				}
 				.text{
-					background-size: 30px 30px;
-					background-image: url("@{icon-base}input.png");
+          line-height: inherit;
+					background-image: url("@{icon-base}form/10.png");
 					&:hover{
-						background-image: url("@{icon-base}input-hover.png");
+
 					}
 				}
 				.textarea{
-					background-image: url("@{icon-base}textarea.png");
+					background-image: url("@{icon-base}form/01.png");
 					&:hover{
-						background-image: url("@{icon-base}textarea-hover.png");
+
 					}
 				}
 				.select{
-					background-image: url("@{icon-base}select.png");
+					background-image: url("@{icon-base}form/05.png");
 					&:hover{
-						background-image: url("@{icon-base}select-hover.png");
+
 					}
 				}
 				.checkbox{
-					background-image: url("@{icon-base}checkbox.png");
+					background-image: url("@{icon-base}form/03.png");
 					&:hover{
-						background-image: url("@{icon-base}checkbox-hover.png");
+
 					}
 				}
 				.radio{
-					background-image: url("@{icon-base}radio.png");
+					background-image: url("@{icon-base}form/02.png");
 					&:hover{
-						background-image: url("@{icon-base}radio-hover.png");
+
 					}
 				}
 				.password{
-					background-size: 34px 34px;
-					background-image: url("@{icon-base}password.png");
+
+					background-image: url("@{icon-base}form/04.png");
 					&:hover{
-						background-image: url("@{icon-base}password-hover.png");
+
 					}
 				}
 				.file{
-					background-image: url("@{icon-base}file.png");
+					background-image: url("@{icon-base}form/09.png");
 					&:hover{
-						background-image: url("@{icon-base}file-hover.png");
+
 					}
 				}
 				.submit{
-					background-image: url("@{icon-base}button.png");
+					background-image: url("@{icon-base}form/06.png");
 					&:hover{
-						background-image: url("@{icon-base}button-hover.png");
+
 					}
 				}
 				.reset{
-					background-image: url("@{icon-base}button.png");
+					background-image: url("@{icon-base}form/06.png");
 					&:hover{
-						background-image: url("@{icon-base}button-hover.png");
+
 					}
 				}
 				.button{
-					background-image: url("@{icon-base}button.png");
+					background-image: url("@{icon-base}form/06.png");
 					&:hover{
-						background-image: url("@{icon-base}button-hover.png");
+
 					}
 				}
 				.h1{
-					background-image: url("@{icon-base}h.png");
+					background-image: url("@{icon-base}form/06.png");
 					&:hover{
-						background-image: url("@{icon-base}h-hover.png");
+
 					}
 				}
 				.img{
-					background-image: url("@{icon-base}img.png");
+					background-image: url("@{icon-base}form/06.png");
 					&:hover{
-						background-image: url("@{icon-base}img-hover.png");
+
 					}
 				}
 				.p{
-					background-image: url("@{icon-base}p.png");
+					background-image: url("@{icon-base}form/06.png");
 					&:hover{
-						background-image: url("@{icon-base}p-hover.png");
+
 					}
 				}
 

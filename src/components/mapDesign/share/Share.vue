@@ -16,16 +16,11 @@
           <el-button @click="sharePassword = ''">重置</el-button>
         </div>
       </div>
-
-
-
     </div>
 
-
-    <div class="main" v-if="ready">
+    <div class="main" v-if="ready" v-loading="shareLoading">
       <!--这里还原表单-->
-      <preview-map :layers = "layersData"></preview-map>
-
+      <preview-map :layers = "layersData" v-if="hasData"></preview-map>
     </div>
 
 
@@ -42,9 +37,11 @@
     data(){
       return {
         isPassword : false,
+        shareLoading: false,
         ready : false,
         loading: true,
         sharePassword : '' ,
+        hasData: false,
         layersData:{}
       }
     },
@@ -63,14 +60,22 @@
           });
         }else{
           let uuid = this.$route.params['uuid'],
-            url = 'form/share/' + uuid +"/code",
+            url = 'map/share/' + uuid +"/code",
             prams = encodeURI("data="+JSON.stringify({code:this.sharePassword}));
 
           this.$http.post(url,prams).then((res)=>{
+            this.shareLoading = true;
             console.log(res);
             if(res.data.result){
               //获取成功
-              this.showForm(res.data.data);
+              let layers = JSON.parse(res.data.data.layers);
+              this.hasData = true;  // 显示PreviewMap组件
+              this.layersData = layers;
+
+              this.ready = true;
+              this.isPassword = false;
+              this.loading = false;
+              this.shareLoading = false;
             }else{
               // 获取失败
               this.$notify.warning({
@@ -80,38 +85,27 @@
               });
               this.sharePassword = "";
             }
-
-
-          }).catch((err)=>{
-            console.log(err);
-          })
-
+          }).catch((err)=>{ console.log(err);  });
         }
-
-
       },
-      showForm(res){
-        let odata = res;
-        let widgetList = JSON.parse(odata.formcontent);
-        delete odata.formcontent;
-        odata.style = JSON.parse(odata.style);
-        let data = {widgetList:widgetList,formConfig:odata};
-        this.formdata = data;
-        this.ready = true;
-        this.isPassword = false;
-        this.loading = false;
-        console.log(data);
-      },
+
       initData(){
         var that =this;
         let uuid = this.$route.params['uuid'], // 030bd7d9-8cbe-4777-aba8-5deff9a33247
-          url = "form/share/" + uuid;
+          url = "map/share/" + uuid;
         this.$http.get(url).then((res)=>{
           console.log(res);
+          this.loading = false;
           // 返回结果是否为加密分享
           if(res.data.result){
             // 没有加密
-            this.showForm(res.data.data);
+            let layers = JSON.parse(res.data.data.data.layers);
+            this.hasData = true;  // 显示PreviewMap组件
+            this.layersData = layers;
+
+            this.ready = true;
+            this.isPassword = false;
+
           }else{
             if(res.data.message === "分享加密,需要密码"){
               // 加密
@@ -125,10 +119,8 @@
                   this.$router.replace({name:'main'});
                 }
               });
-
             }
           }
-
         }).catch((err)=>{
           this.$alert('未找到分享的内容！', '加载失败', {
             confirmButtonText: '再去试试',
@@ -157,8 +149,9 @@
 
 <style lang="less" scoped>
   #share{
+    height: 100%;
     .main{
-
+      height: 100%;
     }
     .tips{
       width: 100%;

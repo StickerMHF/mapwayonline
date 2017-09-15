@@ -1,24 +1,40 @@
 <template>
 	<div class="dbtable-create" id="dbtable-create">
+		<div class="dbtableTop">
+			<p class="dbtableTop_p">创建数据表</p>
+			<button class="closeBtn" @click="closeButton">X</button>
+		</div>
 		<div class="dbtc_top">
 			<div class="dbtct_title">
-				<input class="dbtc_name" v-model="table.name">
-				<!--<span class="dbtc_time" style="color: red;">未找到表{{table.name}}，创建此表</span>-->
+				<div style="float: left; width:30%;">
+					<p style="margin:0;">
+						<p style="margin:0; width:100%; float:left;">
+							<input class="dbtc_name" v-model="table.name">
+						</p>
+						<span class="dbtc_time"><span class="createTime">CREATE</span>&nbsp &nbsp &nbsp{{table.updatedate}}</span>
+					</p>
+				</div>
 				<el-button type="primary" class="dbtc_save" @click="save">保存</el-button>
 			</div>
 			<div class="dbtct_date">
 				<button v-if="datas.type=='UPDATE'" class="dbtc_pub" style="background: #ffb308;border: 1px solid #ffb308;">UPDATE</button>
-				<button v-else class="dbtc_pub">CREATE</button>
-				<span class="dbtc_time">{{table.updatedate}}</span>
+				<button v-else class="dbtc_pub"></button>
+				<span class="dbtc_time"></span>
 			</div>
+
 		</div>
 		<div class="dbtc_content">
-			<el-row :gutter="20" style="height: 100%;">
-				<el-col :span="8" style="height: 100%;">
-					<div class="dbtc_panal dbtc_fields">
-						<div class="dbtcf_title">字段</div>
-						<div class="dbtcf_con">
-							<ul>
+			<el-row :gutter="20" style="height: 100%; ">
+				<el-col :span="12" style="height: 100%; padding:10px; padding-bottom:88px; padding-top:0;">
+					<div class="dbtc_panal dbtc_fields" style="height:100%;">
+						<div class="dbtcf_title">
+							<span style="font-size: 14px;">字段</span>
+							<!--<el-button v-popover:popover5;>hover 激活</el-button>-->
+							<li class="dbtc_con_add" style="font-size: 14px;" v-on:mouseenter="onMouseOverLi"><span><i class="fa fa-plus"></i><span>添加字段</span></span>
+							</li>
+						</div>
+						<div class="dbtcf_con" style="width:100%;">
+							<ul class="dbtcf_ul">
 								<li v-for="item in table.list" @click="fieldselect(item,$event)">
 									<span class="dbtc_con_icon">
 										<i v-if="item.type=='Int'" class="fa fa-subscript"></i>
@@ -41,9 +57,9 @@
 										<i class="el-icon-close"></i>
 									</span>
 								</li>
-								<el-popover ref="popover5" placement="top" width="390" trigger="hover">
-									<ul class="dbtc_pop_fields">
-										<h3>普通字段</h3>
+								<div class="overDiv" v-on:mouseleave="onMouseLeaveDiv">
+									<ul class="dbtc_pop_fields" style="width:46%;">
+										<span style="font-size: 14px; color:#333333;" class="dbtc_pop_fieldsSpan">普通字段</span>
 										<li v-for="item in fieldstype.general" v-if="item.name!='geometry'" :key="item.id" @click="addField(item)">
 											<span class="pop_fields_icon">
 												<i v-if="item.name=='Int'" class="fa fa-subscript"></i>
@@ -57,8 +73,8 @@
 											<span class="pop_fields_name">{{item.cnname}}</span>
 										</li>
 									</ul>
-									<ul class="dbtc_pop_fields" id="geom_fields">
-										<h3>空间字段</h3>
+									<ul class="dbtc_pop_fields" style="width:44%;" id="geom_fields">
+										<span style="font-size: 14px; color:#333333;" class="dbtc_pop_fieldsSpan">空间字段</span>
 										<li v-for="item in fieldstype.geom" v-if="item.name=='Point'||item.name=='LineString'||item.name=='Polygon'" :key="item.id" @click="addField(item)">
 											<span class="pop_fields_icon">
 												<i v-if="item.name=='Point'" class="fa fa-circle"></i>
@@ -74,30 +90,29 @@
 										</li>
 									</ul>
 
-								</el-popover>
-								<li class="dbtc_con_add" v-popover:popover5><span><i class="fa fa-plus"></i><span>添加字段</span></span>
-								</li>
+								</div>
+
 								<!--<el-button v-popover:popover5>删除</el-button>-->
 							</ul>
 
 						</div>
 					</div>
 				</el-col>
-				<el-col :span="16" style="height: 100%;">
-					<div class="dbtc_panal dbtc_info">
-						<div class="dbtcf_title">字段设置</div>
+				<el-col :span="12" style="height: 100%; padding:10px; padding-bottom:88px; padding-top:0;">
+					<div class="dbtc_panal dbtc_info" style="height:100%; font-size: 14px; color:#333333;">
+						<div class="dbtcf_title" style="font-size: 14px;">字段设置</div>
 						<div class="dbtcf_content" v-if="fieldinfo.name!=undefined">
-							<h4>字段名</h4>
-							<el-input v-model="fieldinfo.name" @change="updateitem(fieldinfo,'name')" placeholder="请输入内容"></el-input>
-							<h4>别名</h4>
-							<el-input v-model="fieldinfo.aliasname" @change="updateitem(fieldinfo,'aliasname')" placeholder="请输入内容"></el-input>
-							<h4>类型</h4>
+							<p>字段名</p>
+							<el-input v-model="fieldinfo.name" @blur="updateitem(fieldinfo,'name')" placeholder="请输入内容"></el-input>
+							<p>别名</p>
+							<el-input v-model="fieldinfo.aliasname" @blur="updateitem(fieldinfo,'aliasname')" placeholder="请输入内容"></el-input>
+							<p>类型</p>
 							<el-input v-model="fieldinfo.value" placeholder="请输入内容" :disabled="true"></el-input>
-							<h4>默认值</h4>
+							<p>默认值</p>
 
-							<el-input v-model="fieldinfo.defaultvalue" @change="updateitem(fieldinfo,'defaultvalue')" placeholder="请输入内容"></el-input>
-							<h4>是否为空</h4>
-							<el-switch v-model="fieldinfo.isnull" @change="updateitem(fieldinfo,'isnull')" on-text="" off-text=""></el-switch>
+							<el-input v-model="fieldinfo.defaultvalue" @blur="updateitem(fieldinfo,'defaultvalue')" placeholder="请输入内容"></el-input>
+							<p style="float:left; width:50%;">是否为空</p>
+							<el-switch class="switch" on-color="#009688" v-model="fieldinfo.isnull" @change="updaSwitch" on-text="" off-text=""></el-switch>
 							<!--<h4>设置主键</h4>
 							<el-switch v-model="fieldinfo.iskey" on-text="" off-text="" ></el-switch>-->
 						</div>
@@ -106,6 +121,7 @@
 			</el-row>
 		</div>
 	</div>
+
 </template>
 <script>
 	let id = 0;
@@ -118,6 +134,7 @@
 		name: 'dbtable-create',
 		data() {
 			return {
+        isLeaveli:true,
 				fieldstype: {
 					general: [{
 
@@ -137,7 +154,9 @@
 					tableid: null,
 					type: "CREATE"
 				},
-				fieldinfo: {},
+				fieldinfo: {
+					isnull: false,
+				},
 				currentfield: null,
 				visible2: false
 			}
@@ -158,11 +177,12 @@
 						that.table.list = [];
 						that.table.isgeom = false;
 						that.table.name = "XX表";
-						that.datas.type="CREATE";
+						that.table.geomsrid = 4326;
+						that.datas.type = "CREATE";
 						that.fieldinfo = [];
 					} else {
 						that.datas.tableid = obj;
-						that.datas.type="UPDATE";
+						that.datas.type = "UPDATE";
 						that.getTableById();
 					}
 
@@ -243,12 +263,12 @@
 					this.table.list.push(f);
 				}
 				id += 1;
-				if(this.datas.type=="UPDATE"){
-					var t=this.$Tools.cloneObj(this.table)
-					t.list=f;
-					t.geomsrid=4326;
+				if(this.datas.type == "UPDATE") {
+					var t = this.$Tools.cloneObj(this.table)
+					t.list = f;
+					t.geomsrid = 4326;
 					var params = "data=" + JSON.stringify(t);
-					var url = this.$http.defaults.baseURL + 'TBUSER000001/datacenter/table/' + that.datas.tableid + '/field/add';
+					var url = this.$http.defaults.baseURL + 'datacenter/table/' + that.datas.tableid + '/field/add';
 					that.$http.post(url, params).then((r) => {
 						if(!r.data.result) {
 							this.$message.error(r.data.message);
@@ -259,8 +279,8 @@
 			deleteField(field) {
 				var that = this;
 				var tablelist = [];
-				if(that.table.type == "UPDATE") {
-					var url = this.$http.defaults.baseURL + "TBUSER000001/datacenter/table/" + that.datas.tableid + "/field/delete";
+				if(that.datas.type == "UPDATE") {
+					var url = this.$http.defaults.baseURL + "datacenter/table/" + that.datas.tableid + "/field/delete";
 					var params = "data=" + JSON.stringify(field);
 					that.$http.post(url, params).then((r) => {
 						if(r.data.result) {
@@ -283,20 +303,20 @@
 							});
 						}
 					});
-				}else{
-						for(var item in that.table.list) {
-								if(that.table.list[item].id != field.id) {
-									tablelist.push(that.table.list[item]);
-								} else {
-									if(field.name == "geom") {
-										that.table.isgeom = false;
-										that.table.geomtype = "";
-										that.table.geomcolumn = "";
-									}
-								}
+				} else {
+					for(var item in that.table.list) {
+						if(that.table.list[item].id != field.id) {
+							tablelist.push(that.table.list[item]);
+						} else {
+							if(field.name == "geom") {
+								that.table.isgeom = false;
+								that.table.geomtype = "";
+								that.table.geomcolumn = "";
 							}
-							this.table.list = tablelist;
-							this.fieldinfo = {};
+						}
+					}
+					this.table.list = tablelist;
+					this.fieldinfo = {};
 				}
 				console.log(JSON.stringify(this.table));
 			},
@@ -306,55 +326,77 @@
 				if(evt.target.className != "el-icon-close") {
 					var ele = this.$Tools.siblings(evt.currentTarget);
 					evt.currentTarget.lastElementChild.setAttribute("class", "dbtc_con_close active")
+					evt.currentTarget.style.borderColor = "#009688";
+					evt.currentTarget.children[1].style.borderTop = "0px";
+					evt.currentTarget.children[1].style.borderBottomColor = "#009688";
 					for(var i in ele) {
 						if(ele[i].lastElementChild != undefined) {
 							if(ele[i].lastElementChild.getAttribute("class") == "dbtc_con_close active") {
-								ele[i].lastElementChild.setAttribute("class", "dbtc_con_close")
+								ele[i].lastElementChild.setAttribute("class", "dbtc_con_close");
+								ele[i].style.borderColor = "transparent";
+								ele[i].children[1].style.borderBottomColor = "transparent"
+								ele[i].children[1].style.bordertop = "1px solid #eee"
 							}
 						}
 					}
-					if(field.defaultvalue != null && field.defaultvalue != "") {
+					if(field.defaultvalue !== null && field.defaultvalue !== "") {
 						var fs = field.defaultvalue.split("'");
 						if(fs.length > 2) field.defaultvalue = fs[1];
 					}
 					this.fieldinfo = field;
-					if(this.table.type == "UPDATE") {
+					if(this.table.type === "UPDATE") {
 
 					}
 				}
 			},
+
+			//开关标识
+			updaSwitch() {
+				if(!this.fieldinfo.isnull) {
+					this.fieldinfo.isnull = true;
+					this.updateitem(this.fieldinfo,'isnull');
+				} else {
+					this.fieldinfo.isnull = false;
+					this.updateitem(this.fieldinfo,'isnull');
+				}
+			},
 			//更新字段
-			updateitem(field,name) {
-				
+			updateitem(field, name) {
 				var that = this;
-				if(this.currentfield != null&&this.datas.type=="UPDATE") {
-					var param = {
-						oldfield: this.currentfield,
-						newfield: field,
-						name:name
-					}
-					var params = "data=" + JSON.stringify(param);
-					console.log(params);
-					var url = this.$http.defaults.baseURL + 'TBUSER000001/datacenter/table/' + this.datas.tableid + '/field/update';
-					that.$http.post(url, params).then((r) => {
-						if(r.data.result) {
-							/*this.$bus.$emit('hide_mwdialog');
-							this.table.list = [];*/
-						} else {
-							this.$message.error(r.data.message);
+				if(this.currentfield !== null && this.datas.type === "UPDATE") {
+					if(this.currentfield[name].toString() != field[name].toString()) {
+						var param = {
+							oldfield: this.currentfield,
+							newfield: field,
+							name: name
 						}
-					});
+						var params = "data=" + JSON.stringify(param);
+						console.log(params);
+						//判断新旧是否一样
+						var url = 'datacenter/table/' + this.datas.tableid + '/field/update';
+						that.$http.post(url, params).then((r) => {
+							if(r.data.result) {
+								this.currentfield[name]=field[name];
+								/*this.$bus.$emit('hide_mwdialog');
+								this.table.list = [];*/
+
+								//把新字段添加到旧字段
+
+							} else {
+								this.$message.error(r.data.message);
+							}
+						});
+					}
 				}
 				console.log("updateitem");
 			},
 			//新建表保存
 			save() {
 				var that = this;
-				
 				debugger
 				if(this.datas.type == "CREATE") {
 					var params = "data=" + JSON.stringify(this.table);
-					var url = this.$http.defaults.baseURL + 'TBUSER000001/datacenter/datas/add/custom';
+					var url = 'datacenter/datas/add/custom';
 					that.$http.post(url, params).then((r) => {
 						if(r.data.result) {
 							this.$bus.$emit('hide_mwdialog');
@@ -365,10 +407,11 @@
 							});
 						} else {
 							this.$message.error(r.data.message);
+
 						}
 					});
 				} else {
-					var url = this.$http.defaults.baseURL + 'TBUSER000001/datacenter/table/' + this.datas.tableid + '/rename?newname=' + this.table.name;
+					var url = 'datacenter/table/' + this.datas.tableid + '/rename?newname=' + this.table.name;
 					that.$http.get(url).then((r) => {
 						debugger
 						if(r.data.result) {
@@ -383,17 +426,20 @@
 						}
 					});
 				}
+				debugger
 
+				var mapwaydialog = document.getElementById("mapway-dialog");
+				mapwaydialog.style.display = "none";
 			},
 			init() {
 				var that = this;
-				var url = this.$http.defaults.baseURL + 'TBUSER000001/datacenter/dictionary/19';
+				var url = 'datacenter/dictionary/19';
 				that.$http.get(url).then((r) => {
 					if(r.data.result) {
 						that.fieldstype.general = r.data.data;
 					}
 				});
-				var geomurl = this.$http.defaults.baseURL + 'TBUSER000001/datacenter/dictionary/1';
+				var geomurl = 'datacenter/dictionary/1';
 				that.$http.get(geomurl).then((r) => {
 					if(r.data.result) {
 						that.fieldstype.geom = r.data.data;
@@ -402,13 +448,13 @@
 
 				this.getMaxId();
 				//this.table.name = "XX数据表";
-					
+
 			},
 
 			getTableById() {
 				var that = this;
 				if(this.datas.tableid != null && this.datas.tableid != "") {
-					var url = this.$http.defaults.baseURL + 'TBUSER000001/datacenter/table/' + this.datas.tableid + '/field';
+					var url = 'datacenter/table/' + this.datas.tableid + '/field';
 					that.$http.get(url).then((r) => {
 						debugger
 						if(r.data.result) {
@@ -435,8 +481,25 @@
 				} else {
 					id = 1;
 				}
+			},
+			//鼠标移入事件
+			onMouseOverLi() {
+				//			    alert("onMouseOver")
+				var overDiv = document.getElementsByClassName("overDiv")[0];
+				overDiv.style.display = "block";
+			},
+//      onMouseLeaveLi(){
+//        var overDiv = document.getElementsByClassName("overDiv")[0];
+//        overDiv.style.display = "none";
+//      },
+			onMouseLeaveDiv() {
+				//          alert("leave")
+				var overDiv = document.getElementsByClassName("overDiv")[0];
+				overDiv.style.display = "none";
+			},
+			closeButton() {
+				this.$bus.$emit('hide_mwdialog');
 			}
-
 		},
 		updated(evt, data, event) {
 			console.log("updated" + this.datas.tableid);
@@ -448,67 +511,126 @@
 			//this.$bus.off('initDBTableCreate');
 		},
 		created() {
-			
+
 			this.init();
 			console.log("created");
 		},
+
 		mounted() {
-			
+
 			this.initEvent();
-			
+
 			console.log("mounted");
 		}
 	}
 </script>
 
 <style>
-	.dbtable-create {
-		width: 80%;
-		margin: 0 auto;
-		height: 100%;
-	}
-	
-	.dbtc_top {
-		padding: 20px;
-		box-sizing: content-box;
-		box-shadow: 0px 5px 15px rgba(0, 0, 0, .2);
-	}
-	
-	.dbtc_pub {
-		background: #9BC63B;
-		height: auto;
+	.createTime {
+		color: #fff;
+		background: #009788;
 		border-radius: 4px;
-		color: #FFF;
-		display: inline-block;
-		line-height: 14px;
-		font-size: 10px;
-		font-family: 'Open Sans';
 		padding: 5px;
-		border: 1px solid #9BC63B;
 	}
-	
+
+	.dbtableTop {
+		height: 55px;
+		background: #fff;
+		margin-bottom: 15px;
+		/* -webkit-box-sizing: content-box; */
+		padding: 0 10px;
+	}
+
+	.dbtableTop_p {
+		margin: 0;
+		line-height: 55px;
+		width: 90%;
+		float: left;
+	}
+
+	.closeBtn {
+		/*position: relative;*/
+		/*left: 60%;*/
+		border: 0;
+		background: #fff;
+		cursor: pointer;
+		font-size: 20px;
+		color: #666666;
+		float: right;
+		line-height: 52px;
+	}
+
+	.switch {
+		margin-top: 10px;
+		float: right;
+	}
+
+	.dbtable-create {
+		/*width: 80%;*/
+		/*margin: 0 auto;*/
+		height: 100%;
+		background: #eee;
+	}
+
+	.dbtc_top {
+		/* padding: 15px; */
+		-webkit-box-sizing: content-box;
+		/* box-sizing: content-box; */
+		/* box-shadow: 0px 5px 15px rgba(0, 0, 0, .2); */
+		padding-bottom: 0px;
+		padding-top: 6px;
+		height: 70px;
+		width: 97.5%;
+		border-radius: 4px;
+		background: #fff;
+		margin-left: 15px;
+		padding-left: 15px;
+		padding-right: 15px;
+	}
+
+	.dbtc_pub {
+		/*background: #9BC63B;*/
+		/*height: auto;*/
+		/*border-radius: 4px;*/
+		/*color: #FFF;*/
+		/*display: inline-block;*/
+		/*line-height: 14px;*/
+		/*font-size: 10px;*/
+		/*font-family: 'Open Sans';*/
+		/*padding: 5px;*/
+		/*border: 1px solid #9BC63B;*/
+		position: relative;
+		top: 500px;
+	}
+
 	.dbtc_time {
 		height: 24px;
 		line-height: 24px;
 		font-size: 12px;
 		color: #979EA1;
 		font-family: 'Open Sans';
+		float: left;
+		margin-top: 5px;
 	}
-	
+
 	.dbtc_save {
 		float: right;
-		margin-right: 20px;
+		/*margin-right: 20px;*/
+		height: 32px;
+		background-color: #009688 !important;
+		border-color: #009688 !important;
+		margin-top: 10px;
 	}
-	
+
 	.dbtc_name {
-		font-size: 26px;
-		line-height: 34px;
+		font-size: 18px;
+		line-height: 18px;
 		border: 0px;
 		background: rgba(0, 0, 0, 0);
 		width: auto;
 		font-family: 'Open Sans';
 		text-overflow: ellipsis;
-		width: 200px;
+		/*width: 200px;*/
 		height: 35px;
 		line-height: 35px;
 		margin-bottom: 5px;
@@ -516,18 +638,35 @@
 		-moz-box-sizing: border-box;
 		/* Firefox */
 		-webkit-box-sizing: border-box;
-		/* Safari */
+		height: 28px;
+		float: left;
+		margin: 0;
+		width: 35%;
+		/*Safari*/
+		/*position: relative;*/
+		/*left: 54%;*/
+		/*top: 0px;*/
+		/*width:200px;*/
+		/*height:28px;*/
+		/*line-height:26px;*/
+		/*!*border-radius: 3px;*!*/
+		/*!*padding:2px;*!*/
+		/*border-radius: 4px;*/
+		/*border: 1px solid #ccc;*/
+		/*padding-left: 7px;*/
+		/*float:right;*/
 	}
-	
+
 	.dbtc_name:focus {
 		outline: none;
 		border: 1px solid #1181FB;
 		font-size: 16px;
 		border-radius: 4px;
+		/*border: 1px solid #1181FB;*/
 	}
-	
+
 	.dbtc_panal {
-		border: 1px solid #d1dbe5;
+		/*border: 1px solid #d1dbe5;*/
 		background: #fff;
 		display: inline-block;
 		vertical-align: middle;
@@ -537,50 +676,55 @@
 		height: 65%;
 		border-radius: 3px;
 	}
-	
+
 	.dbtcf_title {
-		height: 36px;
-		line-height: 36px;
-		background: #fbfdff;
-		margin: 0;
+		height: 50px;
+		line-height: 50px;
+		/*background: #fbfdff;*/
+		/*margin: 0 !important;*/
 		padding-left: 20px;
 		border-bottom: 1px solid #d1dbe5;
 		box-sizing: border-box;
 		color: #1f2d3d;
+		width: 96%;
+		margin: 0 auto !important;
 	}
-	
+
 	.dbtc_content {
-		margin-top: 15px;
+		/*margin-top: 15px;*/
 		height: 100%;
+		background: #EEEEEE;
+		padding: 15px;
 	}
-	
+
 	.dbtcf_title {
 		border-radius: 3px 3px 0 0;
 	}
-	
+
 	.dbtc_fields {
 		width: 100%;
 	}
-	
+
 	.dbtc_info {
 		width: 100%;
 	}
-	
+
 	.dbtcf_con ul {
 		margin: 10px;
 	}
-	
+
 	.dbtcf_con ul li {
 		height: 35px;
 		line-height: 35px;
-		margin: 10px 20px;
+		/*margin: 10px 20px;*/
 		position: relative;
+		border: 1px solid transparent;
 	}
-	
-	.dbtcf_con ul li:hover {
-		cursor: pointer;
+
+	.dbtcf_ul li {
+		margin: 10px 20px;
 	}
-	
+
 	.dbtc_con_icon {
 		width: 120px;
 		height: 35px;
@@ -589,7 +733,24 @@
 		border-radius: 3px 0 0 3px;
 		text-align: center;
 	}
-	
+
+	.dbtcf_con ul li:hover {
+		cursor: pointer;
+	}
+
+	.dbtc_pop_fields li {
+		width: 173px;
+	}
+
+	.dbtc_con_icon {
+		width: 120px;
+		height: 35px;
+		position: absolute;
+		border: 1px solid #d1dbe5;
+		border-radius: 3px 0 0 3px;
+		text-align: center;
+	}
+
 	.dbtc_con_close {
 		width: 16px;
 		height: 16px;
@@ -597,51 +758,61 @@
 		position: relative;
 		margin-right: 5px;
 		font-size: 12px;
-		color: rgba(255, 255, 255, 0.56);
+		color: #009688;
 		display: none;
 	}
-	
+
 	.dbtc_con_close:hover {
 		color: rgba(255, 255, 255, 1);
 	}
-	
+
 	.active {
 		display: block;
 	}
-	
+
 	.dbtc_con_name {
 		height: 35px;
 		position: absolute;
 		left: 122px;
 		right: 0px;
-		border: 1px solid #7acbfb;
+		border: 1px solid transparent;
 		border-left: 0px;
 		border-radius: 0px 3px 3px 0px;
-		background: #7acbfb;
-		color: white;
+		background: #f8f8f8;
+		color: #333333;
 		padding: 0 10px;
 	}
-	
+
 	.dbtc_con_add {
 		text-align: center;
 		border: 1px solid #d1dbe5;
 		border-radius: 3px;
+		/*position: relative;*/
+		/*top: -44px;*/
+		/*left: 730px;*/
+		width: 117px;
+		height: 35px;
+		line-height: 35px;
+		background: #009688;
+		color: #fff;
+		float: right;
+		margin-top: 8px;
 	}
-	
+
 	.dbtc_con_add:hover {
 		cursor: pointer;
 	}
-	
+
 	.dbtc_con_add span {
 		padding: 0 10px;
 	}
-	
+
 	.dbtc_pop_fields {
 		width: 175px;
 		float: left;
 		margin: 0 10px;
 	}
-	
+
 	.dbtc_pop_fields li {
 		height: 35px;
 		line-height: 35px;
@@ -649,18 +820,20 @@
 		border: 1px solid transparent;
 		border-radius: 3px;
 	}
-	
-	.dbtc_pop_fields h3 {
+
+	.dbtc_pop_fieldsSpan {
+		display: inline-block;
+		width: 90%;
 		margin: 0;
 		border-bottom: 1px solid #ccc;
 		padding-bottom: 5px;
 	}
-	
+
 	.dbtc_pop_fields li:hover {
 		cursor: pointer;
 		border: 1px solid #9bc63b;
 	}
-	
+
 	.pop_fields_icon {
 		border: 1px solid #d1dbe5;
 		border-radius: 3px 0 0 3px;
@@ -669,26 +842,52 @@
 		float: left;
 		height: 33px;
 	}
-	
+
 	.pop_fields_name {
-		border: 1px solid #7acbfb;
+		border: 1px solid #eee;
 		border-left: 0px;
 		border-radius: 0px 3px 3px 0px;
-		background: #7acbfb;
-		color: white;
+		background: #f8f8f8;
+		color: #333333;
 		width: 121px;
 		float: left;
 		padding: 0 10px;
 		box-sizing: border-box;
 		height: 35px;
 	}
-	
+
 	.dbtcf_content {
 		margin: 20px;
 	}
-	
+
 	.dbtcf_content h4 {
 		margin: 10px 0;
 		padding: 0px;
 	}
+
+	.dbtct_title {
+		box-sizing: border-box;
+		padding-top: 6px;
+	}
+
+	.overDiv {
+		display: none;
+		float: left;
+		width: 54%;
+		border: 1px solid #eee;
+		background: #fff;
+		position: absolute;
+		left: 410px;
+		top: 43px;
+		font-size: 14px;
+
+	}
+	/*.dbtc_con_icon{*/
+	/*float: left;*/
+	/*width:14%;*/
+	/*}*/
+	/*.dbtc_con_name{*/
+	/*float: left;*/
+	/*width:80%;*/
+	/*}*/
 </style>

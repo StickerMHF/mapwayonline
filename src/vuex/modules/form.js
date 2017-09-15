@@ -3,14 +3,16 @@ export default {
 		widgetList: [],
 		formConfig: {
 			formname: "",
+      folder:'999', // 表单所属文件夹
 			description: "",
 			tablename: "",
+      datamodel:false,
 			manner: "wide", // 画布风格
-			mark:"备注",
+			mark:"标签", // 标签
 			maxid:0,
 			img:'', // base64的缩略图
 			isinputform:true, // 判断创建的是否为录入
-			selectfiled:'mapwayid', // 根据具体的某一个字段展示数据
+      selectfield:'mapwayid', // 根据具体的某一个字段展示数据
 			style: {
 				width: "960px",
 				height:'540px',
@@ -33,13 +35,15 @@ export default {
 			state.widgetList = [];
 			state.formConfig = {
 				formname: "",
+        folder:'999', // 表单所属文件夹
 				description: "",
 				tablename: "",
+        datamodel:false,
 				manner: "wide", // 画布风格
-				mark:"备注",
+				mark:"标签",
 				maxid:0,
 				isinputform:true, // 判断创建的是否为录入
-				selectfiled:'mapwayid', // 根据具体的某一个字段展示数据
+        selectfield:'mapwayid', // 根据具体的某一个字段展示数据
 				img:'', // base64的缩略图
 				style: {
 					width: "960px",

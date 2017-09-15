@@ -10,13 +10,12 @@
 			</div>
 			<div class="myform " id="myform" style="text-align: center;">
 				<div class="form-header">
-					<h1></h1>
-					<p></p>
+
 				</div>
 
 				<div id="get_appimg" style="display: inline-block; ">
 
-					<my-app-form :formdata = "oneForm"></my-app-form>
+					<my-app-form v-if="hasformdata" :formdata = "oneForm"></my-app-form>
 
 				</div>
 
@@ -55,7 +54,7 @@
 			</div>
 		</transition>
 
-		<!--提示保存模态框-->
+		<!--提示分享模态框-->
 		<transition name='el-zoom-in-center'>
 			<div class="model-box" v-show ='isShare' >
 				<div class="save-set">
@@ -93,7 +92,7 @@
 
 <script type="text/ecmascript-6">
 	import {mapGetters, mapActions } from 'vuex'
-	import myForm from '@/components/formDesign/formtemp/myappform.vue'
+	import myForm from '@/components/formDesign/preview/temp/myappform.vue'
 	export default {
 		name:'appformpreview',
 		computed: {
@@ -106,6 +105,7 @@
 		},
 		data(){
 			return {
+        hasformdata:false,
 				loading:true,
 				onlypre:false,
 				isSave:false, // 保存数据模态框显示/隐藏
@@ -114,7 +114,7 @@
 				hasNull:true, // 过滤保存的数据时的提醒
 				saved:'',
 				oneForm:{},
-				thumbnail:'',// base64 的缩略图
+
 				toUrl:"", // 数据提交的接口地址
 				sharePassword:'',
 				oid:''
@@ -155,8 +155,8 @@
 					this.$Tools.html2images(box, function(canvas) {
 						var imageData = canvas.toDataURL();
 						that.$Tools.dealImage(imageData,function(base){ // 压缩
-							that.thumbnail = base;
 							that._setCanvas({attr:'img',value:base}); // 存储到state中
+              console.log(base);
 						});
 
 					});
@@ -166,17 +166,37 @@
 			},
 			fifterForm(obj){
 				// 过滤数据，一些字段不能为空
+        if(obj.formConfig.formname === ''){
+          this.$notify.warning({
+            title: '提示！',
+            message: '表名不能为空！！！',
+            offset: 100
+          });
+          return false;
+        }
 
-//				return false;
-				return true;
+//        if(obj.formConfig.tablename ==='' ){
+//          this.$confirm('还没有绑定数据源，是否继续保存？')
+//            .then(() => {
+//              return true;
+//            })
+//            .catch(() => {
+//              return false;
+//            });
+//
+//
+//        }
+        return true;
+
+
 
 			},
 			saveForm(){
 
-				var that = this;
+				let that = this;
 				that.isSave = false;
-				let addUrl = 'TBUSER000002/formdesign/forms/add', // 添加的接口
-					updateUrl = 'TBUSER000002/formdesign/forms/update/'; // 更新的接口
+				let addUrl = 'formdesign/forms/add', // 添加的接口
+					updateUrl = 'formdesign/forms/update/'; // 更新的接口
 				// 保存数据
 				// console.log({widgetList:that.getForm.widgetList,formConfig:that.getForm.formConfig});
 				if(this.fifterForm(this.getForm)){
@@ -187,19 +207,20 @@
 						formConfig:that.getForm.formConfig
 					});
 //					console.log(this.getForm);
-//					console.log(prams);
+					console.log("上传之前",prams);
 
 					prams = encodeURI(prams);
-//					console.log(prams)
+					console.log(prams)
 					// 判断是否是二次编辑 ，如果是二次编辑，需要调用更新的接口
 					if(that.oid === 'new'){
 						that.$http.post(addUrl,prams)
 				      	.then((res) => {
 				      			console.log(res);
-				      			if(res.data.result == true){
+				      			if(res.data.result === true){
 				      				that.saved = res.data.data.keys[0];
 				      				// 上传成功
 				      				// 跳转到。。。。
+                      this.$router.replace({name:'formDesign'});
 				      				that.$notify.success({
 							          title: '提交成功！',
 							          message: '提交成功！！！',
@@ -225,7 +246,7 @@
 				      	.then(
 				      		(res) => {
 				      			console.log(res);
-				      			if(res.data.result == true){
+				      			if(res.data.result === true){
 				      				that.saved = res.data.data.keys[0];
 				      				// 上传成功
 				      				// 跳转到。。。。
@@ -234,7 +255,7 @@
 							          message: '提交成功！！！',
 							          offset: 100
 							        });
-
+                      this.$router.replace({name:'formDesign'});
 				      			}else{
 				      				console.log(res.data.message);
 				      				that.$notify.error({
@@ -318,7 +339,7 @@
 			},
 			getFormInfo(){
 				var that = this;
-				let url = 'TBUSER000002/formdesign/forms/'+this.oid;
+				let url = 'formdesign/forms/'+this.oid;
 //					let url = 'http://localhost:80/fz/json.php?f=oneform';
 				this.$http.get(url).then((res)=>{
 			      	console.log('res',res);
@@ -330,9 +351,8 @@
 			      	let data = {widgetList:widgetList,formConfig:odata};
 			      	that.oneForm = data;
 			      	console.log('preview',data)
-			        that.restoreCanvas();
-					that.restoreWidget();
 			        that.loading = false;
+              that.hasformdata = true;
 			        that.getThumbnail();// 生成缩略图 并保存
 			    }).catch((err)=>{
 			    	console.log(err)
@@ -355,14 +375,14 @@
 			if(this.oid === 'new' || this.getForm.editState.hasData){
 				console.log('new');
 				this.oneForm = this.cloneObj(this.getForm); // new 说明是来自正在编辑的内容预览
-				this.restoreCanvas();
-				this.restoreWidget();
+//				this.restoreCanvas();
+//				this.restoreWidget();
 				this.loading = false;
+        this.hasformdata = true;
 				this.getThumbnail();// 生成缩略图 并保存
 			}else if(this.oid === 'none'){
 				console.log('没有任何数据');
 				alert('没有任何数据');
-				return ;
 			}else{
 				this.getFormInfo(); // 获取用户指定的某一条form数据
 			}

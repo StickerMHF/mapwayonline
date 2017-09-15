@@ -1,36 +1,203 @@
 <template>
 	<div id="main">
-		首页内容
+		<el-row :gutter="20" class="tb-titleinfo">
+<!--			<el-col :span="2"></el-col>-->
+			<el-col :span="4">
+				<div class="tb-info-box dark-bg">
+					<i class="fa fa-database tb-info-icon"></i>
+					<div class="tb-info-right">
+					<span class="tb-info-name">我的数据</span>
+					<RealtimeNum class="tb-info-realtime" :ids="realtimeoptions.id" :num="realtimeoptions.num" :time="realtimeoptions.time"></RealtimeNum>
+					</div>
+				</div>
+			</el-col>
+			<el-col :span="4">
+				<div class="tb-info-box blue-bg">
+					<i class="fa fa-database tb-info-icon"></i>
+					<div class="tb-info-right">
+					<span class="tb-info-name">我的模型</span>
+					<RealtimeNum class="tb-info-realtime" :ids="realtimeoptions.id" :num="realtimeoptions.num" :time="realtimeoptions.time"></RealtimeNum>
+					</div>
+				</div>
+			</el-col>
+			<el-col :span="4">
+				<div class="tb-info-box green-bg">
+					<i class="fa fa-database tb-info-icon"></i>
+					<div class="tb-info-right">
+					<span class="tb-info-name">我的数据</span>
+					<RealtimeNum class="tb-info-realtime" :ids="realtimeoptions.id" :num="realtimeoptions.num" :time="realtimeoptions.time"></RealtimeNum>
+					</div>
+				</div>
+			</el-col>
+			<el-col :span="4">
+				<div class="tb-info-box brown-bg">
+					<i class="fa fa-database tb-info-icon"></i>
+					<div class="tb-info-right">
+					<span class="tb-info-name">我的数据</span>
+					<RealtimeNum class="tb-info-realtime" :ids="realtimeoptions.id" :num="realtimeoptions.num" :time="realtimeoptions.time"></RealtimeNum>
+					</div>
+				</div>
+			</el-col>
+			<el-col :span="4">
+				<div class="tb-info-box orgin-bg">
+					<i class="fa fa-database tb-info-icon"></i>
+					<div class="tb-info-right">
+					<span class="tb-info-name">我的数据</span>
+					<RealtimeNum class="tb-info-realtime" :ids="realtimeoptions.id" :num="realtimeoptions.num" :time="realtimeoptions.time"></RealtimeNum>
+					</div>
+				</div>
+			</el-col>
+			<el-col :span="4">
+				<div class="tb-info-box blue-bg">
+					<i class="fa fa-database tb-info-icon"></i>
+					<div class="tb-info-right">
+					<span class="tb-info-name">我的数据</span>
+					<RealtimeNum class="tb-info-realtime" :ids="realtimeoptions.id" :num="realtimeoptions.num" :time="realtimeoptions.time"></RealtimeNum>
+					</div>
+				</div>
+			</el-col>
+<!--			<el-col :span="2"></el-col>-->
+		</el-row>
 		
-		
-	
+		<el-row :gutter="20" class="tb-titleinfo">
+			<el-col :span="12">
+				<TBChart :id="chartoptions.id" :option="chartoptions.option" style="margin:10px;"></TBChart>
+			</el-col>
+			<el-col :span="12">
+				<TBChart :id="'areachart'" :option="chartoption.area" style="margin:10px;"></TBChart>
+			</el-col>
+		</el-row>
+		<el-row :gutter="20" class="tb-titleinfo">
+			<el-col :span="8">
+				<TBChart :id="'areachart1'" :option="chartoptions.option" style="margin:10px;"></TBChart>
+			</el-col>
+			<el-col :span="8">
+				<TBChart :id="'areachart2'" :option="chartoption.area" style="margin:10px;"></TBChart>
+			</el-col>
+			<el-col :span="8">
+				<TBChart :id="'areachart3'" :option="chartoption.pie" style="margin:10px;"></TBChart>
+			</el-col>
+		</el-row>
+
 	</div>
 </template>
 
 <script>
+	import TBChart from './common/chart/TBChart.vue';
+	import options from './common/chart/ChartOptions';
+	import RealtimeNum from './common/RealtimeNum';
 	export default {
-		name:'main',
-		components:{},
-		data(){
+		name: 'main',
+
+		data() {
+			let option = options
 			return {
-				
-				
-				
+				realtimeoptions: {
+					id: "sss",
+					num: 300,
+					time: 1
+				},
+				chartoptions: {
+					id: 'sssssss',
+					option: option.bar
+				},
+				chartoption:option
 			}
 		},
-		methods:{
-			
+		components: {
+			TBChart,
+			RealtimeNum
 		},
-		created(){
-			
+		methods: {
+
 		},
-		mounted(){
-			
+		created() {
+
+		},
+		mounted() {
+
 		}
 	}
 </script>
 
 <style scoped>
-
-
+	.tb-titleinfo{
+		margin: 0px !important;
+		margin: 20px !important;
+	}
+	.blue-bg{
+		color: #fff;
+    background: #57889c;
+    background-color: #57889c;
+	}
+	.brown-bg {
+    color: #fff;
+    background: #d1b993;
+    background-color: #d1b993;
+}
+.dark-bg {
+    color: #fff;
+    background: #ff9c9c;
+    background-color: #ff9c9c;
+}
+.green-bg {
+    color: #fff;
+    background: #26c281;
+    background-color: #26c281;
+}
+.orgin-bg {
+    color: #fff;
+    background: #2697c2;
+    background-color: #2697c2;
+}
+.tb-info-box{
+	min-height: 140px;
+    margin-bottom: 30px;
+    color: white;
+    -webkit-box-shadow: inset 0 0 1px 1px rgba(255, 255, 255, 0.35), 0 3px 1px -1px rgba(0, 0, 0, 0.1);
+    -moz-box-shadow: inset 0 0 1px 1px rgba(255, 255, 255, 0.35), 0 3px 1px -1px rgba(0, 0, 0, 0.1);
+    box-shadow: inset 0 0 1px 1px rgba(255, 255, 255, 0.35), 0 3px 1px -1px rgba(0, 0, 0, 0.1);
+    
+}
+.tb-info-box i {
+    display: block;
+/*    height: 100px;*/
+    font-size: 36px;
+    line-height: 100px;
+/*    width: 100px;*/
+    float: left;
+    text-align: center;
+    /*margin-right: 20px;
+    padding-right: 20px;*/
+    color: rgba(255, 255, 255, 1);
+}
+.tb-info-realtime{
+    font-size: 34px;
+    font-weight: 700;
+    line-height: 47px;
+    height: 135px;
+}
+.tb-info-name{
+	float: left;
+    box-sizing: border-box;
+    margin-right: 33%;
+    margin-top: 11%;
+}
+.tb-info-icon{
+	width: 40%;
+    float: left;
+    display: block;
+    font-size: 36px;
+    text-align: right;
+    color: rgba(255, 255, 255, 1);
+    text-align: right !important;
+    margin-top: 5%;
+   
+}
+.tb-info-right{
+	float: left;
+	width: 50%;
+	padding-left: 10%;
+	margin-top: 5%;
+}
 </style>

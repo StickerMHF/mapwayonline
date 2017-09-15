@@ -15,22 +15,7 @@
     /**
      * 深度克隆对象，从source到target
      */
-    clone (source, target) {
-      /*var tmp;
-      target = target || {};
-      for (var i in source) {
-        if (source.hasOwnProperty(i)) {
-          tmp = source[i];
-          if (typeof tmp == 'object') {
-            target[i] = this.isArray(tmp) ? [] : {};
-            this.clone(source[i], target[i])
-          } else {
-            target[i] = tmp;
-          }
-        }
-      }
-      return target;*/
-
+    clone (source) {
       var result;
       (source instanceof Array) ? (result = []) : (result = {});
 
@@ -113,53 +98,62 @@
       }
     },
 
-    /* 依次添加多条图层数据，默认生成不同的style，以便于保存 */
-    createInitStyle (gtype, index) {
+    /* 依次添加多条图层数据，默认生成不同的style，以便于保存 obj == renderset {}  */
+    createInitStyle (gtype, obj) {
       var gType =   this.gType(gtype),
-        fillColor = this.getUniqueInitColor(index) ,
-        color = this.getUniqueInitColor(index),
+        fillColor = this.getUniqueInitColor() ,
+        color = this.getUniqueInitColor(),
         style = {};
 
       switch (gType) {
         case 'point':
           style = {
-            radius: 4,
+            radius: obj.fill.radius,
             fillColor: fillColor,
-            color: '#eee',
-            weight: 1,
-            opacity: 1,
-            fillOpacity: 1
+            color: obj.border.color,
+            weight: obj.border.weight,
+            opacity: obj.border.opacity,
+            fillOpacity: obj.fill.opacity
           };
+          obj.fill.color = fillColor;
           break;
 
         case 'line':
           style = {
-            radius: 4,
-            fillColor: '',
+            radius: obj.fill.radius,
+            fillColor: obj.fill.color,
             color: color,
-            weight: 1,
-            opacity: 1,
-            fillOpacity: 1
+            weight: obj.border.weight,
+            opacity: obj.border.opacity,
+            fillOpacity: obj.fill.opacity
           };
+          obj.border.color = color;
           break;
 
         case 'polygon':
           style = {
-            radius: 4,
+            radius: obj.fill.radius,
             fillColor: fillColor,
-            color: '#eee',
-            weight: 1,
-            opacity: 1,
-            fillOpacity: 1
+            color: obj.border.color,
+            weight: obj.border.weight,
+            opacity: obj.border.opacity,
+            fillOpacity: obj.fill.opacity
           };
+          obj.fill.color = fillColor;
           break;
       }
 
       return style;
     },
 
-    getUniqueInitColor (index) {
-      return initColors[index];
+    getUniqueInitColor () {
+      var len = initColors.length, color = '';
+      if (colorIndex === len) {
+        colorIndex = 0;
+      }
+      color = initColors[colorIndex];
+      colorIndex++;
+      return color;
     },
 
     gType (gtype) {

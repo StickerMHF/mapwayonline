@@ -1,6 +1,6 @@
 export default {
   state: {
-    // 存储用户添加的数据  geoJsons: [{  id: 1, data: {}, }]
+    // 存储用户添加的数据
     geoJsons: [],
     layer: [],
     currentLayerId:　null,
@@ -34,27 +34,28 @@ export default {
     },
     // 向服务器提交的数据
     savedLayers: {
-      base_layer: null,
+      widget: [],
+      base_layer: [],
       over_layer: [
         /*{
-          data_id: null,
-          gtype: null,
-          new: {
-            rtype: null,
-            rule: {
-              field: null,
-              field_zone: null,
-            },
-            label: {
-              layerId: null,
-              field: null,
-              style: {
-                color: null,
-                fontSize: null
-              }
-            },
-          }
-        }*/
+         id: null,
+         gtype: null,
+         new: {
+         rtype: null,
+         rule: {
+         field: null,
+         field_zone: null,
+         },
+         label: {
+         layerId: null,
+         field: null,
+         style: {
+         color: null,
+         fontSize: null
+         }
+         },
+         }
+         }*/
       ],
     },
     newMapInfo: {
@@ -64,15 +65,29 @@ export default {
     },
     currentStyle: null,
 
-    // 创建地图选择的数据id集合
-    dataIdChecked: [],
-
+    idChecked: [], // 创建地图选择的数据id, name集合数组
     isFirstRender: true, // 是否是第一次渲染
     currentMapId: '', // 当前选中的mapid
-
   },
 
   mutations: {
+    RESET_RENDER (state) {
+      state.geoJsons = [];
+      state.layer= [];
+      state.currentLayerId=　null;
+      state.renderType=  'simple';
+      state.savedLayers=  {
+        widget: [],
+        base_layer: [],
+        over_layer: []
+      };
+      state.newMapInfo = {};
+      state.currentStyle = null;
+      state.idChecked = [];
+      state.isFirstRender = true;
+      state.currentMapId = '';
+    },
+
     SET_LAYERS (state, layers) {
       state.layers = layers;
     },
@@ -92,17 +107,17 @@ export default {
      * @param {Object}
      */
     ADD_GEO_JSON (state, obj) {
-      var exit = false;
-      state.geoJsons.some((item) => {
-        if (obj.id === item.id) {
-          exit = true;
-          return;
-        }
+      let temArray = []; // 存放id
+
+      state.geoJsons.forEach((item) => {
+        temArray.push(item.id);
       });
 
-      if (!exit) {
+      var index = temArray.indexOf(obj.id);
+      if (index < 0) {
         state.geoJsons.push(obj);
       }
+
       /*console.log(state.geoJsons)
        debugger*/
     },
@@ -112,16 +127,59 @@ export default {
       state.geoJsons = [];
     },
 
+    ADD_SAVED_LAYERS_BASE_LAYER (state, obj) {
+      let temArray = []; // 存放name
+
+      state.savedLayers.base_layer.forEach((item) => {
+        temArray.push(item.url);
+      });
+
+      var index = temArray.indexOf(obj.url);
+      if (index < 0) {
+        state.savedLayers.base_layer.push(obj);
+      }
+
+      console.log(state.savedLayers.base_layer)
+      //debugger
+    },
+
+    REMOVE_SAVED_LAYERS_BASE_LAYER (state, obj) {
+      state.savedLayers.base_layer.some((item, index) => {
+        if (obj.url === item.url) {
+          state.savedLayers.base_layer.splice(index, 1);
+          return;
+        }
+      });
+    },
+
+    CHANGE_SAVED_LAYERS_BASE_LAYER_INDEX  (state, url) {
+      state.savedLayers.base_layer.some((item, index) => {
+        if (item.url === url) {
+          state.savedLayers.base_layer.splice(index, 1);
+          state.savedLayers.base_layer.unshift(item);
+          return;
+        }
+      });
+    },
+
+    RESET_SAVED_LAYERS (state) {
+      state.savedLayers = {
+        widget: [],
+        base_layer: [],
+        over_layer: []
+      };
+    },
+
     // 向服务器提交的数据中
-    SET_BASE_LAYER (state, url) {
-      state.savedLayers.base_layer = url;
+    RESET_OVER_LAYER (state) {
+      state.savedLayers.over_layer = [];
     },
 
     // 更新每个叠加图层的样式
     UPDATE_OVER_LAYER (state, obj) {
       if (!!obj) {
         state.savedLayers.over_layer.some((item) => {
-          if (state.currentLayerId === item.data_id) {
+          if (state.currentLayerId === item.id) {
             item.render = obj;
           }
         });
@@ -132,49 +190,77 @@ export default {
       return;
     },
 
-    // 更新每个叠加图层的样式
+    // 更新每个叠加图层label的样式
     UPDATE_OVER_LAYER_LABEL (state, obj) {
-      if (!!obj) {
-        state.savedLayers.over_layer.some((item) => {
-          if (state.currentLayerId === item.data_id) {
-            item.label = obj;
-          }
-          return;
-        });
-      }
-      //console.log(state.savedLayers.over_layer);
-      return;
+      state.savedLayers.over_layer.some((item) => {
+        if (state.currentLayerId === item.id) {
+          item.label = obj;
+        }
+        return;
+      });
+      console.log('label字段选择为空后：', state.savedLayers.over_layer);
     },
 
     ADD_OVER_LAYER_STYLE (state, obj) {
       state.savedLayers.over_layer.push(obj);
     },
 
+    ADD_SAVED_LAYERS_WIDGET (state, obj) {
+      let temArray = []; // 存放name
+
+      state.savedLayers.widget.forEach((item) => {
+        temArray.push(item.name);
+      });
+
+      var index = temArray.indexOf(obj.name);
+      if (index < 0) {
+        state.savedLayers.widget.push(obj);
+      }
+    },
+
+    REMOVE_SAVED_LAYERS_WIDGET (state, obj) {
+      state.savedLayers.widget.some((item, index) => {
+        if (obj.name === item.name) {
+          state.idChecked.splice(index, 1);
+          return;
+        }
+      });
+    },
+
     SET_NEW_MAP_INFO (state, obj) {
-      state.newMapInfo[obj.key] = obj.value;
+      for (let i in obj) {
+        state.newMapInfo[i] = obj[i];
+      }
     },
 
     SET_CURRENT_STYLE (state, style) {
       state.currentStyle = style;
     },
 
-    ADD_DATA_ID_CHECKED (state, id) {
-      var index = state.dataIdChecked.indexOf(id);
+    ADD_ID_CHECKED (state, obj) {
+      let temArray = []; // 存放id
+
+      state.idChecked.forEach((item) => {
+        temArray.push(item.id);
+      });
+
+      var index = temArray.indexOf(obj.id);
       if (index < 0) {
-        state.dataIdChecked.push(id);
+        state.idChecked.push(obj);
       }
     },
 
-    REMOVE_DATA_ID_CHECKED (state, id) {
-      state.dataIdChecked.some((item, index) => {
-        if (id === item) {
-          state.dataIdChecked.splice(index, 1);
+    REMOVE_ID_CHECKED (state, obj) {
+      state.idChecked.some((item, index) => {
+        if (obj.id === item.id) {
+          state.idChecked.splice(index, 1);
+          return;
         }
       });
     },
 
-    RESET_DATA_ID_CHECKED (state) {
-      state.dataIdChecked = [];
+    RESET_ID_CHECKED (state) {
+      state.idChecked = [];
     },
 
     SET_NOT_FRIST_RENDER (state) {
@@ -191,6 +277,10 @@ export default {
   },
 
   actions: {
+    resetRender ({commit}) {
+      commit('RESET_RENDER');
+    },
+
     addGeoJsons ({commit}, obj) {
       commit('ADD_GEO_JSON', obj);
     },
@@ -212,8 +302,25 @@ export default {
       commit('SET_CURRENT_LAYER_ID', id);
     },
 
-    setBaseLayer ({commit}, url) {
-      commit('SET_BASE_LAYER', url);
+
+    addSavedLayersBaseLayer ({commit}, obj) {
+      commit('ADD_SAVED_LAYERS_BASE_LAYER', obj)
+    },
+
+    removeSavedLayersBaseLayer ({commit}, obj) {
+      commit('REMOVE_SAVED_LAYERS_BASE_LAYER', obj);
+    },
+
+    changeSavedLayersBaseLayerIndex ({commit}, url) {
+      commit('CHANGE_SAVED_LAYERS_BASE_LAYER_INDEX', url)
+    },
+
+    resetSavedLayers ({commit}) {
+      commit('RESET_SAVED_LAYERS');
+    },
+
+    resetOverLayer ({commit}) {
+      commit('RESET_OVER_LAYER');
     },
 
     updateOverLayer ({commit}, obj) {
@@ -228,6 +335,14 @@ export default {
       commit('ADD_OVER_LAYER_STYLE', obj);
     },
 
+    addSavedLayersWidget ({commit}, obj) {
+      commit('ADD_SAVED_LAYERS_WIDGET', obj);
+    },
+
+    removeSavedLayersWidget ({commit}, obj) {
+      commit('REMOVE_SAVED_LAYERS_WIDGET', obj);
+    },
+
     setNewMapInfo ( {commit}, obj ) {
       commit('SET_NEW_MAP_INFO', obj);
     },
@@ -236,16 +351,16 @@ export default {
       commit('SET_CURRENT_STYLE', style);
     },
 
-    addDataIdChecked ({commit}, id) {
-      commit('ADD_DATA_ID_CHECKED', id);
+    addIdChecked ({commit}, id) {
+      commit('ADD_ID_CHECKED', id);
     },
 
-    removeDataIdChecked({commit}, id) {
-      commit('REMOVE_DATA_ID_CHECKED', id);
+    removeIdChecked({commit}, id) {
+      commit('REMOVE_ID_CHECKED', id);
     },
 
-    resetDataIdChecked ({commit}) {
-      commit('RESET_DATA_ID_CHECKED');
+    resetIdChecked ({commit}) {
+      commit('RESET_ID_CHECKED');
     },
 
     setNotFirstRender ({commit}) {

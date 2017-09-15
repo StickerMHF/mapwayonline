@@ -1,25 +1,26 @@
 <template>
 	<div id="content-left">
 		<div class="cl_head clearfix">
-			<h2 @click="backTomapList">地图</h2>
-			<div class="cl_header_menu dropdown">
-				<i class="fa fa-plus-circle"></i>
-			</div>
+			<!--<h2 @click="backTomapList">地图</h2>-->
+			<!--<div class="cl_header_menu dropdown">-->
+				<!--<i class="fa fa-plus-circle"></i>-->
+			<!--</div>-->
 		</div>
 		<div class="folder_box">
 			<div class="tree" @click="getmapByCondition(0,'我的地图')">
-				<ul>
-					<li>
-						<span class="view_allmap">
-							<div></div>
-							<p>我的地图</p>
-							<font class="map_count">({{mapcount}})</font>
-						</span>
-					</li>
-				</ul>
+				<!--<ul>-->
+					<!--<li>-->
+						<!--<span class="view_allmap">-->
+							<!--<div></div>-->
+							<!--<p>我的地图</p>-->
+							<!--<font class="map_count">({{mapcount}})</font>-->
+						<!--</span>-->
+					<!--</li>-->
+				<!--</ul>-->
+        <TreeFolder @getByTreeId="getByTree" @updateTreeList="updateTreeList"></TreeFolder>
 			</div>
 			<div class="folder_list">
-				<TreeFolder @getByTreeId="getByTree" @updateTreeList="updateTreeList"></TreeFolder>
+				<!--<TreeFolder @getByTreeId="getByTree" @updateTreeList="updateTreeList"></TreeFolder>-->
 			</div>
 			<!--<div class="tree" @click="getmapByCondition(1,'已购买的地图')">
 				<ul>
@@ -31,7 +32,7 @@
 					</li>
 				</ul>
 			</div>-->
-			<div class="tree" @click="getmapByCondition(2,'已分享的地图')">
+			<div class="tree shareMap" @click="getmapByCondition(2,'已分享的地图')">
 				<ul>
 					<li>
 						<span class="view_allmap">
@@ -88,7 +89,7 @@
 					"subitem": tdata
 				});
 
-				var url = this.$http.defaults.baseURL + 'TBUSER000001/formdesign/folder/update';
+				var url = 'formdesign/folder/update';
 				that.$http.post(url, params).then((r) => {
 					debugger
 					if(r.data.result) {
@@ -107,7 +108,7 @@
 			},
 			gettreedata() {
 				var that = this;
-				var url = 'TBUSER000001/mapdesign/folder';
+				var url = 'mapdesign/folder';
 				that.$http.get(url).then((r) => {
 					that.mapcount = r.data.mapcount;
 					if(r.data.treedata.length == 0) {
@@ -125,6 +126,34 @@
 				});
 			},
 			getmapByCondition(type, name) {
+
+
+        if(name=="已分享的地图"){
+          var shared=document.getElementsByClassName("shareMap")[0];
+          shared.style.backgroundColor="#009688";
+          shared.style.borderRadius="4px";
+          var sharedFont=document.getElementsByClassName("view_allmap")[0];
+          sharedFont.style.color="#fff";
+          var treeNname =document.getElementsByClassName("treename");
+          for(var i=0;i<treeNname.length;i++){
+            treeNname[i].style.color="#5a5a5a";
+          }
+          var nodeContent =document.getElementsByClassName("el-tree-node__content");
+          for(var i=0;i<nodeContent.length;i++){
+            nodeContent[i].style.background="#fff";
+          }
+          var nodeContent2 =document.getElementsByClassName("el-tree-node__children");
+          for(var i=0;i<nodeContent2.length;i++){
+            nodeContent2[i].style.background="#fff";
+          }
+        }else{
+            debugger
+          var shared=document.getElementsByClassName("shareMap")[0];
+          shared.style.backgroundColor="#fff";
+          var sharedFont=document.getElementsByClassName("view_allmap")[0];
+          sharedFont.style.color="#5a5a5a";
+          var treeNname =document.getElementsByClassName("treename");
+        }
 				this.$emit("getmapByCondition", type, name);
 			}
 		},
@@ -146,8 +175,9 @@
 		top: 0;
 		bottom: 0;
 		overflow-y: auto;
-		background: #f9f9f9;
+		background: #ffffff !important;
 		border-right: 1px solid #e5e9ed;
+    z-index:999 !important;
 	}
 
 	.clearfix:after {
@@ -204,6 +234,7 @@
 		padding: 0;
 		box-shadow: none;
 		-webkit-box-shadow: none;
+
 	}
 
 	.tree li {
@@ -258,4 +289,7 @@
 		float: left;
 		margin-left: 8px;
 	}
+  .folder_box{
+    padding:0 10px;
+  }
 </style>

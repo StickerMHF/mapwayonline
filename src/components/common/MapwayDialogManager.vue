@@ -22,7 +22,7 @@
 					data:{
 						tableid:null
 					}
-				} 
+				}
 			}
 		},
 		components: {
@@ -31,10 +31,10 @@
 			DBModelCreate
 		},
 		computed: {
-			
+
 		},
 		methods: {
-			
+
 			initEvent() {
 				var that=this;
 				this.$bus.on('init_mwdialog', (dialogdata,model) => {
@@ -57,8 +57,8 @@
 						break;
 					}
 					},100);
-					
-					
+
+
 				});
 
 			},

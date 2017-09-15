@@ -118,8 +118,8 @@
       fetchData: function(tip) {
         this.tableLoading = true;
 
-        var dataid = this.$route.params.dataid;
-        var url = 'TBUSER000001/mapdesign/maps/layers/'+ dataid + '/query?f=geojson&outSr=4326&returnGeometry=true';
+        var id = this.$route.params.id;
+        var url = 'mapdesign/maps/layers/'+ id + '/query?f=geojson&outSr=4326&returnGeometry=true';
         this.$http.get(url).then((res) => {
           /*console.log(res);
            debugger*/
@@ -177,8 +177,8 @@
           type: 'warning'
         }).then(() => {
           // TODO  向后台提交删除
-          var dataid = this.$route.params.dataid;
-          var url = 'TBUSER000001/mapdesign/maps/layers/' + dataid + '/features/delete';
+          var id = this.$route.params.id;
+          var url = 'mapdesign/maps/layers/' + id + '/features/delete';
 
           var params = "data=" + JSON.stringify({
               mapwayid: mapwayid,

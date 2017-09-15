@@ -29,7 +29,7 @@ export default {
      },*/
     schema: null,
 
-    currentDataId: null,
+    currentId: null,
 
     // 记录是更新还是添加
     editType: ''
@@ -60,12 +60,12 @@ export default {
       console.log('Huoqu de schema', state.schema)
     },
 
-    SET_CURRENT_DATA_ID (state, id) {
-      state.currentDataId = id;
+    SET_CURRENT_ID (state, id) {
+      state.currentId = id;
     },
 
-    RESET_CURRENT_DATA_ID (state) {
-      state.currentDataId = null;
+    RESET_CURRENT_ID (state) {
+      state.currentId = null;
     },
 
     SET_EDIT_TYPE (state, type) {
@@ -105,12 +105,12 @@ export default {
       commit('SET_SCHEMA', field);
     },
 
-    setCurrentDataId ({commit}, id) {
-      commit('SET_CURRENT_DATA_ID', id);
+    setCurrentId ({commit}, id) {
+      commit('SET_CURRENT_ID', id);
     },
 
-    resetCurrentDataId ({commit}) {
-      commit('RESET_CURRENT_DATA_ID');
+    resetCurrentId ({commit}) {
+      commit('RESET_CURRENT_ID');
     },
 
     setEditType ({commit}, type) {
