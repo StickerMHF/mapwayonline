@@ -1,0 +1,426 @@
+<template>
+  <div class="renderContent">
+
+    <div v-show="isShowRenderSetting">
+      <!--<div class="current-layer-info">
+        <el-row :gutter="10">
+          <el-col :xs="24" :sm="24" :md="8" :lg="8"><el-button icon="arrow-left" style="margin-left: 10px;" @click="showLayerList">上一页</el-button></el-col>
+          <el-col :xs="24" :sm="24" :md="8" :lg="10"><div class="layer-name">{{ currentLayer.name }}</div></el-col>
+          &lt;!&ndash;<el-col :xs="24" :sm="24" :md="8" :lg="8"><div class="layer-name">{{ currentLayer.name }}</div></el-col>&ndash;&gt;
+        </el-row>
+      </div>-->
+
+      <div class="render-btns">
+        <el-button-group>
+          <el-button type="primary"  @click="simpleRender">简单</el-button>
+          <el-button type="primary"  @click="gradeRender">分级</el-button>
+          <el-button type="primary"  @click="typeRender">分类</el-button>
+        </el-button-group>
+      </div>
+      <hr>
+
+      <div class="render-set">
+        <simple v-show="isSimple"></simple>
+        <grade v-show="isGrade"></grade>
+        <type v-show="isType"></type>
+        <label-layer></label-layer>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+  import { mapActions, mapGetters, mapMutations } from 'vuex'
+  import Grade from './Grade.vue'
+  import Type from './Type.vue'
+  import Simple from './Simple.vue'
+  import LabelLayer from './LabelLayer.vue'
+  import Tool from '@/components/tool.vue'
+
+  import html2canvas from 'html2canvas'
+
+  export default {
+    name: 'renderSet',
+    components: { Grade, Type, Simple, LabelLayer },
+    computed: {
+      ...mapGetters([
+        'render'
+      ])
+    },
+    data () {
+      return {
+        isShowLayerList: true,
+        layers: null,
+        /*layers: {
+         id: TBDATA00001,
+         isAdded: true
+         }*/
+
+        isShowRenderSetting: true,
+        isGrade: false,
+        isType: false,
+        isSimple: false,
+        currentLayer: {
+          id: null,
+          name: null,
+          isAdded: null,
+        },
+      }
+    },
+    created () {
+      this.initEvent();
+    },
+    beforeDestroy () {
+       this.destroyEvent();
+    },
+    mounted () {
+      this.$bus.on('show-render-map-loading');
+      if (this.render.isFirstRender) { // 首次渲染
+        this.firstRender();
+      } else { // 二次编辑还原
+        this.notFirstRender();
+      }
+    },
+    methods: {
+      ...mapActions([
+        'setRenderType','addGeoJsons', 'resetGeoJsons', 'setCurrentLayerId',
+      ]),
+      initEvent () {
+        this.$bus.on('grade-render',() => {
+          this.gradeRender();
+        });
+
+        this.$bus.on('get-map-image',(url) => {
+          this.saveMap(url);
+        });
+
+        this.$bus.on('type-render', () => {
+          this.typeRender();
+        });
+
+        this.$bus.on('update-layers',(layers) => {
+          this.layers = layers;
+        });
+
+        this.$bus.on('hide-render',() => {
+          this.hideRender();
+        });
+
+        this.$bus.on('init-render-set',(id, layers) => {
+          this.initRenderSet(id, layers);
+        });
+
+        /* 显示右侧渲染方法 */
+        this.$bus.on('set-render-set-display', (boolValue) => {
+          this.isShowRenderSetting = boolValue;
+        });
+      },
+
+      destroyEvent () {
+        this.$bus.off('grade-render');
+        this.$bus.off('get-map-image');
+        this.$bus.off('type-render');
+        this.$bus.off('update-layers');
+        this.$bus.off('hide-render');
+        this.$bus.off('init-render-set');
+        this.$bus.off('set-render-set-display');
+      },
+
+      /* 首次渲染 */
+      firstRender () {
+        var vm = this;
+        var dataIdChecked = this.render.dataIdChecked;
+
+        console.log('dataIdChecked 的长度为 ', dataIdChecked.length);
+        var len = dataIdChecked.length, _temArray = [];
+
+        this.resetGeoJsons();
+        dataIdChecked.forEach((item) => {
+          var url = 'mapdesign/maps/layers/' + item.id + '/query?f=geojson&returnGeometry=true&OutSr=4326';
+          vm.$http.get(url).then(function(res){
+            var _geoJson = null;
+
+            if (!res.data.features) {
+              console.log('layerid： ' + item.id + '的geojson数据： ' + res.data);
+              console.log('后台传回来的数据结构有问题');
+              return;
+            }
+
+            _geoJson = {
+              id: item.id,
+              data: res.data,
+            };
+            vm.addGeoJsons( Tool.clone(_geoJson) );
+            _temArray.push(_geoJson);
+
+            if (len !== _temArray.length) {
+              return;
+            }
+            // 如果所需的图层数据全部请求回来, 全部默认简单渲染，进行初次默认渲染
+            vm.$bus.emit('init-render', _temArray);
+
+          }).catch((err) => { console.log(err); });
+        });
+      },
+
+      /* 二次编辑 */
+      notFirstRender () {
+        var id = this.render.currentMapId,
+          url = 'mapdesign/maps/'+ id;
+
+        this.$http.get(url).then((res) => {
+          if (!res.data.data.data) {
+            console.log('ajax 获取二此编辑数据结构发生变化', res.data);
+            return;
+          }
+
+          var layers = JSON.parse(res.data.data.data.layers);
+
+          this.$bus.emit('restore-map-render', layers);
+        }).catch((err) => { console.log(err) });
+      },
+
+      initRenderSet (id, over_layers) {
+        over_layers.some((item) => {
+
+          if (id === item.id) {
+            var geometryType = item.gtype, renderType = item.render.rtype;
+            this.setRenderType(renderType);
+            console.log('renderType 点击当前图层的时候', renderType)
+
+            switch (renderType) {
+              case 'simple':
+                this.showOneRender('isSimple');
+                this.$bus.emit('init-simple');
+                break;
+              case 'grade':
+                this.showOneRender('isGrade');
+                break;
+              case 'type':
+                this.showOneRender('isType');
+                break;
+            }
+            this.$bus.emit(this.render.renderType + '-renderSet-change', item);
+
+            return;
+          }
+        });
+      },
+
+      /* 返回图层列表 */
+      showLayerList () {
+        this.$confirm('是否保存对当前图层的修改?', '提示', {
+          type: 'warning'
+        }).then(() => {
+          this.saveCurrentLayerRender();
+
+          /*this.$message({
+            showClose: true,
+            message: '保存成功',
+            type: 'success',
+          });*/
+          // TODO 保存当前对层的修改,
+        }).catch(() => {
+          this.notSaveCurrentLayerRender();
+          // TODO 不保存当前对层的修改,
+        });
+
+        this.isShowLayerList = true;
+        this.isShowRenderSetting = false;
+
+        // 清空currentLayer数据
+        this.currentLayer = {
+          id: null,
+          name: null,
+          isAdded: null,
+        };
+
+        this.$bus.emit('update-currentLayerId', null);
+      },
+
+      /* 对当前图层渲染样式的保存 */
+      saveCurrentLayerRender () {
+        this.hideRender();
+        switch (this.render.renderType) {
+          case 'simple':
+            this.$bus.emit('save-current-simple-render');
+            break;
+
+          case 'grade':
+            this.$bus.emit('save-current-grade-render');
+            break;
+
+          case 'type':
+            this.$bus.emit('save-current-type-render');
+            break;
+        }
+      },
+
+      /* 对当前图层渲染样式的不保存 */
+      notSaveCurrentLayerRender () {
+        this.hideRender();
+        switch (this.render.renderType) {
+
+          case 'simple':
+            this.$bus.emit('not-save-current-simple-render');
+            break;
+
+          case 'grade':
+            this.$bus.emit('not-save-current-grade-render');
+            break;
+
+          case 'type':
+            this.$bus.emit('not-save-current-type-render');
+            break;
+        }
+      },
+
+      simpleRender () {
+        if (this.render.renderType === 'simple') {
+          return;
+        }
+        this.isGrade = false;
+        this.isType = false;
+        this.isSimple = true;
+        this.$bus.emit('reset-type-data');
+        this.$bus.emit('reset-grade-data');
+        this.setRenderType('simple');
+        this.$bus.emit('init-simple');
+      },
+
+      gradeRender () {
+        if (this.render.renderType === 'grade') {
+          return;
+        }
+        this.isGrade = true;
+        this.isType = false;
+        this.isSimple = false;
+        this.$bus.emit('reset-type-data');
+        this.$bus.emit('reset-simple-data');
+        this.setRenderType('grade');
+        this.$bus.emit('init-grade');
+      },
+
+      typeRender () {
+        if (this.render.renderType === 'type') {
+          return;
+        }
+        this.isGrade = false;
+        this.isType = true;
+        this.isSimple = false;
+        this.$bus.emit('reset-grade-data');
+        this.$bus.emit('reset-simple-data');
+        this.setRenderType('type');
+        this.$bus.emit('init-type');
+      },
+
+      hideRender () {
+        this.isGrade = false;
+        this.isType = false;
+        this.isSimple = false;
+        //this.setRenderType(null);
+      },
+
+      showOneRender (type) {
+        var types = ['isSimple', 'isGrade', 'isType'], len = types.length;
+        for (let i = 0; i < len; i++) {
+          var _type = types[i];
+          if (type === _type) {
+            this[_type] = true;
+          } else {
+            this[_type] = false;
+          }
+        }
+        console.log('this.isGrade ', this.isGrade )
+        console.log('this.isSimple ', this.isSimple )
+        console.log('this.isType ', this.isType )
+      },
+    }
+  }
+</script>
+
+<style>
+  .tip-btns {
+    text-align: center;
+    margin: 10px 0;
+  }
+
+  h3 {
+    margin: 0;
+    text-align: center;
+  }
+
+  .renderContent {
+    height: 100%;
+    overflow-y: auto;
+    padding-top: 20px;
+  }
+
+  .layer-list {
+    margin: 0 10px;
+  }
+
+  .current-layer-info {
+    height: 36px;
+    line-height: 36px;
+    margin: 10px 0;
+  }
+
+  .layer-name {
+    font-size: 20px;
+  }
+
+  .render-btns {
+    text-align: center;
+  }
+
+  .render-set {
+    padding: 10px;
+  }
+
+  .layer {
+    display: table;
+    width: 100%;
+    margin: 10px 0;
+    border: 1px solid #eee;
+    box-sizing: border-box;
+    border-radius: 5px;
+  }
+
+  .opacity05 {
+    opacity: 0.5;
+  }
+
+  .layer:hover {
+    border: 1px solid #AAA;
+    cursor: pointer;
+  }
+
+  .box {
+    width: 100px;
+    height: 75px;
+    line-height: 75px;
+    text-align: center;
+    display: inline-block;
+    color: #20a0ff;
+  }
+
+  .box img {
+    width: 50px;
+    height: 50px;
+    vertical-align: middle;
+  }
+
+  .box i {
+    vertical-align: middle;
+  }
+  .right {
+    display: table-cell;
+    text-align: right;
+  }
+  .left {
+    display: table-cell;
+    text-align: left;
+  }
+</style>
+

@@ -1,0 +1,313 @@
+<template>
+	<div id="myappform">
+
+
+		<!---->
+			<div class="form-main" id="form-main" :style="formdata.formConfig.style" v-if="formdata">
+				<form :action="toUrl" method="post" @submit="checkForm">
+					<div class="widget-item"
+						v-for="(item,index) in formdata.widgetList"
+						:key = "item.tagname"
+						:style="{'width':item.layout.w,'height':item.layout.h,'top':item.layout.y,'left':item.layout.x}"
+          >
+
+						<!--根据类型渲染不同的控件-->
+						<!--输入框-->
+            <label v-if="item.tagname === 'input' && item.type === 'text'" class="widget input_text" :style="item.style">
+                <span class="label input_text_label">{{item.label}}</span><span :is="item.tagname"
+                  type = 'text'
+                  :name = "item.bindFiled"
+                  class="type input_text_type"
+                ></span>
+            </label>
+
+            <!--
+
+						<label  v-if="item.tagname === 'input' && item.type === 'text'" style="display: flex;height: 100%;">
+							<span style="display: inline-block;margin-right:5px;min-width: 75px;vertical-align: middle;box-sizing: border-box;">{{item.label}}</span>
+							<div
+								:is="item.tagname" type='text'
+								:style="item.style"
+								:name = "item.bindFiled"
+								style="flex-grow: 1;height: 100%;box-sizing: border-box;outline: hidden;"
+								>
+							</div>
+						</label>
+
+						-->
+						<!--密码框-->
+            <label v-if="item.tagname === 'input' && item.type === 'password'" class="widget input_password" :style="item.style">
+              <span class="label input_password_label">{{item.label}}</span>
+              <span :is="item.tagname"
+                    type = 'password'
+                    :name = "item.bindFiled"
+                    class="type input_password_type"
+              ></span>
+            </label>
+						<!--文件上传-->
+            <label v-if="item.tagname === 'input' && item.type === 'file'" class="widget input_file" :style="item.style">
+              <span class="label input_file_label">{{item.label}}</span>
+              <span :is="item.tagname"
+                    type = 'file'
+                    :name = "item.bindFiled"
+                    class="type input_file_type"
+              ></span>
+
+            </label>
+						<!--文本域-->
+            <label v-if="item.tagname === 'textarea' " class="widget textarea" :style="item.style">
+              <span class="label textarea_label">{{item.label}}</span>
+              <span :is="item.tagname"
+                    :name = "item.bindFiled"
+                    class="type textarea_type"
+              ></span>
+            </label>
+						<!--下拉选择框-->
+            <label v-if="item.tagname === 'select' " class="widget select" :style="item.style">
+              <span class="label select_label">{{item.label}}</span>
+              <span :is="item.tagname"
+                    :name = "item.bindFiled"
+                    class="type select_type"
+              >
+                <option class="select_option" v-for="o in item.option" :key="o" :value="o">{{o}}</option>
+              </span>
+            </label>
+
+						<!--复选框-->
+            <label v-if="item.tagname === 'input' && item.type === 'checkbox' " class="widget input_checkbox" :style="item.style">
+              <span class="label input_checkbox_label">{{item.label}}</span>
+              <span class="type input_checkbox_type" >
+                <label v-for="o in item.option" :key="o">
+                  <span class="input_checkbox_option" :is="item.tagname" :value="o" type="checkbox" :name="item.bindFiled + '[]'"></span>
+                  {{o}}
+                </label>
+              </span>
+            </label>
+
+						<!--<div v-if="item.tagname === 'input' && item.type === 'checkbox'"-->
+							 <!--style="height: 100%;width: 100%; display: flex;box-sizing: border-box;">-->
+							<!--<span style="display: inline-block;margin-right:5px;min-width: 75px;">{{item.label}}</span>-->
+							<!--<div :style="item.style" style="flex-grow: 1;height: 100%;box-sizing: border-box;">-->
+								<!--<label  v-for="o in item.option" :key="o" >-->
+									<!--<div :is="item.tagname" :value="o" type='checkbox' :name = "item.bindFiled + '[]'"></div>-->
+									<!--{{o}}-->
+								<!--</label>-->
+							<!--</div>-->
+						<!--</div>-->
+						<!--单选框-->
+            <label v-if="item.tagname === 'input' && item.type === 'radio' " class="widget input_radio" :style="item.style">
+              <span class="label input_radio_label">{{item.label}}</span>
+              <span class="type input_radio_type" >
+                <label v-for="o in item.option" :key="o">
+                  <span class="input_radio_option" :is="item.tagname" :value="o" type="radio" :name="item.bindFiled"></span>
+                  {{o}}
+                </label>
+              </span>
+            </label>
+						<!--按钮-->
+            <label  v-if="item.tagname === 'button'" class="widget button" >
+                <span
+                  :is="item.tagname"
+                  :type="item.type"
+                  :style="item.style"
+
+                  class="button_label"
+                >{{item.label}}</span>
+
+            </label>
+						<!--<div-->
+							<!--:is="item.tagname"-->
+							<!--:type='item.type'-->
+							<!--v-if="item.tagname === 'button'" style="width: 100%;height: 100%;" :style="item.style">-->
+							<!--{{item.label}}-->
+						<!--</div>-->
+						<!--标题-->
+            <label v-if="item.tagname === 'h1'" class="widget h">
+              <span
+                :is="item.tagname"
+                :style="item.style"
+                class="h_content"
+              >
+                {{item.description}}
+              </span>
+
+            </label>
+
+						<!--段落-->
+            <label v-if="item.tagname === 'p'" class="widget p">
+              <span
+                :is="item.tagname"
+                :style="item.style"
+                class="p_content"
+              >
+                {{item.description}}
+              </span>
+
+            </label>
+						<!--图片-->
+            <label v-if="item.tagname === 'img'" class="widget img">
+              <span
+                :is="item.tagname"
+                :style="item.style"
+                :src="item.src ? item.src : ''"
+                class="img_content"
+              >
+              </span>
+            </label>
+
+						<div :is="item.tagname" v-if="item.tagname === 'img'"
+							:style="item.style"
+							:src="item.src ? item.src : ''"
+							:alt = "item.description"
+							style="width: 100%;height: 100%;box-sizing: border-box;">
+
+						</div>
+
+					</div>
+
+				</form>
+
+			</div>
+
+
+		<!---->
+
+
+	</div>
+</template>
+
+<script>
+	export default {
+		replace : true,
+		name :'myappform',
+		props : {
+			formdata : {
+				type : Object,
+				default : {
+					widgetList: [],
+					formConfig: {
+						formname: "",
+						description: "",
+						tablename: "",
+						manner: "wide", // 画布风格
+						mark:"备注",
+						maxid:0,
+						img:'', // base64的缩略图
+						isinputform:true, // 判断创建的是否为录入
+						style: {
+							width: "960px",
+							height:'540px',
+							minHeight: "540px",
+							backgroundColor: "none",
+							backgroundImage: "url(none)",
+							backgroundPosition: "0 0",
+							backgroundSize: "100% 100%"
+						}
+					}
+				}
+			}
+		},
+		data(){
+			return {
+				toUrl : 'http://localhost:80/fz/submit.php',
+			}
+		},
+		methods:{
+			checkForm(){
+				let that = this;
+				this.$confirm("您确定要提交吗？","提示",{
+					confirmButtonText: '确定',
+			        cancelButtonText: '取消',
+			        type: 'warning'
+				}).then(()=>{
+					return true;
+				}).catch(()=>{
+					return false;
+				})
+
+
+			}
+		},
+		created(){
+			console.log("formdata",this.formdata);
+      this.toUrl = "http://localhost:80/fz/submit.php"
+//      this.toUrl =  'http://192.168.0.222:8082/mapwayonline/TBUSER000001/datacenter/datas/'+this.formdata.formConfig.tablename + "/insert";
+
+
+		},
+		mounted(){
+
+		}
+	}
+</script>
+
+<style lang="less" scoped>
+  input,textarea,select{
+    border: none;
+  }
+.form-main {
+		margin: 0 auto;
+		position: relative;
+		text-align: left;
+
+  .widget-item{
+    position: absolute;
+
+    .widget{
+      display: flex;
+      height: 100%;
+      width: 100%;
+      box-sizing: border-box;
+      justify-content: space-between;
+      align-items: stretch;
+    }
+    .label{
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-right: 1px solid #c3c3c3;
+      width: 100px;
+      box-sizing: border-box;
+      padding: 0 10px;
+      text-align: center;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      background-color: rgba(251,251,251,0.7);
+      font-size: 14px;
+    }
+    .type{
+      flex-grow: 1;
+      display: inline-block;
+      padding-left: 5px;
+    }
+    .input_file_type{
+        width: 10px;
+        opacity: 0.8;
+    }
+    .input_radio_type{
+      display: flex;
+      flex-wrap:wrap;
+      align-items: center;
+      justify-content: space-around;
+    }
+    .input_checkbox_type{
+      display: flex;
+      flex-wrap:wrap;
+      align-items: center;
+      justify-content: space-around;
+    }
+    .input_file_type{
+      display: flex;
+      align-items: center;
+
+    }
+    .select_option{
+      line-height: 1.5em;
+    }
+    .input_checkbox_option{
+
+    }
+  }
+}
+</style>

@@ -1,0 +1,460 @@
+<template>
+	<div id="appformpreview" v-loading.body="loading" >
+		<div style="margin: 60px;" v-if="loading"  v-loading.body="loading"></div>
+		<div v-if="!loading">
+			<div class="nav" v-if="!onlypre">
+				<el-button :plain="true" type="success" @click="goEdit">编辑 </el-button>
+				<el-button :plain="true" type="success" @click = "isSave = true">保存</el-button>
+				<!--<el-button :plain="true" type="success" @click = "isShare = true">分享</el-button>-->
+				<!--<el-button @click="getThumbnail" type="success">getThumbnail</el-button>-->
+			</div>
+			<div class="myform " id="myform" style="text-align: center;">
+				<div class="form-header">
+
+				</div>
+
+				<div id="get_appimg" style="display: inline-block; ">
+
+					<my-app-form v-if="hasformdata" :formdata = "oneForm"></my-app-form>
+
+				</div>
+
+				<div class="form-footer"></div>
+
+
+			</div>
+
+
+		</div>
+
+
+		<!--提示保存模态框-->
+		<transition name='el-zoom-in-center'>
+			<div class="model-box" v-show ='isSave' >
+				<div class="save-set">
+					<div class="model-header">
+						<span>保存数据 </span>
+						<el-button @click="isSave = false" type="text"> × </el-button>
+					</div>
+					<div class="model-content">
+						<div v-if="hasNull">还有字段未绑定数据。。。balabala</div>
+
+						<p>确定要保存吗？</p>
+
+
+					</div>
+					<div class="model-footer">
+						<el-button type="success" @click="saveForm">确定</el-button>
+						<el-button @click="isSave = false" >取消</el-button>
+					</div>
+				</div>
+
+
+
+			</div>
+		</transition>
+
+		<!--提示分享模态框-->
+		<transition name='el-zoom-in-center'>
+			<div class="model-box" v-show ='isShare' >
+				<div class="save-set">
+					<div class="model-header">
+						<span>分享表单 </span>
+						<el-button @click="isShare = false" type="text"> × </el-button>
+					</div>
+					<div class="model-content">
+						<h3>请选择您分享的类型：</h3>
+						<el-radio-group v-model="shareType">
+						    <el-radio :label="true">公共分享</el-radio>
+						    <el-radio :label="false">私密分享</el-radio>
+						  </el-radio-group>
+						<div class="share-tip">
+							<div v-if="shareType">
+								<span class="atip">公共分享，所有用户都可以使用您的表单！</span>
+							</div>
+							<div v-if="!shareType">
+								<span class="atip">私密分享，请输入您的分享密码！</span>
+								<el-input type="text" size="small" placeholder="请输入您的分享密码" v-model="sharePassword"></el-input>
+							</div>
+						</div>
+					</div>
+					<div class="model-footer">
+						<el-button type="success" @click="shareForm">确定</el-button>
+						<el-button @click="isShare = false" >取消</el-button>
+					</div>
+				</div>
+
+			</div>
+		</transition>
+
+	</div>
+</template>
+
+<script type="text/ecmascript-6">
+	import {mapGetters, mapActions } from 'vuex'
+	import myForm from '@/components/formDesign/preview/temp/myappform.vue'
+	export default {
+		name:'appformpreview',
+		computed: {
+			...mapGetters([
+				'getForm'
+			])
+		},
+		components:{
+			"myAppForm": myForm
+		},
+		data(){
+			return {
+        hasformdata:false,
+				loading:true,
+				onlypre:false,
+				isSave:false, // 保存数据模态框显示/隐藏
+				isShare:false, // 分享界面的模态框
+				shareType:true,
+				hasNull:true, // 过滤保存的数据时的提醒
+				saved:'',
+				oneForm:{},
+
+				toUrl:"", // 数据提交的接口地址
+				sharePassword:'',
+				oid:''
+			}
+		},
+		methods:{
+			...mapActions([
+        		'_setCanvas',
+        		'_setCurrent'
+        	]),
+        	goEdit(){
+        		this._setCurrent({attr:'isSaveInPreview',value:false});
+        		this._setCurrent({attr:'hasData',value:true});
+        		this.$router.replace({name: 'formdesigninit', params: {id:this.oid,hasEdit:true}});
+        	},
+
+			fifterShare(){
+				// 验证分享的信息
+
+				return true;
+			},
+			shareForm(){
+				// 分享表单
+				if(this.fifterShare()){
+
+
+
+
+
+
+
+				}
+			},
+			getThumbnail(){
+				var that = this;
+				that.$nextTick(function(){
+					let box = document.getElementById('get_appimg');
+					this.$Tools.html2images(box, function(canvas) {
+						var imageData = canvas.toDataURL();
+						that.$Tools.dealImage(imageData,function(base){ // 压缩
+							that._setCanvas({attr:'img',value:base}); // 存储到state中
+              console.log(base);
+						});
+
+					});
+
+				})
+
+			},
+			fifterForm(obj){
+				// 过滤数据，一些字段不能为空
+        if(obj.formConfig.formname === ''){
+          this.$notify.success({
+            title: '提示！',
+            message: '表名不能为空！！！',
+            offset: 100
+          });
+          return false;
+        }
+				return true;
+
+			},
+			saveForm(){
+
+				let that = this;
+				that.isSave = false;
+				let addUrl = 'formdesign/forms/add', // 添加的接口
+					updateUrl = 'formdesign/forms/update/'; // 更新的接口
+				// 保存数据
+				// console.log({widgetList:that.getForm.widgetList,formConfig:that.getForm.formConfig});
+				if(this.fifterForm(this.getForm)){
+
+					// 过滤一部分数据  比如：一些字段不为空之类的
+					let prams = 'data='+JSON.stringify({
+						widgetList:that.getForm.widgetList,
+						formConfig:that.getForm.formConfig
+					});
+//					console.log(this.getForm);
+					console.log("上传之前",prams);
+
+					prams = encodeURI(prams);
+					console.log(prams)
+					// 判断是否是二次编辑 ，如果是二次编辑，需要调用更新的接口
+					if(that.oid === 'new'){
+						that.$http.post(addUrl,prams)
+				      	.then((res) => {
+				      			console.log(res);
+				      			if(res.data.result === true){
+				      				that.saved = res.data.data.keys[0];
+				      				// 上传成功
+				      				// 跳转到。。。。
+                      this.$router.replace({name:'formDesign'});
+				      				that.$notify.success({
+							          title: '提交成功！',
+							          message: '提交成功！！！',
+							          offset: 100
+							        });
+
+				      			}else{
+				      				that.$notify.error({
+							          title: '保存失败！',
+							          message: '保存失败！！！ ',
+							          offset: 100
+							        });
+				      			}
+
+				      		}
+				      	).catch((error) => {
+				      		console.log("出错了",error);
+				      	});
+
+					}else{
+
+						that.$http.post(updateUrl + that.oid,prams)
+				      	.then(
+				      		(res) => {
+				      			console.log(res);
+				      			if(res.data.result === true){
+				      				that.saved = res.data.data.keys[0];
+				      				// 上传成功
+				      				// 跳转到。。。。
+				      				that.$notify.success({
+							          title: '修改成功！',
+							          message: '提交成功！！！',
+							          offset: 100
+							        });
+                      this.$router.replace({name:'formDesign'});
+				      			}else{
+				      				console.log(res.data.message);
+				      				that.$notify.error({
+							          title: '修改失败！',
+							          message: '修改失败！！！ ',
+							          offset: 100
+							        });
+				      			}
+
+				      		}
+				      	).catch((error) => {
+				      		console.log(error);
+				      	});
+
+
+
+					}
+
+
+				}else{
+					that.$notify.error({
+			          title: '请求失败！',
+			          message: '请求失败！存在控件未绑定数据或者值错误！！！',
+			          offset: 100
+			       });
+				}
+			},
+			restoreCanvas(){
+				// 还原布局的画布
+				this.toUrl =  'http://192.168.0.222:8082/mapwayonline/TBUSER000001/datacenter/datas/'+this.oneForm.formConfig.tablename + "/insert";
+//				this.toUrl = "http://localhost:80/fz/submit.php"
+			},
+			restoreWidget(){
+				// 还原控件
+
+				this.oneForm.widgetList.forEach(function(item){
+					item.layout.x = item.layout.x + 'px';
+					item.layout.y = item.layout.y + 'px';
+					item.layout.w = item.layout.w + 'px';
+					item.layout.h = item.layout.h + 'px';
+					if(item.option){
+						item.option = item.option.split(',');
+					}
+
+				})
+//
+//				this.widgetList = this.oneForm.widgetList;
+//
+//				let wl = this.widgetList;
+//				for(var i=0;i<wl.length;i++){
+//					// 布局中添加单位px
+//					wl[i].layout.x = wl[i].layout.x +'px';
+//					wl[i].layout.y = wl[i].layout.y +'px';
+//					wl[i].layout.w = wl[i].layout.w +'px';
+//					wl[i].layout.h = wl[i].layout.h +'px';
+//					// option字符串 转化为对应的数组
+//					if(wl[i].option){
+//						wl[i].option = wl[i].option.split(',');
+//					}
+//
+//				}
+//
+//				console.log(wl);
+
+
+			},
+			cloneObj(obj){  // 深拷贝
+			    var str, newobj = obj.constructor === Array ? [] : {};
+			    if(typeof obj !== 'object'){
+			        return;
+			    } else if(window.JSON){
+			        str = JSON.stringify(obj), //系列化对象
+			        newobj = JSON.parse(str); //还原
+			    } else {
+			        for(var i in obj){
+			            newobj[i] = typeof obj[i] === 'object' ?
+			            this.cloneObj(obj[i]) : obj[i];
+			        }
+			    }
+			    return newobj;
+			},
+			getFormInfo(){
+				var that = this;
+				let url = 'formdesign/forms/'+this.oid;
+//					let url = 'http://localhost:80/fz/json.php?f=oneform';
+				this.$http.get(url).then((res)=>{
+			      	console.log('res',res);
+			      	let odata = res.data.data;
+			      	let widgetList = JSON.parse(odata.formcontent);
+			      	delete odata.formcontent;
+			      	odata.style = JSON.parse(odata.style);
+
+			      	let data = {widgetList:widgetList,formConfig:odata};
+			      	that.oneForm = data;
+			      	console.log('preview',data)
+			        that.loading = false;
+              that.hasformdata = true;
+			        that.getThumbnail();// 生成缩略图 并保存
+			    }).catch((err)=>{
+			    	console.log(err)
+			    });
+			},
+		},
+		created(){
+			// 在预览之前  清除上一次注册的事件
+			this.$bus.off('add-widget');
+			this.$bus.off('set-grid');
+
+
+			if(this.getForm.editState.isSaveInPreview){
+				this.isSave = true;
+				// 需要预览 并生成缩略图保存
+			}
+
+			this.oid = this.$route.params.id;
+			this.onlypre = this.$route.params.onlypre
+			if(this.oid === 'new' || this.getForm.editState.hasData){
+				console.log('new');
+				this.oneForm = this.cloneObj(this.getForm); // new 说明是来自正在编辑的内容预览
+//				this.restoreCanvas();
+//				this.restoreWidget();
+				this.loading = false;
+        this.hasformdata = true;
+				this.getThumbnail();// 生成缩略图 并保存
+			}else if(this.oid === 'none'){
+				console.log('没有任何数据');
+				alert('没有任何数据');
+			}else{
+				this.getFormInfo(); // 获取用户指定的某一条form数据
+			}
+
+
+		},
+		mounted(){
+
+		}
+	}
+</script>
+
+<style lang="less" scoped>
+#appformpreview{
+	select,option{
+		// 不需要外边框
+		outline: none;
+	}
+	.nav{
+		height: 40px;
+		background-color: rgba(0,0,0,0.5);
+		margin-bottom: 20px;
+		padding: 5px 40px;
+		text-align: right;
+	}
+	.form-header{
+		text-align: center;
+		border-bottom: 1px solid #EEEEEE;
+		padding-bottom: 12px;
+		margin-bottom: 12px;
+	}
+	.form-main {
+		margin: 0 auto;
+		position: relative;
+		text-align: left;
+	}
+	.model-box{
+		position: fixed;
+		top: 0;
+		left: 0;
+		height: 100%;
+		width: 100%;
+		background-color: rgba(0,0,0,0.4);
+		z-index: 2000;
+		.save-set{
+			position: absolute;
+			width: 400px;
+			height: 340px;
+			top: 200px;
+			margin-left: -200px;
+			left: 50%;
+			border-radius: 5px;
+			background-color: #FFFFFF;
+			overflow:hidden;
+			.model-header{
+				height: 50px;
+				padding-left: 30px;
+				font-size: 16px;
+				border-bottom: 1px solid #BFCBD9;
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+			}
+			.model-content{
+				height: 210px;
+				overflow: hidden;
+				text-align: center;
+				.share-tip{
+					width: 50%;
+					margin: 0 auto;
+					padding: 25px 0 10px;
+					display: flex;
+					justify-content: center;
+					align-items: space-between;
+					.atip{
+						line-height: 30px;
+					}
+				}
+			}
+			.model-footer{
+				text-align: center;
+				height: 50px;
+				padding-bottom: 30px;
+			}
+
+		}
+	}
+}
+</style>

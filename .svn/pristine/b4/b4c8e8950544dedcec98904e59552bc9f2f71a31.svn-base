@@ -1,0 +1,489 @@
+<script>
+  import Vue from 'vue'
+
+  var initColors = ['	#778899', '#696969', '#00FFFF', '#AFEEEE', '#008B8B', '#4682B4',
+    '#87CEFA', '#6495ED', '#1E90FF', '#0000CD', '#483D8B', '#F0FFF0', '#7FFFD4', '#90EE90',
+    '#00FF7F', '#7FFF00', '#3CB371', '#20B2AA', '#228B22', '#006400', '#808000', '2F4F4F'
+  ];
+  var colorIndex = 0;
+
+  export default {
+    isArray (obj){
+      return Object.prototype.toString.call(obj)=='[object Array]';
+    },
+
+    /**
+     * 深度克隆对象，从source到target
+     */
+    clone (source, target) {
+      /*var tmp;
+      target = target || {};
+      for (var i in source) {
+        if (source.hasOwnProperty(i)) {
+          tmp = source[i];
+          if (typeof tmp == 'object') {
+            target[i] = this.isArray(tmp) ? [] : {};
+            this.clone(source[i], target[i])
+          } else {
+            target[i] = tmp;
+          }
+        }
+      }
+      return target;*/
+
+      var result;
+      (source instanceof Array) ? (result = []) : (result = {});
+
+      for (var key in source) {
+        result[key] = (typeof source[key]==='object') ? this.clone(source[key]) : source[key];
+      }
+      return result;
+    },
+
+    isNumber (obj) {
+      if (Object.prototype.toString.call(obj) === '[object Number]') {
+        return true;
+      }
+      return false;
+    },
+
+    /* postgresql数据类型转换为js认识的类型 */
+    postsql2Js (type) {
+      var jsType = '';
+
+      switch (type) {
+        case 'integer':
+        case 'bigint':
+        case 'double precision':
+          jsType = 'number';
+          break;
+
+        case 'character varying':
+          jsType = 'string';
+          break;
+
+        case 'date':
+          jsType = 'date';
+          break;
+      }
+
+      return jsType;
+    },
+
+    /* js Date 转化为 2015-01-01格式
+     *  data 实例化的Date对象
+     * */
+    sqlDateFormet (date) {
+      var year = date.getFullYear().toString();
+      var month = date.getUTCMonth().toString();
+      var day = date.getUTCDate().toString();
+      if (month.length ===1) {
+        month = '0' + month;
+      }
+
+      return year + '-' + month + '-' + day;
+    },
+
+    /* 判断一个对像是否为空 */
+    isEmptyObject(obj) {
+      for (var key in obj) {
+        return false;
+      }
+      return true;
+    },
+
+    /**
+     *  通用的
+     */
+    initIsType (gtype, obj) {
+      var gType =   this.gType(gtype);
+
+      switch (gType) {
+        case 'point':
+          obj.isPoint = true;
+          break;
+
+        case 'line':
+          obj.isLine = true;
+          break;
+
+        case 'polygon':
+          obj.isPolygon = true;
+          break;
+      }
+    },
+
+    /* 依次添加多条图层数据，默认生成不同的style，以便于保存 obj == renderset {}  */
+    createInitStyle (gtype, index, obj) {
+      var gType =   this.gType(gtype),
+        fillColor = this.getUniqueInitColor(index) ,
+        color = this.getUniqueInitColor(index),
+        style = {};
+
+      switch (gType) {
+        case 'point':
+          style = {
+            radius: obj.fill.radius,
+            fillColor: fillColor,
+            color: obj.border.color,
+            weight: obj.border.weight,
+            opacity: obj.border.opacity,
+            fillOpacity: obj.fill.opacity
+          };
+          obj.fill.color = fillColor;
+          break;
+
+        case 'line':
+          style = {
+            radius: obj.fill.radius,
+            fillColor: obj.fill.color,
+            color: color,
+            weight: obj.border.weight,
+            opacity: obj.border.opacity,
+            fillOpacity: obj.fill.opacity
+          };
+          obj.border.color = color;
+          break;
+
+        case 'polygon':
+          style = {
+            radius: obj.fill.radius,
+            fillColor: fillColor,
+            color: obj.border.color,
+            weight: obj.border.weight,
+            opacity: obj.border.opacity,
+            fillOpacity: obj.fill.opacity
+          };
+          obj.fill.color = fillColor;
+          break;
+      }
+
+      return style;
+    },
+
+    getUniqueInitColor (index) {
+      return initColors[index];
+    },
+
+    gType (gtype) {
+      switch (gtype) {
+        case 'Point':
+        case 'MultiPoint':
+          return 'point';
+
+        case 'LineString':
+        case 'MultiLineString':
+          return 'line';
+
+        case 'Polygon':
+        case 'MultiPolygon':
+          return 'polygon';
+      }
+    },
+
+    /* 得到所有的字段数组 */
+    getField (data) {
+      var result = [];
+      var properties = data.features[0].properties;
+
+      for(var i in properties) {
+        result.push(i);
+      }
+
+      return result;
+    },
+
+    /* 返回一个元素在对象数组中的index值  */
+    getIndexInArray (array, field) {
+      var index, len = array.length;
+
+      for (var i = 0; i < len; i++) {
+        if ( array[i].min === array[i].max) { // min == max
+          // [min, max]
+          if (field === array[i].min) {
+            index = i;
+            break;
+          }
+
+        } else { // min != max
+          // [min, max)
+          if ( field >= array[i].min && field < array[i].max ) {
+            index = i;
+            break;
+          }
+          // (min, max)
+          if ( field > array[i].min && field < array[i].max ) {
+            index = i;
+            break;
+          }
+          // (min, max]
+          if ( field > array[i].min && field <= array[i].max ) {
+            index = i;
+            break;
+          }
+        }
+      }
+      return index;
+    },
+
+    /* 返回feature需要的样式 */
+    getFeatureStyle (obj) {
+      return  {
+        radius: obj.fill.radius,
+        fillColor: obj.fill.color,
+        color: obj.border.color,
+        weight: obj.border.weight,
+        opacity: obj.border.opacity,
+        fillOpacity: obj.fill.opacity
+      };
+    },
+
+
+    /**
+     *  分级渲染
+     */
+    /* 得到字段值是数字且长度小于8的的字段数组，用于首次分级渲染 */
+    getNumberField (data) {
+      var result = [], vm = this, fields = vm.getField(data);
+
+      fields.forEach(function(field) {
+        var vals = [], allIsNumber;
+
+        data.features.forEach(function(feature) {
+          var fieldVal = feature.properties[field];
+          if (fieldVal) {
+            vals.push(fieldVal);
+          }
+        });
+
+        // 判断所有的值都是number类型
+        allIsNumber = vals.every((item) => {
+          return vm.isNumber(item);
+        });
+
+        if( allIsNumber && vm.arrayUnique(vals).length <= 8 && vm.arrayUnique(vals).length　> 0) {
+          result.push(field)
+        }
+      });
+
+      return result;
+    },
+
+
+    /*
+     *  Function groupArray 将一个数组按照相同的间隔分成若干组
+     *  @Param min   Number 数组最小值
+     *  @Param max  Number 数组最大值
+     *  @Param groups Number 组数
+     */
+    groupArray (min, max, grade) {
+      var result = [],
+        gap = Number( ((max - min)/grade).toFixed(2) ), i = 0, bound;
+
+      if (grade === 1 || max === min) {
+        result.push({
+          min: min,
+          max: max
+        });
+        //console.log(result);
+        return result;
+      }
+
+      for (; i < grade; ++i) {
+        if (i === 0) {
+
+          result.push({
+            min: min,
+            max: min + gap,
+          });
+          bound = Number((min+gap).toFixed(2));
+        } else if (i === grade - 1) {
+          result.push({
+            min: bound,
+            max: max,
+          })
+          return result;
+        } else {
+          result.push({
+            min: bound,
+            max: bound + gap
+          });
+          bound = Number((bound + gap).toFixed(2));
+        }
+      }
+    },
+
+    /* 数组从小到大排的方法 */
+    sortNumber (a, b) { return a - b; },
+
+    /* 数组去重 */
+    arrayUnique (arr) {
+      var tmp = {},
+        result = [];
+
+      for (var i = 0, j = arr.length; i < j; i++) {
+        if (!tmp[arr[i]]) {
+          tmp[arr[i]] = 1;
+          result.push(arr[i]);
+        }
+      }
+      return result;
+    },
+
+    /* 取符合要求的字段数组第一个值，返回相应的字段值数组，并且去重，用于分级渲染 */
+    getGradeValue (data, field) {
+      var _fieldVals=[], result;
+      data.features.forEach(function(feature) {
+        _fieldVals.push(feature.properties[field]);
+      });
+      result= this.arrayUnique(_fieldVals);
+
+      return result;
+    },
+
+    getGradeArray (gtype, fieldValsSortedGrouped, obj, gradient) {
+      var gType =   this.gType(gtype);
+
+      switch (gType) {
+        case 'point':
+          this.getPointGradeArray(fieldValsSortedGrouped, obj, gradient);
+          break;
+
+        case 'line':
+          this.getLineGradeArray(fieldValsSortedGrouped, obj, gradient);
+          break;
+
+        case 'polygon':
+          this.getPolygonGradeArray(fieldValsSortedGrouped, obj, gradient);
+          break;
+      }
+    },
+
+    getPointGradeArray (fieldValsSortedGrouped, obj, gradient) {
+      Vue.set(obj, 'fieldStyleArray', null);
+      var radius = obj.fill.radius, result = [];
+      fieldValsSortedGrouped.forEach((item, index) => {
+        result.push({index, min: item.min, max: item.max, radius, fillColor: gradient[index], color: obj.border.color, weight: obj.border.weight });
+      });
+      Vue.set(obj, 'fieldStyleArray', result);
+    },
+
+    getPolygonGradeArray (fieldValsSortedGrouped, obj, gradient) {
+      Vue.set(obj, 'fieldStyleArray', null);
+      var radius = obj.fill.radius, result = [];
+      fieldValsSortedGrouped.forEach((item, index) => {
+        result.push({index, min: item.min, max: item.max, radius: obj.fill.radius, fillColor: gradient[index], color: obj.border.color, weight: obj.border.weight });
+      });
+      Vue.set(obj, 'fieldStyleArray', result);
+    },
+
+    getLineGradeArray (fieldValsSortedGrouped, obj, gradient) {
+      Vue.set(obj, 'fieldStyleArray', null);
+      var weight = obj.border.weight, result = [];
+      fieldValsSortedGrouped.forEach((item, index) => {
+        result.push({index, min: item.min, max: item.max, radius: obj.fill.radius, color: gradient[index], fillColor: obj.border.color, weight: obj.border.weight });
+      });
+      Vue.set(obj, 'fieldStyleArray', result);
+    },
+
+
+    /**
+     *  分类渲染
+     */
+    /* 得到字段值长度小于8的字段数组，主要用于首次分类渲染 */
+    getTypeField: function(data) {
+
+      var result = [], fields = this.getField(data), vm = this;
+      fields.forEach(function(field) {
+        var vals = [];
+        data.features.forEach(function(feature) {
+          var fieldVal = feature.properties[field];
+          if (!!fieldVal) {
+            vals.push(fieldVal);
+          }
+        });
+        if(vm.arrayUnique(vals).length <= 8 && vm.arrayUnique(vals).length > 0) {
+          result.push(field)
+        }
+      });
+
+      return result;
+    },
+
+    /* 取符合要求的字段数组第一个值，得到相应的字段值数组，并且去重，主要用于首次分类渲染 */
+    getTypeValue: function(data, field) {
+      var _fieldVals=[], fieldVals, vm = this;
+      data.features.forEach(function(feature) {
+        _fieldVals.push(feature.properties[field]);
+      });
+      fieldVals= vm.arrayUnique(_fieldVals);
+
+      return fieldVals;
+    },
+
+    getFieldValue: function(layer, currentField) {
+      var arr = [];
+      for(var i in layer._layers) {
+        var feature = layer._layers[i];
+        arr.push(feature.feature.properties[currentField]);
+      }
+      return this.arrayUnique(arr);
+    },
+
+    getClassifyArray (gtype, fieldVals, obj, gradient) {
+      var gType = this.gType(gtype);
+
+      switch (gType) {
+        case 'point':
+          this.getPointClassifyArray(fieldVals, obj, gradient);
+          break;
+
+        case 'line':
+          this.getLineClassifyArray(fieldVals, obj, gradient);
+          break;
+
+        case 'polygon':
+          this.getPolygonClassifyArray(fieldVals, obj, gradient);
+          break;
+      }
+    },
+
+    getPointClassifyArray (fieldVals, obj, gradient) {
+      var result = [], vm = this;
+      fieldVals.forEach((fieldVal, index) => {
+        if ( !fieldVal && typeof(fieldVal) != "undefined" && fieldVal !=0 && vm.isEmptyObject(fieldVal) ) {
+
+        } else {
+          result.push({ fieldVal, radius: obj.fill.radius, fillColor: gradient[index], color: obj.border.color, weight: obj.border.weight });
+        }
+      });
+      obj.fieldStyleArray = result;
+      /*console.log(result)
+      debugger*/
+    },
+
+    getPolygonClassifyArray (fieldVals, obj, gradient) {
+      var result = [];
+      fieldVals.forEach((fieldVal, index) => {
+        result.push({ fieldVal, radius: obj.fill.radius, fillColor: gradient[index], color: obj.border.color, weight: obj.border.weight });
+      });
+      obj.fieldStyleArray = result;
+    },
+
+    getLineClassifyArray (fieldVals, obj, gradient) {
+      var result = [];
+      fieldVals.forEach((fieldVal, index) => {
+        result.push({ fieldVal, radius: obj.fill.radius, color: gradient[index], fillColor: obj.border.color, weight: obj.border.weight });
+      });
+      obj.fieldStyleArray = result;
+    },
+
+    /**
+     *  简单渲染
+     */
+
+
+
+
+  }
+</script>

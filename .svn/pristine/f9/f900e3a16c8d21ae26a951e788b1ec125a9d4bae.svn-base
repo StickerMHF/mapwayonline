@@ -1,0 +1,376 @@
+<template>
+  <div class="renderContent">
+    <div v-show="isShowRenderSetting">
+      <div class="layer-info">
+        {{ dataName }}
+      </div>
+
+      <hr>
+
+      <div class="render-btns">
+        <el-button-group>
+          <el-button type="primary"  @click="simpleRender">简单</el-button>
+          <el-button type="primary"  @click="gradeRender">分级</el-button>
+          <el-button type="primary"  @click="typeRender">分类</el-button>
+        </el-button-group>
+      </div>
+
+      <hr>
+
+      <div class="render-set">
+        <simple v-show="isSimple"></simple>
+        <grade v-show="isGrade"></grade>
+        <type v-show="isType"></type>
+        <label-layer></label-layer>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+  import { mapActions, mapGetters, mapMutations } from 'vuex'
+  import Grade from './Grade.vue'
+  import Type from './Type.vue'
+  import Simple from './Simple.vue'
+  import LabelLayer from './LabelLayer.vue'
+  import Tool from '@/components/tool.vue'
+
+  export default {
+    name: 'renderSet',
+    components: { Grade, Type, Simple, LabelLayer },
+    computed: {
+      ...mapGetters([
+        'render'
+      ])
+    },
+    data () {
+      return {
+        layers: null,
+        /*layers: {
+         id: TBDATA00001,
+         isAdded: true
+         }*/
+
+        isShowRenderSetting: true,
+        dataName:　'',
+        isGrade: false,
+        isType: false,
+        isSimple: false,
+        currentLayer: {
+          id: null,
+          name: null,
+          isAdded: null,
+        },
+      }
+    },
+    created () {
+      this.initEvent();
+    },
+    beforeDestroy () {
+      this.destroyEvent();
+    },
+    mounted () {
+      this.$bus.on('show-render-map-loading');
+      if (this.render.isFirstRender) { // 首次渲染
+        this.firstRender();
+      } else { // 二次编辑还原
+        this.notFirstRender();
+      }
+    },
+    methods: {
+      ...mapActions([
+        'setRenderType','addGeoJsons', 'resetGeoJsons', 'setNewMapInfo'
+      ]),
+      initEvent () {
+        this.$bus.on('grade-render',() => {
+          this.gradeRender();
+        });
+
+        this.$bus.on('get-map-image',(url) => {
+          this.saveMap(url);
+        });
+
+        this.$bus.on('type-render', () => {
+          this.typeRender();
+        });
+
+        this.$bus.on('update-layers',(layers) => {
+          this.layers = layers;
+        });
+
+        this.$bus.on('hide-render',() => {
+          this.hideRender();
+        });
+
+        this.$bus.on('init-render-set',(id, layers) => {
+          this.dataName = id; // 将当前渲染图层id在RenderSet组件中显示出来  TODO 以后需换成name 显示
+          this.initRenderSet(id, layers);
+        });
+
+        /* 显示右侧渲染方法 */
+        this.$bus.on('set-render-set-display', (boolValue) => {
+          this.isShowRenderSetting = boolValue;
+        });
+
+        /* 渲染页面新增的数据 */
+        this.$bus.on('add-data-render', idChecked => {
+            this.addDataRender(idChecked);
+        });
+      },
+
+      destroyEvent () {
+        this.$bus.off('grade-render');
+        this.$bus.off('get-map-image');
+        this.$bus.off('type-render');
+        this.$bus.off('update-layers');
+        this.$bus.off('hide-render');
+        this.$bus.off('init-render-set');
+        this.$bus.off('set-render-set-display');
+        this.$bus.off('add-data-render');
+      },
+
+      /* 首次渲染 */
+      firstRender () {
+        this.resetGeoJsons();
+        this.getLayerData(this.render.idChecked, 'initData');
+        console.log('选择渲染图层个数为 ', this.render.idChecked.length);
+      },
+
+      /* 渲染界面新选择的数据进行渲染 */
+      addDataRender (idChecked) {
+        this.getLayerData(idChecked, 'addData');
+      },
+
+      /* 根据数据数组，请求所需的图层数据，并更新vuex中的geoJsons */
+      getLayerData (dataArray, type) {
+        var vm = this, _temArray = [],
+          len = dataArray.length;
+
+        dataArray.forEach((item) => {
+          var url = 'mapdesign/maps/layers/' + item.id + '/query?f=geojson&returnGeometry=true&OutSr=4326';
+          vm.$http.get(url).then(function(res){
+            if (!res.data.features) {
+              console.log('后台传回来的数据结构有问题geojson数据： ' + res.data);
+              return;
+            }
+
+            var _geoJson = {
+              id: item.id,
+              data: res.data,
+            };
+            vm.addGeoJsons( Tool.clone(_geoJson) );
+            _temArray.push(_geoJson);
+
+            if (len === _temArray.length) {  // 如果所需的图层数据全部请求回来, 全部默认简单渲染，进行初次默认渲染
+              vm.$bus.emit('init-render', type, _temArray);
+            }
+          }).catch((err) => { console.log(err); });
+        });
+      },
+
+      /* 二次编辑 */
+      notFirstRender () {
+        var id = this.render.currentMapId,
+          url = 'mapdesign/maps/'+ id;
+
+        this.$http.get(url).then((res) => {
+          if (!res.data.data.data) {
+            console.log('ajax 获取二此编辑数据结构发生变化', res.data);
+            return;
+          }
+
+          var layers = JSON.parse(res.data.data.data.layers); // 还原地图的图层信息
+          this.setNewMapInfo({
+            name: res.data.data.data.name
+          }); // 还原地图的基本信息  TODO name字段为空
+
+          debugger
+          this.$bus.emit('restore-map-render', layers);
+        }).catch((err) => { console.log(err) });
+      },
+
+      /* 点击RenderConfig组件每个图层树的时候 */
+      initRenderSet (id, over_layers) {
+
+        over_layers.some((item) => {
+          if (id === item.id) {
+            debugger
+            var renderType = item.render.rtype;
+            console.log('点击当前图层的渲染类型', renderType)
+
+            switch (renderType) {
+              case 'simple':
+                this.showOneRender('isSimple');
+                break;
+              case 'grade':
+                this.showOneRender('isGrade');
+                break;
+              case 'type':
+                this.showOneRender('isType');
+                break;
+            }
+
+            this.$bus.emit(renderType + '-renderSet-restore', item);
+            this.$bus.emit('label-restore', item);
+
+            return;
+          }
+        });
+      },
+
+      /* 切换为简单渲染 */
+      simpleRender () {
+        if (this.render.renderType === 'simple') {
+          return;
+        }
+        this.isGrade = false;
+        this.isType = false;
+        this.isSimple = true;
+        this.$bus.emit('reset-type-data');
+        this.$bus.emit('reset-grade-data');
+        this.setRenderType('simple');
+        this.$bus.emit('simple-render');
+      },
+
+      /* 切换为分级渲染 */
+      gradeRender () {
+        if (this.render.renderType === 'grade') {
+          return;
+        }
+        this.isGrade = true;
+        this.isType = false;
+        this.isSimple = false;
+        this.$bus.emit('reset-type-data');
+        this.$bus.emit('reset-simple-data');
+        this.setRenderType('grade');
+        this.$bus.emit('grade-render');
+      },
+
+      /* 切换为分类渲染 */
+      typeRender () {
+        if (this.render.renderType === 'type') {
+          return;
+        }
+        this.isGrade = false;
+        this.isType = true;
+        this.isSimple = false;
+        this.$bus.emit('reset-grade-data');
+        this.$bus.emit('reset-simple-data');
+        this.setRenderType('type');
+        this.$bus.emit('type-render');
+      },
+
+      hideRender () {
+        this.isGrade = false;
+        this.isType = false;
+        this.isSimple = false;
+        //this.setRenderType(null);
+      },
+
+      showOneRender (type) {
+        var types = ['isSimple', 'isGrade', 'isType'], len = types.length;
+        for (let i = 0; i < len; i++) {
+          var _type = types[i];
+          if (type === _type) {
+            this[_type] = true;
+          } else {
+            this[_type] = false;
+          }
+        }
+        console.log('this.isGrade ', this.isGrade )
+        console.log('this.isSimple ', this.isSimple )
+        console.log('this.isType ', this.isType )
+      },
+    }
+  }
+</script>
+
+<style>
+  .tip-btns {
+    text-align: center;
+    margin: 10px 0;
+  }
+
+  h3 {
+    margin: 0;
+    text-align: center;
+  }
+
+  .renderContent {
+    height: 100%;
+    overflow-y: auto;
+    padding-top: 20px;
+  }
+
+  .layer-info {
+    text-align: center;
+  }
+
+  .layer-list {
+    margin: 0 10px;
+  }
+
+  .current-layer-info {
+    height: 36px;
+    line-height: 36px;
+    margin: 10px 0;
+  }
+
+  .layer-name {
+    font-size: 20px;
+  }
+
+  .render-btns {
+    text-align: center;
+  }
+
+  .render-set {
+    padding: 10px;
+  }
+
+  .layer {
+    display: table;
+    width: 100%;
+    margin: 10px 0;
+    border: 1px solid #eee;
+    box-sizing: border-box;
+    border-radius: 5px;
+  }
+
+  .opacity05 {
+    opacity: 0.5;
+  }
+
+  .layer:hover {
+    border: 1px solid #AAA;
+    cursor: pointer;
+  }
+
+  .box {
+    width: 100px;
+    height: 75px;
+    line-height: 75px;
+    text-align: center;
+    display: inline-block;
+    color: #20a0ff;
+  }
+
+  .box img {
+    width: 50px;
+    height: 50px;
+    vertical-align: middle;
+  }
+
+  .box i {
+    vertical-align: middle;
+  }
+  .right {
+    display: table-cell;
+    text-align: right;
+  }
+  .left {
+    display: table-cell;
+    text-align: left;
+  }
+</style>
+

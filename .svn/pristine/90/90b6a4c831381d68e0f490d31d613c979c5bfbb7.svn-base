@@ -1,0 +1,171 @@
+<template>
+	<div class="folder_list" id="tree-folder">
+				<div class="sub_ui_title">
+					<h3>分类目录</h3></div>
+				<el-tree :data="treedata" node-key="id" default-expand-all :expand-on-click-node="false" :render-content="renderContent">
+				
+				</el-tree>
+			</div>
+</template>
+
+<script>
+	let id = 1000;
+	export default {
+		name: 'tree-folder',
+		data() {
+			return {
+				treedata: [{
+					id: 999,
+					label: '文件夹',
+				}]
+			}
+		},
+		methods: {
+			append(store, data) {
+				var that = this;
+				console.log(store)
+				this.createname(function(name) {
+					store.append({
+						id: id++,
+						label: '文件夹' + id,
+						children: []
+					}, data);
+					debugger
+					console.log(that);
+				})
+			var iconMenu=document.getElementsByClassName('tree_menu')[0];
+			if(iconMenu.style.display=="block"){
+				iconMenu.style.display="none";
+			}else{
+				iconMenu.style.display="block";
+			}
+			
+			},
+			createname(callback) {
+				const h = this.$createElement;
+				this.$msgbox({
+					title: '消息',
+					customClass: 'messagestyle',
+					message: h('p', {
+						style: 'height:32px;padding: 0 50px;'
+					}, [
+						h('div', {
+							style: 'line-hight:32px;display: inline-block;color: #999;'
+						}, '目录名称： '),
+						h('div', {
+							style: 'color: teal;display: inline-block;width:265px;'
+						}, [
+							h('input', {
+								style: 'width: 100%;line-height: 28px;border: 1px solid #ddd;'
+							}, '22')
+						])
+					]),
+					showCancelButton: true,
+					confirmButtonText: '确定',
+					cancelButtonText: '取消'
+				}).then(action => {
+					if(typeof callback === "function") {
+						callback("是");
+					}
+				}).catch(() => {
+					if(typeof callback === "function") {
+						callback("是");
+					}
+				});
+			},
+			remove(store, data) {
+				store.remove(data);
+				
+				
+			},
+			mouseOver(store, data){
+				console.log(store);
+				debugger
+				
+				var iconBar=document.getElementsByClassName('icon_bar')[0];
+				iconBar.style.display='block';
+			},
+			mouseOut(){
+				var iconBar=document.getElementsByClassName('icon_bar')[0];
+				iconBar.style.display='none';
+				var treeMenu=document.getElementsByClassName('tree_menu')[0];
+				treeMenu.style.display='none';
+			},
+			renderContent(h, {
+				node,
+				data,
+				store
+			}) {
+				return( 
+					<ul class="tree_folder">
+					 <li style="position: relative;" on-mouseover={ () => this.mouseOver(store, data) } on-mouseleave={ () => this.mouseOut() }>
+                         <span>
+                             <span class="treename">未命名文件夹</span>
+                         </span>
+                         <span style="float: right; display:none; margin-right:20px;" class="icon_bar">
+                             <i class="fa fa-bars"  on-click={ () => this.append(store, data) }></i>
+                         </span>
+                            <ul class="tree_menu" style="position: absolute;right: 15px;top: 30px;font-size: 12px;line-height: 16px;display:none; border:1px solid #ccc;background:#fff;">
+                                <li style="line-height: 32px;" on-click={ () => this.append(store, data) }><div  style="padding:3px 8px;"><i class="fa fa-plus"></i><span>创建子目录</span></div></li>
+                                <li style="line-height: 32px;" on-click={ () => this.remove(store, data) }><div  style="padding:3px 8px;"><i class="el-icon-edit"></i><span>重命名</span></div></li>
+                                <li style="line-height: 32px;" on-click={ () => this.remove(store, data) }><div  style="padding:3px 8px;"><i class="el-icon-delete"></i><span>删除</span></div></li>
+                             </ul>
+                      </li>
+                      </ul>
+				);
+
+			}
+		},
+		created() {
+
+		},
+		mounted() {
+
+		}
+	}
+</script>
+
+<style >
+	.el-tree {
+		cursor: default;
+		background: #f9f9f9;
+		border: 0px;
+		font-size: 12px;
+	}
+	.treename{
+		font-size: 12px;
+	}
+	
+	
+	.sub_ui_title {
+		border-bottom: 1px solid #e5e9ed;
+		height: 35px;
+		padding: 0 15px;
+		margin-bottom: 10px;
+	}
+	.tree_folder{
+		float: left;
+		width:190px;
+	}
+	
+	.el-tree-node__expand-icon{
+		float: left;
+		margin:0;
+		margin-top:10px;
+		margin-right: 8px;
+		margin-left:12px;
+	}
+	.sub_ui_title h3 {
+		display: inline-block;
+		line-height: 33px;
+		border-bottom: 3px solid #333;
+		font-size: 12px;
+		font-weight: bold;
+		color: #333;
+		margin: 0;
+	}
+	.tree_menu li:hover{
+		background: #ccc;
+	}
+	
+</style>

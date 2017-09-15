@@ -1,0 +1,212 @@
+<template>
+	<div id="formheader">
+
+    <div class="form-set">
+      <div class="form-name">
+          <span style="white-space: nowrap;padding-left: 20px">表名：</span>
+          <el-input size="small" class="input" v-model="this.formName" @blur="updataformname"></el-input>
+      </div>
+
+    </div>
+
+		<div class="header-tool" style="white-space: nowrap">
+			<el-button class="tool-button" :plain="true" type="success" @click = "previewForm">预览</el-button>
+			<el-button class="tool-button" :plain="true" type="success" @click = "goPreview">保存</el-button>
+		</div>
+
+
+
+	</div>
+</template>
+
+<script>
+
+	import {mapGetters, mapActions } from 'vuex'
+
+	export default {
+		name:'formheader',
+		components:{},
+		props:['oid'],
+		data(){
+			return {
+        formName:''
+
+
+			}
+		},
+		computed: {
+			...mapGetters([
+				'getForm'
+			])
+		},
+		methods:{
+			...mapActions([
+        		'_setCurrent',
+            '_setCanvas'
+        	]),
+			previewForm(){
+				// 预览数据
+				if(this.getForm.formConfig.isinputform){
+					// 预览应用界面
+					this.$router.replace({name: 'appformpreview', params: {id:this.oid}});
+				}else{
+					// 预览展示界面
+					this.$router.replace({name:'showformpreview',params:{id:this.oid,detail:'new'}});
+				}
+
+
+
+			},
+      updataformname(){
+			  if(this.formName!==''){
+          this._setCanvas({attr:'formname',value:this.formName});
+        }else{
+          this.$message({
+            message: '表名不能为空！',
+            type: 'warning'
+          });
+        }
+
+      },
+			goPreview(){
+				// 跳转到预览页，获取缩略图 并且保存数据
+				this._setCurrent({attr:'isSaveInPreview',value:true});
+
+				if(this.getForm.formConfig.isinputform){
+					// 预览应用界面
+					this.$router.replace({name: 'appformpreview', params: {id:this.oid,onlypre:true}});
+				}else{
+					// 预览展示界面
+					this.$router.replace({name:'showformpreview',params:{id:this.oid,detail:'new',onlypre:true}});
+				}
+
+			},
+			fifterForm(obj){
+				// 过滤数据，一些字段不能为空
+
+				return false;
+//				return true;
+
+			},
+			saveForm(){
+				let that = this;
+				// 保存数据
+				if(this.fifterForm(this.getForm)){
+					// 过滤一部分数据  比如：一些字段不为空之类的
+					let prams = 'data='+JSON.stringify({
+						widgetList:that.getForm.widgetList,
+						formConfig:that.getForm.formConfig
+					});
+	//				console.log(prams);
+					prams = encodeURI(prams);
+			      	that.$http.post('formdesign/forms/add',prams)
+			      	.then(
+			      		(res) => {
+			      			console.log(res);
+			      			if(res.data.result){
+			      				// 上传成功
+			      				// 跳转到。。。。
+			      				that.$notify.success({
+						          title: '提交成功！',
+						          message: '提交成功！！！',
+						          offset: 100
+						        });
+
+			      			}else{
+			      				that.$notify.error({
+						          title: '保存失败！',
+						          message: '保存失败！！！ ',
+						          offset: 100
+						        });
+			      			}
+
+			      		}
+			      	).catch((error) => {
+			      		console.log(error);
+			      	});
+
+				}else{
+					that.$notify.error({
+			          title: '请求失败！',
+			          message: '请求失败！存在控件未绑定数据或者值错误！！！',
+			          offset: 100
+			        });
+
+				}
+			}
+
+
+		},
+		created(){
+
+		},
+		mounted(){
+      this.formName = this.getForm.formConfig.formname;
+		}
+	}
+</script>
+
+<style lang="less" scoped>
+#formheader{
+	text-align: left;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	padding-right: 10px;
+  flex-grow: 1;
+	ul,li{
+		list-style: none;
+		text-decoration: none;
+		margin: 0;
+		padding: 0;
+	}
+  .form-set{
+    flex-grow: 1;
+    text-align: left;
+    justify-content: flex-start;
+    align-items: center;
+    span{
+      line-height: 30px;
+      padding-right: 15px;
+      font-size: 14px;
+    }
+    .form-name{
+      justify-content: flex-end;
+       display: flex;
+       .input{
+         width: 240px;
+         text-align: left;
+       }
+     }
+  }
+	.form-list{
+		height:100px;
+		background-color: #F0F8FF;
+		text-align: left;
+		vertical-align: middle;
+		padding-left: 20px;
+		display: inline-block;
+		.form-item{
+			display: inline-block;
+			margin-top:1px;
+			margin-left: 5px;
+			height: 98px;
+			width: 98px;
+			box-sizing: border-box;
+			border: 1px solid #BBBBBB;
+			text-align: center;
+		}
+
+	}
+	.header-tool{
+		display: inline-block;
+		margin-left: 20px;
+	}
+  .tool-button{
+    background-color: #00958F;
+    color: white;
+  }
+
+}
+
+</style>

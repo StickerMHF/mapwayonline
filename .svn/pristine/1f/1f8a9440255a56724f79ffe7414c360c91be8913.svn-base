@@ -1,0 +1,161 @@
+<template>
+  <div id="preview-map"  v-loading="mapLoading"></div>
+</template>
+<script>
+  import Leaflet from 'leaflet'
+  import { mapActions, mapGetters, mapMutations } from 'vuex'
+  import Tool from '@/components/tool.vue'
+  require('../../../node_modules/leaflet/dist/leaflet.css');
+  // TODO  以后MAP_IMAGE_PATH这个图片地址要改成node_modules中的地址
+  const MAP_IMAGE_PATH = "http://cdn.bootcss.com/leaflet/1.0.3/images/";
+
+  export default {
+    name: 'preview_map',
+    data () {
+      return {
+        map: null,
+        mapLoading: false,
+        map_config: {
+          zoom: 3,
+          center: [36, 108],
+          minZoom: 2,
+          maxZoom: 18
+        },
+        baseLayer: null,
+        renderLayer: null,
+        labelLayer: null,
+      }
+    },
+    created () {
+
+    },
+    mounted () {
+      this.initMap();
+      this.addDefaultLayer();
+      this.fetchData();
+    },
+    methods: {
+      initMap() {
+        L.Icon.Default.imagePath = MAP_IMAGE_PATH;
+        this.map = L.map("preview-map",{
+          center: this.map_config.center,
+          zoom: this.map_config.zoom,
+          minZoom: this.map_config.minZoom,
+          maxZoom: this.map_config.maxZoom,
+          attributionControl: false,
+          scrollWheelZoom: true,
+        });
+      },
+
+      addDefaultLayer() {
+        this.renderLayer = L.layerGroup().addTo(this.map);
+        this.labelLayer = L.layerGroup().addTo(this.map);
+      },
+
+      addBaseLayer (url) {
+        this.baseLayer = L.tileLayer(url).addTo(this.map);
+      },
+
+      addOverLayer(features, gtype, render) {
+        // 添加的geojson数据到图层上
+        var vm = this, geojsonLayer, style = vm.getStyle(render);
+
+        switch (gtype) {
+          case 'Point':
+          case 'MultiPoint':
+            geojsonLayer = L.geoJson(features, {
+              pointToLayer: function (feature, latlng) {
+                return L.circleMarker(latlng, style);
+              }
+            });
+            break;
+
+          default:
+            geojsonLayer = L.geoJson(features, {
+              style: function () {
+                return style;
+              }
+            });
+        }
+
+        this.renderLayer.addLayer(geojsonLayer);
+      },
+
+      getStyle (obj) {
+        var rtype = obj.rtype, style = obj.style;
+        switch (rtype) {
+          case 'grade':
+              break;
+          case 'type':
+              break;
+          case 'simple':
+              return {
+                radius: style.fill.radius,
+                fillColor: style.fill.color,
+                color: style.border.color,
+                weight: style.border.color,
+                opacity: style.border.opacity,
+                fillOpacity: style.fill.opacity,
+              }
+        }
+      },
+
+      addLabelLayer() {
+        this.labelLayer = L.layerGroup().addTo(this.map);
+      },
+
+      fetchData: function () {
+        var vm = this;
+        this.mapLoading = true;
+        var mapid = this.$route.params.mapid;
+        mapid = 'TBMAP000018'
+        var url = 'TBUSER000001/mapdesign/maps/'+ mapid;
+
+        //debugger
+        this.$http.get(url).then((res) => {
+          if (!res.data.result) {
+            console.log('ajax 有问题', res.data);
+            return;
+          }
+
+          let layers = JSON.parse(res.data.data.layers);
+          this.addLayers(layers);
+          vm.mapLoading = false;
+        }).catch((err) => { console.log(err) });
+      },
+
+      addLayers (layers) {
+        this.addBaseLayer(layers.base_layer);
+
+        var over_layers = layers.over_layer;
+
+        over_layers.forEach((item) => {
+          this.getGeojson(item);
+        });
+      },
+
+      getGeojson (obj) {
+        var dataid = obj.data_id, gtype = obj.gtype, render = obj.render;
+        var url = 'TBUSER000001/mapdesign/maps/layers/'+ dataid + '/query?f=geojson&outSr=4326&returnGeometry=true';
+
+        this.$http.get(url).then((res) => {
+          let data = res.data;
+
+          this.addOverLayer(data, gtype, render);
+
+          if ( !Tool.isEmptyObject(obj.label) ) {
+            this.addLabelLayer();
+          }
+
+        }).catch((err) => { console.log(err) });
+      },
+    }
+  }
+</script>
+
+<style>
+  #preview-map {
+    width: 100%;
+    height: 100%;
+  }
+</style>

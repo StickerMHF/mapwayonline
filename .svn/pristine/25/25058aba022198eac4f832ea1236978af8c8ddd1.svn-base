@@ -1,0 +1,489 @@
+<template>
+  <div id="formcontent">
+
+    <!--<el-button @click = "showList">查看列表</el-button>-->
+    <div class="hiddenbar ">
+      <div class="drag-area no-select deactivated "
+           :style="getForm.formConfig.style" id="drag-area"
+           @mouseover="showBar = true"
+           @mouseout="showBar = false"
+      >
+        <div class="grid deactivated" :style="{opacity:grid.opacity}"
+             style="height: 100%;width: 100%;position: absolute;">
+        </div>
+        <div v-show="showBar " id="drag-bar" @mousedown="dragCanvas" class="drag-bar deactivated">
+          <div class="drag-icon"><i class="point"></i><i class="point"></i><i class="point"></i><i class="point"></i><i
+            class="point"></i></div>
+          <div class="drag-icon"><i class="point"></i><i class="point"></i><i class="point"></i><i class="point"></i><i
+            class="point"></i></div>
+        </div>
+
+        <div :is="'vue-draggable-resizable'"
+             v-for="(item,index) of getForm.widgetList"
+             :key='item.id'
+             :x='item.layout.x'
+             :y='item.layout.y'
+             :w='item.layout.w'
+             :h='item.layout.h'
+             :oid='index'
+             :grid="gridcell"
+             @removeBox='removeBox'
+             @resizestop="onResizeStop"
+             @dragstop="onDragStop"
+             @resizing="resizing"
+             @activated="activated"
+             @deactivated='deactivated'
+             @dragging="dragging"
+             class="box-item deactivated"
+             ref="owidget"
+
+        >
+          <div :style='item.style' class="owidget">
+            <div class="label deactivated" v-show="hasLabel(item.tagname)">{{item.label}}</div>
+            <div
+              :style="{backgroundColor: item.style.backgroundColor}"
+              :class="item.tagname"
+              class="type deactivated"> {{index}} {{item.description}}
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+
+    </div>
+  </div>
+</template>
+
+<script type="text/ecmascript-6">
+  import VueDraggableResizable from '../drag/vue-draggable-resizable.vue'
+  import {mapGetters, mapActions} from 'vuex'
+
+  export default {
+    name: 'formcontent',
+    props: ['oid'],
+    components: {
+      'vue-draggable-resizable': VueDraggableResizable
+    },
+    data() {
+      return {
+        gridcell: [10, 10],
+        currentOid: null,
+        showBar: false,
+        mouseY: 0,
+        lastMouseY: 0,
+        mouseOffY: 0,
+        grid: {
+          opacity: 0.6
+        },
+        selectList: [],
+      }
+    },
+    computed: {
+      ...mapGetters([
+        'getForm'
+      ])
+    },
+    methods: {
+      ...mapActions([
+        '_addWidget',
+        '_removeWidget',
+        '_savePosition',
+        '_upData',
+        '_setCanvasStyle'
+      ]),
+
+      activated(i) {
+        console.log('容器被选中', i.oid);
+        this.currentOid = i.oid;
+        this.$bus.emit('show-setbox', i.oid);
+      },
+      deactivated(i) {
+//      		console.log("容器失去选中",i.oid);
+      },
+      onResizeStop(x, y, w, h) {
+        let that = this;
+        // 选中元素缩放完毕
+//				console.log('缩放完毕',x,y,w,h);
+        that._savePosition({
+          oid: that.currentOid,
+          option: {x, y, w, h}
+        })
+      },
+      onDragStop(x, y, w, h) {
+        let that = this;
+        // 选中元素拖拽完毕
+//				console.log('拖拽完毕',x,y,w,h);
+        that._savePosition({
+          oid: that.currentOid,
+          option: {x, y, w, h}
+        })
+      },
+      resizing(x, y, w, h) {
+        // 缩放时
+//				console.log('缩放时',x,y,w,h)
+      },
+      dragging(x, y) {
+        // 拖拽中
+//				console.log('拖拽中',x,y);
+      },
+      removeBox(id) {
+        // 删除一个盒子
+
+//				console.log('删除',id);
+        this._removeWidget(id);
+
+      },
+      dragCanvasMove(e) {
+
+        this.mouseY = e.pageY || e.clientY + document.documentElement.scrollTop;
+//				console.log(this.mouseY);
+
+        let diffY = this.mouseY - this.lastMouseY + this.mouseOffY;
+
+        this.mouseOffY = 0;
+
+
+        let dragBox = document.getElementById('drag-area');
+        const style = window.getComputedStyle(dragBox, null);
+
+        const parentH = parseInt(style.getPropertyValue('height'), 10);
+
+        let d = parentH + Math.ceil(diffY / 3 * 2);
+        this._setCanvasStyle({attr: 'height', value: d + 'px'});
+
+        this.lastMouseY = this.mouseY;
+
+        if(this.$refs.owidget){
+          // 有组建时触发
+//          console.log(d,this.$refs.owidget);
+          this.$refs.owidget.forEach(function (item) {
+            //更新组件的高
+            item.parentH = d;
+          });
+          //console.log("refs", this.$refs.owidget); // 拿到每个控件的vue对象 可以修改其中的属性
+        }
+
+      },
+      dragCanvasUp() {
+        document.getElementById('drag-bar').style.display = 'none';
+        document.documentElement.removeEventListener('mousemove', this.dragCanvasMove);
+        document.documentElement.removeEventListener('mouseup', this.dragCanvasUp);
+
+      },
+      dragCanvas($event) {
+        this.lastMouseY = $event.pageY || $event.clientY + document.documentElement.scrollTop;
+        // 拖拽增加画布长度
+//				const style = window.getComputedStyle(document.getElementById('drag-bar'), null);
+//				const parentW = parseInt(style.getPropertyValue('width'), 10);
+//				const parentH = parseInt(style.getPropertyValue('height'), 10);
+        this.lastMouseY = $event.pageY || e.clientY + document.documentElement.scrollTop;
+        let target = $event.target || $event.srcElement;
+        target.style.display = 'block';
+        document.documentElement.addEventListener('mousemove', this.dragCanvasMove, false);
+        document.documentElement.addEventListener('mouseup', this.dragCanvasUp, false);
+
+      },
+
+      hasLabel(tagname) {
+        let noLabel = ['button', 'h1','h2','h3','h4','h5','h6','p', 'img'];
+        return noLabel.indexOf(tagname)<0;
+      },
+      addBox(t) {
+        console.log("添加了一个", t.tagname);
+        // 添加一个盒子 并设置默认属性
+        let type = t.type || '',
+          tagname = t.tagname || '';
+        let that = this,
+          description = 'description',
+          label = 'label',
+          bindFiled = '';
+        let oneWidget = {
+          id: this.getForm.formConfig.maxid,
+          tagname,
+          type,
+          description,
+          label,
+          bindFiled,
+          layout: {
+            x: 0, y: 0, w: 300, h: 30
+          },
+          style: {
+            backgroundColor: '',
+            lineHeight: '',
+            fontSize: '16px',
+            color: '#333',
+            borderStyle: 'solid',
+            borderWidth: '1px',
+            borderColor: '#EEE',
+            borderRadius: '0'
+          }
+        };
+
+
+        switch (tagname + type) {
+          case 'inputtext':
+            oneWidget.layout.w = 300;
+            oneWidget.layout.h = 40;
+            oneWidget.label = oneWidget.description = '输入框';
+            break;
+          case 'textareatextarea':
+            oneWidget.layout.w = 300;
+            oneWidget.layout.h = 150;
+            oneWidget.label = oneWidget.description = '文本域';
+            break;
+          case 'inputcheckbox':
+            oneWidget.layout.w = 300;
+            oneWidget.layout.h = 80;
+            oneWidget.label = oneWidget.description = '复选框';
+            oneWidget.option = '选项1,选项2,选项3';
+            break;
+          case 'inputradio':
+            oneWidget.layout.w = 300;
+            oneWidget.layout.h = 80;
+            oneWidget.label = oneWidget.description = '单选框';
+            oneWidget.option = '选项1,选项2,选项3';
+            break;
+          case 'inputpassword':
+            oneWidget.layout.w = 300;
+            oneWidget.layout.h = 40;
+            oneWidget.label = oneWidget.description = '密码框';
+            break;
+          case 'inputfile':
+            oneWidget.layout.w = 300;
+            oneWidget.layout.h = 40;
+            oneWidget.label = oneWidget.description = '文件上传';
+            break;
+          case 'selectselect':
+            oneWidget.layout.w = 250;
+            oneWidget.layout.h = 40;
+            oneWidget.label = oneWidget.description = '下拉选择框';
+            oneWidget.option = '选项1,选项2,选项3';
+            break;
+          case 'buttonsubmit':
+            oneWidget.layout.w = 120;
+            oneWidget.layout.h = 50;
+            oneWidget.label = oneWidget.description = '提交';
+            break;
+          case 'buttonreset':
+            oneWidget.layout.w = 120;
+            oneWidget.layout.h = 50;
+            oneWidget.label = oneWidget.description = '重置';
+            break;
+          case 'buttonbutton':
+            oneWidget.layout.w = 120;
+            oneWidget.layout.h = 50;
+            oneWidget.label = oneWidget.description = '按钮';
+            break;
+          case 'h1':
+            oneWidget.layout.w = 400;
+            oneWidget.layout.h = 40;
+            oneWidget.label = oneWidget.description = '标题';
+            break;
+          case 'img':
+            oneWidget.layout.w = 200;
+            oneWidget.layout.h = 250;
+            oneWidget.label = oneWidget.description = '图片';
+            oneWidget.src = "";
+            break;
+          case 'p':
+            oneWidget.layout.w = 300;
+            oneWidget.layout.h = 250;
+            oneWidget.label = oneWidget.description = '段落';
+            break;
+          default:
+            break;
+        }
+
+
+        that._addWidget(oneWidget);
+        this.maxid++;
+        that.$nextTick(function () {
+          // 添加的新控件默认被选中
+
+          let ow = that.$refs['owidget'],
+            l = ow.length - 1;
+          console.log(l);
+          that.activated({oid: l});
+          ow.forEach(function (item) {
+            item.active = false;
+          });
+          ow[l].active = true;
+
+        })
+
+      },
+
+      showList() {
+
+        let x = this.getForm.widgetList;
+//				console.log(this.getForm);
+        console.log(JSON.stringify(this.getForm));
+        for (let i = 0; i < x.length; i++) {
+          console.log(JSON.stringify(x[i].layout));
+        }
+
+        console.log('con', this.getForm)
+
+      },
+      setGrid(obj) {
+        this.grid[obj.attr] = obj.value;
+      },
+      initEvent() {
+        let that = this;
+        that.$bus.on('add-widget', that.addBox);
+        that.$bus.on('set-grid', that.setGrid);
+
+      },
+      initData() {
+        let that = this;
+        that.maxid = that.getForm.formConfig.maxid;
+//           		console.log(this.maxid)
+      },
+
+    },
+    created() {
+//      	console.log('content',this.oid);
+      this.initEvent(); // 初始化总线事件
+      this.initData(); // 初始化数据
+
+
+    },
+    mounted() {
+
+
+    },
+    beforeDestroy() {
+      // 每次进入之前  清除上一次注册的事件
+
+      this.$bus.off('add-widget');
+      this.$bus.off('set-grid');
+
+    }
+
+  }
+
+</script>
+
+<style lang="less" scoped>
+  #formcontent {
+    flex-grow: 1;
+    max-height: 800px;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    .hiddenbar {
+      padding-top: 35px;
+      position: relative;
+      width: 100%;
+      height: 100%;
+      box-sizing: border-box;
+      padding-bottom: 100px;
+      margin: 0 auto;
+      background-color: #EEEEEE;
+      #drag-area {
+        box-shadow: 6px 6px 5px #888888;
+        background-color: #FFFFFF;
+        margin: 0 auto;
+        text-align: left;
+        min-height: 540px;
+        position: relative;
+        width: 960px;
+        .drag-bar {
+          width: 100%;
+          height: 12px;
+          background-color: #C3C3C3;
+          position: absolute;
+          bottom: -10px;
+          left: 0;
+          cursor: s-resize;
+          .drag-icon {
+            text-align: center;
+            height: 3px;
+            line-height: 3px;
+            pointer-events: none; // 禁止鼠标点击事件
+            .point {
+              display: inline-block;
+              border: 1px solid;
+              margin-left: 3px;
+            }
+          }
+        }
+      }
+      .active {
+        border: 1px dashed #28B779;
+      }
+      .vdr-content {
+        width: 100%;
+        height: 100%;
+        background-color: aqua;
+        font-size: 40px;
+        box-sizing: border-box;
+      }
+      .no-select {
+        -moz-user-select: none; /*火狐*/
+        -webkit-user-select: none; /*webkit浏览器*/
+        -ms-user-select: none; /*IE10*/
+        -khtml-user-select: none; /*早期浏览器*/
+        user-select: none;
+      }
+      .box-item {
+        text-align: left;
+        line-height: 20px;
+        box-sizing: border-box;
+        display: flex;
+        align-items: center;
+        box-shadow: 1px 1px 1px rgba(230, 230, 230, 0.5);
+      }
+      .owidget {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        display: flex;
+        align-items: stretch;
+      }
+      .label {
+        display: flex;
+        align-items: center;
+        width: 80px;
+        padding: 0 10px;
+        height: auto;
+        box-sizing: border-box;
+        background-color: rgba(255,255,255,0.5);
+        border-right: solid 1px #EEEEEE;
+        vertical-align: middle;
+        font-size: 12px;
+        color: #000000;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+      }
+      .type {
+        display: flex;
+        align-items: center;
+        height: auto;
+        flex-grow: 1;
+        box-sizing: border-box;
+        background-color: rgba(255,255,255,0.5);
+        vertical-align: middle;
+        padding-left: 10px;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+      }
+      .button {
+        background: #DDD;
+        text-align: center !important;
+      }
+
+    }
+
+  }
+
+  .grid {
+    background: -webkit-linear-gradient(top, transparent 9px, #DFDFDF 10px),
+    -webkit-linear-gradient(left, transparent 9px, #DFDFDF 10px);
+    background-size: 10px 10px;
+
+  }
+</style>

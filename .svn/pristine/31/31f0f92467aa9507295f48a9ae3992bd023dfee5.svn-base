@@ -1,0 +1,187 @@
+<template>
+  <div class="render-config-content">
+    <div class="map-info">
+      <h2>{{ render.newMapInfo.name }}</h2>
+      <!--2017-5-5-->
+    </div>
+
+    <el-tabs :value="tabValue" @tab-click="tabClick">
+      <el-tab-pane label="图层" name="layer">
+        <div class="layer-tree">
+          <div class="addBtnDiv">
+            <el-button type="success" @click="addData">添加数据</el-button>
+          </div>
+
+          <div class="layer" v-for="item in layerTree" :key="item.id" :class="[ item.isAdded ? '' : 'opacity05']" @click="renderCurrent(item)">
+            <div class="left">
+              <div class="box"><img src="../../../assets/mapDesign/img/esriGeometryPoint.png" alt=""></div>
+            </div>
+            <div>{{ item.id }}</div>
+            <div class="right">
+              <div class="box">
+                <i :class="[ item.isAdded ? 'fa-eye' : 'fa-eye-slash', 'fa']" @click.stop.prevent="layerDisplayControl(item)"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </el-tab-pane>
+      <el-tab-pane label="组件" name="widget">
+        <div class="addBtnDiv">
+          <el-button type="success" @click="addWidget">添加组件</el-button>
+        </div>
+      </el-tab-pane>
+    </el-tabs>
+  </div>
+</template>
+
+<script>
+  import { mapActions, mapGetters, mapMutations } from 'vuex'
+  import Tool from '@/components/tool.vue'
+
+  export default {
+    name: 'renderConfig',
+    computed: {
+      ...mapGetters([
+        'render'
+      ])
+    },
+    data () {
+      return {
+        // tab页
+        tabValue: 'layer',
+
+        // 图层树
+        layerTree: {},
+        /*layerTree: {
+         data_id: TBDATA00001,
+         isAdded: true
+         }*/
+        currentLayer: {
+          id: '',
+          name: '',
+          isAdded: false,
+        },
+        currentLayerId: '',
+
+      };
+    },
+    created () {
+      this.initEvent();
+    },
+    mounted () {
+
+    },
+    beforeDestroy () {
+      this.destroyEvent();
+    },
+    methods: {
+      ...mapActions([
+        'setRenderType','addGeoJsons', 'resetGeoJsons', 'setCurrentLayerId',
+      ]),
+      initEvent () {
+        this.$bus.on('update-layers',(layerTree) => {
+          this.layerTree = layerTree;
+          console.log('layerTree', layerTree)
+        });
+      },
+      destroyEvent () {
+        this.$bus.off('update-layers');
+      },
+      /* tab页点击事件 */
+      tabClick (tab) {
+        this.tabValue = tab.name;
+      },
+
+      /* 添加新图层数据 */
+      addData () {
+          // TODO
+      },
+
+      /* 添加新图层数据 */
+      addWidget () {
+        // TODO
+      },
+
+      /* 选择图层进行渲染 */
+      renderCurrent (item) {
+        if (this.currentLayer.id) {
+          return;
+        }
+
+        if (!item.isAdded) {
+          this.$message({
+            showClose: true,
+            message: '未添加的图层不允许编辑',
+            type: 'warning',
+          });
+          return;
+        }
+
+        console.log('this.render.savedLayers.over_layer: ',this.render.savedLayers.over_layer);
+
+        this.currentLayer.id = item.data_id;
+        this.setCurrentLayerId(item.data_id);
+        //this.initRenderSet(item.data_id, this.render.savedLayers.over_layer);
+        this.$bus.emit('init-render-set', item.data_id, this.render.savedLayers.over_layer);
+        this.$bus.emit('init-label');
+        this.currentLayer.name = '当前数据的name';
+
+        this.$bus.emit('set-render-set-display', true);
+      },
+
+      layerDisplayControl (item) {
+        item.isAdded = !item.isAdded;
+        if (!item.isAdded) { // 隐藏图层
+          this.$bus.emit('hide-layer', item.data_id);
+          this.$bus.emit('hide-label');
+        } else {
+          this.$bus.emit('show-layer', item.data_id);
+          this.$bus.emit('show-label');
+        }
+      },
+    },
+  }
+</script>
+
+<style scoped>
+  .addBtnDiv {
+    text-align: center;
+  }
+
+  .layer {
+    display: table;
+    width: 100%;
+    margin: 10px 0;
+    border: 1px solid #eee;
+    box-sizing: border-box;
+    border-radius: 5px;
+  }
+
+  .opacity05 {
+    opacity: 0.5;
+  }
+
+  .layer:hover {
+    border: 1px solid #AAA;
+    cursor: pointer;
+  }
+
+  .box {
+    width: 100px;
+    height: 50px;
+    line-height: 50px;
+    text-align: center;
+    display: inline-block;
+    color: #20a0ff;
+  }
+
+  .box img {
+    width: 30px;
+    height: 30px;
+    vertical-align: middle;
+  }
+
+  .box i {
+    vertical-align: middle;
+  }
+</style>

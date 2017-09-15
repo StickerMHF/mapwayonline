@@ -1,0 +1,156 @@
+<template>
+	<div class="sqlbuilder">
+		<div class="sqlb_head">
+			<div class="sqlbh_name">{{sqldata.name}}</div>
+			<div class="sqlbh_group"><span class="sqlbhspan"><i class="fa fa-plus"></i>添加</span><span class="sqlbhspan"> <i></i>ddd</span></div>
+		</div>
+		<div class="sqlb_content">
+			<div class="sqlbc_col">
+				<el-row :gutter="20">
+					<el-col :span="8">
+						<el-select class="full-width" v-model="field" placeholder="字段">
+							<el-option v-for="item in sqldata.fields" :key="item.name" :label="item.aliasname" :value="item">
+							</el-option>
+						</el-select>
+					</el-col>
+					<el-col :span="8">
+						<el-select class="full-width" v-model="value4" placeholder="条件">
+							<el-option v-if="field.typename=='Double'||field.typename=='Int'" v-for="item in conditions.Int" :key="item.name" :label="item.name" :value="item.value"></el-option>
+							<el-option v-else-if="field.typename=='Date'||field.typename=='String'" v-for="item in sqldata.fields" :key="item.name" :label="item.aliasname" :value="item"></el-option>
+							<el-option v-else-if="field.typename=='Boolean'||field.typename=='Json'" v-for="item in sqldata.fields" :key="item.name" :label="item.aliasname" :value="item"></el-option>
+							<el-option v-else v-for="item in conditions.Int" :key="item.name" :label="item.aliasname" :value="item"></el-option>
+						</el-select>
+					</el-col>
+					<el-col :span="8">
+						<el-input class="full-width" v-model="value4" placeholder="请输入内容"></el-input>
+					</el-col>
+				</el-row>
+
+			</div>
+
+		</div>
+	</div>
+</template>
+
+<script>
+	export default {
+		name: 'sqlbuilder',
+		props: {
+			sqldata: {
+				type: Object,
+				default: function() {
+					return {
+						"name": "",
+						"order": 1,
+						"fixed": false
+					}
+				}
+			}
+		},
+		data() {
+			return {
+				field: '',
+				value4: '',
+				conditions: {
+					"Int": [{
+						"name": "大于",
+						"value": ">"
+					}, {
+						"name": "小于",
+						"value": "<"
+					}, {
+						"name": "等于",
+						"value": "="
+					}],
+					"Date": [],
+					"String": [],
+					"Boolean": [],
+					"Json": []
+				}
+			}
+		},
+		methods: {
+			//根据表名获取所有字段
+			getFieldsById(tid) {
+				var that = this;
+				var url = this.$http.defaults.baseURL + 'TBUSER000001/datacenter/datas/' + tid + '/field';
+				that.$http.get(url).then((r) => {
+					if(r.data.result) {
+						that.$set(that.sqldata, "fields", r.data.data);
+					}
+				});
+			}
+		},
+		computed: {
+
+		},
+
+		created() {
+
+		},
+		mounted() {
+			this.getFieldsById(this.sqldata.id)
+			console.log("SQL构建mounted" + this.sqldata.id)
+		}
+	}
+</script>
+
+<style scoped>
+	.sqlbuilder {
+		padding: 10px 10px 6px;
+		border: 1px solid #DCC896;
+		background: rgba(250, 240, 210, .5);
+		margin: 5px;
+	}
+	
+	.sqlb_head {
+		height: 30px;
+		width: 100%;
+		line-height: 30px;
+		position: relative;
+	}
+	
+	.sqlbh_name {
+		float: left;
+	}
+	
+	.sqlbh_group {
+		float: right;
+	}
+	
+	.sqlbh_group span {
+		display: inline-block;
+		margin: 0 5px;
+		font-size: 12px;
+		width: 50px;
+		text-align: center;
+		border-radius: 3px;
+		height: 25px;
+		line-height: 25px;
+	}
+	
+	.sqlbhspan {
+		color: #fff;
+		background-color: #20a0ff;
+	}
+	
+	.sqlbh_group span:hover {
+		cursor: pointer;
+	}
+	
+	.sqlbh_group i {
+		margin: 0 2px;
+	}
+	
+	.el-select-dropdown__item.selected {
+		color: black !important;
+		background-color: #fff !important;
+	}
+	
+	.sqlbc_col {
+		background: white;
+		padding: 5px;
+		border-radius: 3px;
+		border: 1px solid #dad9d9;
+	}
+</style>

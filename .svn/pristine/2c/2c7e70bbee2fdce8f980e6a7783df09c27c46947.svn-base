@@ -1,0 +1,241 @@
+<template>
+	<div id="share" v-loading.body="loading">
+
+		<!--<h2 style="text-align: center;">-->
+			<!--{{form_title}}-->
+		<!--</h2>-->
+
+		<div class="tips" v-if="isPassword">
+			<!--如果是加密表单 需要输入密码才能使用 -->
+			<div class="model-box">
+				<div class="model-header">
+					<h4>需要分享密码</h4>
+					<span class="close-model" @click="closeBox">×</span>
+				</div>
+				<div class="model-content">
+					<el-input  type="password" v-model="sharePassword" size="small" ></el-input>
+				</div>
+				<div class="model-footer">
+					<el-button type="success" @click="checkPassword">确认</el-button>
+					<el-button @click="sharePassword = ''">重置</el-button>
+				</div>
+			</div>
+
+
+
+		</div>
+
+
+		<div class="main" v-if="ready">
+			<!--这里还原表单-->
+			<my-app-form v-if="isAppform" :formdata = "formdata"></my-app-form>
+      <my-show-form v-else :formdata = "formdata" :showdata="data_souce" ></my-show-form>
+		</div>
+
+
+	</div>
+</template>
+
+<script>
+	import myAppForm from '@/components/formDesign/preview/temp/myappform.vue'
+  import myShowForm from '@/components/formDesign/preview/temp/myshowform.vue'
+
+
+	export default {
+		name:'',
+		components:{
+			"myAppForm": myAppForm,
+      "myShowForm": myShowForm
+		},
+		data(){
+			return {
+        isAppform:true,
+				form_title:'',
+        appform:true,
+				isPassword : false,
+				ready : false,
+				loading: true,
+				sharePassword : '' ,
+				formdata:{},
+        data_souce:'fz'
+			}
+		},
+		methods:{
+			closeBox(){
+				this.isPassword = false;
+				this.$router.replace({name:'main'});
+			},
+			checkPassword(){
+				// 检查密码 获取加密表单数据
+				if(this.sharePassword ===''){
+					this.$notify.warning({
+				          title: '密码错误！',
+				          message: '密码不能为空！！！',
+				          offset: 100
+				        });
+				}else{
+					let uuid = this.$route.params['uuid'],
+					    url = 'form/share/' + uuid +"/code",
+					    prams = encodeURI("data="+JSON.stringify({code:this.sharePassword}));
+
+					this.$http.post(url,prams).then((res)=>{
+						console.log(res);
+						if(res.data.result){
+							//获取成功
+							this.showForm(res.data.data);
+						}else{
+							// 获取失败
+							this.$notify.warning({
+					          title: '密码错误！',
+					          message: '密码错误，请重新填写！！！',
+					          offset: 100
+					        });
+							this.sharePassword = "";
+						}
+
+
+					}).catch((err)=>{
+						console.log(err);
+					})
+
+				}
+
+
+			},
+			showForm(res){
+				let odata = res;
+        let widgetList = JSON.parse(odata.formcontent);
+        delete odata.formcontent;
+        odata.style = JSON.parse(odata.style);
+        let data = {widgetList:widgetList,formConfig:odata};
+
+        if(data.formConfig.isinputform){
+            this.isAppform = true;
+        }else{
+            this.isAppform = false;
+        }
+
+        this.formdata = data;
+				this.ready = true;
+				this.isPassword = false;
+				this.loading = false;
+//				this.form_title = data.formConfig.formname;
+				console.log(data);
+			},
+			initData(){
+				var that =this;
+				let uuid = this.$route.params['uuid'], // 030bd7d9-8cbe-4777-aba8-5deff9a33247
+					url = "form/share/" + uuid;
+				this.$http.get(url).then((res)=>{
+					console.log(res);
+					// 返回结果是否为加密分享
+					if(res.data.result){
+						// 没有加密
+						this.showForm(res.data.data);
+					}else{
+						if(res.data.message === "分享加密,需要密码"){
+							// 加密
+							this.isPassword = true;
+							this.ready = false;
+						}else{
+							// uuid 错误
+							 this.$alert('未找到指定分享的内容！', '加载失败', {
+					          confirmButtonText: '再去试试',
+					          callback: action => {
+					            this.$router.replace({name:'main'});
+					          }
+					        });
+
+						}
+					}
+
+				}).catch((err)=>{
+					this.$alert('未找到分享的内容！', '加载失败', {
+			          confirmButtonText: '再去试试',
+			          callback: action => {
+			            this.$router.replace({name:'main'});
+			          }
+			        });
+					console.log(err);
+				})
+
+
+
+
+
+			}
+
+		},
+		created(){
+			this.initData(); // 获取表单数据 创建应用表
+		},
+		mounted(){
+
+		}
+	}
+</script>
+
+<style lang="less" scoped>
+	#share{
+		.main{
+
+		}
+		.tips{
+			width: 100%;
+			height: 100%;
+			position: fixed;
+			background-color: rgba(0,0,0,0.3);
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			.model-box{
+				width: 600px;
+				height: 400px;
+				background-color: #FFF;
+				position: relative;
+				border-radius: 6px;
+				.model-header{
+					position: relative;
+					box-sizing: border-box;
+					padding: 10px 20px;
+					font-size: 15px;
+					.close-model{
+						display: inline-block;
+						width: 15px;
+						height: 15px;
+						position: absolute;
+						top:5px;
+						right: 5px;
+						text-align: center;
+						line-height:15px;
+						cursor:pointer;
+
+						&:hover{
+							background-color: #EEEEEE;
+						}
+					}
+
+				}
+				.model-content{
+
+					text-align: center;
+					padding: 10px 30px ;
+					width: 200px;
+				}
+				.model-footer{
+					width: 100%;
+					height: 40px;
+					position: absolute;
+					bottom: 40px;
+					right: 70px;
+					text-align: right;
+
+				}
+			}
+
+
+		}
+
+	}
+
+</style>

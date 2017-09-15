@@ -1,0 +1,48 @@
+{
+  "count": 3,
+  "results": [
+    {
+      "added_by": "",
+      "added_time": "",
+      "attribution": "",
+      "bounds": [-180.0, -90.0, 180.0, 90.0],
+      "layer_name": "矢量图",
+      "name": "天地图",
+      "preview": "https://www.amigocloud.com/api/v1/base_layers/392/preview",
+      "preview_image": "https://www.amigocloud.com/api/v1/base_layers/392/image.png",
+      "tiles": "https://cdnamigocloud.global.ssl.fastly.net/api/v1/base_layers/392/tiles",
+      "opacity": 1.0,
+      "url": "http://cache1.arcgisonline.cn/arcgis/rest/services/ChinaOnlineStreetGray/MapServer/tile/{z}/{y}/{x}",
+      "zoom_max": 12,
+      "zoom_min": 0
+    },
+    {
+      "added_by": "",
+      "added_time": "",
+      "attribution": "",
+      "bounds": [-180.0, -90.0, 180.0, 90.0],
+      "layer_name": "卫星图",
+      "name": "天地图",
+      "preview": "https://www.amigocloud.com/api/v1/base_layers/3/preview",
+      "preview_image": "https://www.amigocloud.com/api/v1/base_layers/3/image.png",
+      "opacity": 1.0,
+      "url": "http://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+      "zoom_max": 12,
+      "zoom_min": 0
+    },
+    {
+      "added_by": "",
+      "added_time": "",
+      "attribution": "",
+      "bounds": [-180.0, -90.0, 180.0, 90.0],
+      "layer_name": "地形图",
+      "name": "天地图",
+      "preview": "https://www.amigocloud.com/api/v1/base_layers/2/preview",
+      "preview_image": "https://www.amigocloud.com/api/v1/base_layers/2/image.png",
+      "opacity": 1.0,
+      "url": "http://cache1.arcgisonline.cn/arcgis/rest/services/ChinaOnlineStreetColor/MapServer/tile/{z}/{y}/{x}",
+      "zoom_max": 12,
+      "zoom_min": 0
+    }
+  ]
+}

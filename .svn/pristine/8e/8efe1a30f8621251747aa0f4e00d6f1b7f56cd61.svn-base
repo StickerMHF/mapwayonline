@@ -1,0 +1,694 @@
+<template>
+	<div class="dbtable-create" id="dbtable-create">
+		<div class="dbtc_top">
+			<div class="dbtct_title">
+				<input class="dbtc_name" v-model="table.name">
+				<!--<span class="dbtc_time" style="color: red;">未找到表{{table.name}}，创建此表</span>-->
+				<el-button type="primary" class="dbtc_save" @click="save">保存</el-button>
+			</div>
+			<div class="dbtct_date">
+				<button v-if="datas.type=='UPDATE'" class="dbtc_pub" style="background: #ffb308;border: 1px solid #ffb308;">UPDATE</button>
+				<button v-else class="dbtc_pub">CREATE</button>
+				<span class="dbtc_time">{{table.updatedate}}</span>
+			</div>
+		</div>
+		<div class="dbtc_content">
+			<el-row :gutter="20" style="height: 100%;">
+				<el-col :span="8" style="height: 100%;">
+					<div class="dbtc_panal dbtc_fields">
+						<div class="dbtcf_title">字段</div>
+						<div class="dbtcf_con">
+							<ul>
+								<li v-for="item in table.list" @click="fieldselect(item,$event)">
+									<span class="dbtc_con_icon">
+										<i v-if="item.type=='Int'" class="fa fa-subscript"></i>
+										<i v-else-if="item.type=='Double'" class="fa fa-header"></i>
+												<i v-else-if="item.type=='Boolean'" class="fa fa-check-square-o"></i>
+												<i v-else-if="item.type=='Date'" class="fa fa-calendar"></i>
+												<i v-else-if="item.type=='Json'" class="fa fa-text-height"></i>
+												<i v-else-if="item.type=='String'" class="fa fa-font"></i>
+												<i v-else-if="item.type=='Point'" class="fa fa-circle"></i>
+												<i v-else-if="item.type=='MultiPoint'" class="fa fa-ellipsis-h"></i>
+												<i v-else-if="item.type=='LineString'" class="fa fa-minus"></i>
+												<i v-else-if="item.type=='MultiLineString'" class="fa fa-navicon"></i>
+												<i v-else-if="item.type=='Polygon'" class="fa fa-object-ungroup"></i>
+												<i v-else-if="item.type=='MultiPolygon'" class="fa fa-object-group"></i>
+												<i v-else class="fa fa-question-circle"></i>
+									</span>
+									<span v-if="item.type=='Point'||item.type=='MultiPoint'||item.type=='LineString'||item.type=='MultiLineString'||item.type=='Polygon'||item.type=='MultiPolygon'" class="dbtc_con_name" style="background: #9BC63B;border-color:#9BC63B;">{{item.name}}</span>
+									<span v-else class="dbtc_con_name">{{item.name}}</span>
+									<span class="dbtc_con_close" @click="deleteField(item)">
+										<i class="el-icon-close"></i>
+									</span>
+								</li>
+								<el-popover ref="popover5" placement="top" width="390" trigger="hover">
+									<ul class="dbtc_pop_fields">
+										<h3>普通字段</h3>
+										<li v-for="item in fieldstype.general" v-if="item.name!='geometry'" :key="item.id" @click="addField(item)">
+											<span class="pop_fields_icon">
+												<i v-if="item.name=='Int'" class="fa fa-subscript"></i>
+												<i v-else-if="item.name=='Double'" class="fa fa-header"></i>
+												<i v-else-if="item.name=='Boolean'" class="fa fa-check-square-o"></i>
+												<i v-else-if="item.name=='Date'" class="fa fa-calendar"></i>
+												<i v-else-if="item.name=='Json'" class="fa fa-text-height"></i>
+												<i v-else-if="item.name=='String'" class="fa fa-font"></i>
+												<i v-else class="fa fa-question-circle"></i>
+												</span>
+											<span class="pop_fields_name">{{item.cnname}}</span>
+										</li>
+									</ul>
+									<ul class="dbtc_pop_fields" id="geom_fields">
+										<h3>空间字段</h3>
+										<li v-for="item in fieldstype.geom" v-if="item.name=='Point'||item.name=='LineString'||item.name=='Polygon'" :key="item.id" @click="addField(item)">
+											<span class="pop_fields_icon">
+												<i v-if="item.name=='Point'" class="fa fa-circle"></i>
+												<i v-else-if="item.name=='MultiPoint'" class="fa fa-ellipsis-h"></i>
+												<i v-else-if="item.name=='LineString'" class="fa fa-minus"></i>
+												<i v-else-if="item.name=='MultiLineString'" class="fa fa-navicon"></i>
+												<i v-else-if="item.name=='Polygon'" class="fa fa-object-ungroup"></i>
+												<i v-else-if="item.name=='MultiPolygon'" class="fa fa-object-group"></i>
+												<i v-else class="fa fa-question-circle"></i>
+											</span>
+											<span v-if="table.isgeom==false" class="pop_fields_name">{{item.cnname}}</span>
+											<span v-else class="pop_fields_name" style="background: #ccc;">{{item.cnname}}</span>
+										</li>
+									</ul>
+
+								</el-popover>
+								<li class="dbtc_con_add" v-popover:popover5><span><i class="fa fa-plus"></i><span>添加字段</span></span>
+								</li>
+								<!--<el-button v-popover:popover5>删除</el-button>-->
+							</ul>
+
+						</div>
+					</div>
+				</el-col>
+				<el-col :span="16" style="height: 100%;">
+					<div class="dbtc_panal dbtc_info">
+						<div class="dbtcf_title">字段设置</div>
+						<div class="dbtcf_content" v-if="fieldinfo.name!=undefined">
+							<h4>字段名</h4>
+							<el-input v-model="fieldinfo.name" @change="updateitem(fieldinfo,'name')" placeholder="请输入内容"></el-input>
+							<h4>别名</h4>
+							<el-input v-model="fieldinfo.aliasname" @change="updateitem(fieldinfo,'aliasname')" placeholder="请输入内容"></el-input>
+							<h4>类型</h4>
+							<el-input v-model="fieldinfo.value" placeholder="请输入内容" :disabled="true"></el-input>
+							<h4>默认值</h4>
+
+							<el-input v-model="fieldinfo.defaultvalue" @change="updateitem(fieldinfo,'defaultvalue')" placeholder="请输入内容"></el-input>
+							<h4>是否为空</h4>
+							<el-switch v-model="fieldinfo.isnull" @change="updateitem(fieldinfo,'isnull')" on-text="" off-text=""></el-switch>
+							<!--<h4>设置主键</h4>
+							<el-switch v-model="fieldinfo.iskey" on-text="" off-text="" ></el-switch>-->
+						</div>
+					</div>
+				</el-col>
+			</el-row>
+		</div>
+	</div>
+</template>
+<script>
+	let id = 0;
+	let flag = 0;
+	import {
+		mapGetters,
+		mapActions
+	} from 'vuex'
+	export default {
+		name: 'dbtable-create',
+		data() {
+			return {
+				fieldstype: {
+					general: [{
+
+					}],
+					geom: []
+				},
+				table: {
+					name: "人员信息表",
+					updatedate: this.$Tools.getNowFormatDate(),
+					isgeom: false,
+					geomsrid: 4326,
+					geomtype: "",
+					geomcolumn: "",
+					list: []
+				},
+				datas: {
+					tableid: null,
+					type: "CREATE"
+				},
+				fieldinfo: {},
+				currentfield: null,
+				visible2: false
+			}
+		},
+		computed: {
+			...mapGetters([
+				'getFormList'
+			])
+		},
+		methods: {
+			...mapActions([
+				'_setTreeData'
+			]),
+			initEvent() {
+				var that = this;
+				this.$bus.on('initDBTableCreate', (obj) => {
+					if(obj == null) {
+						that.table.list = [];
+						that.table.isgeom = false;
+						that.table.name = "XX表";
+						that.datas.type="CREATE";
+						that.fieldinfo = [];
+					} else {
+						that.datas.tableid = obj;
+						that.datas.type="UPDATE";
+						that.getTableById();
+					}
+
+				});
+			},
+			//添加字段
+			addField(field) {
+				var that = this;
+				var f = {
+					defaultvalue: ""
+				};
+				switch(field.name) {
+					case "Int":
+						f.icon = "fa fa-subscript";
+						break;
+					case "Double":
+						f.icon = "fa fa-superscript";
+						break;
+					case "Boolean":
+						f.icon = "fa fa-check-square-o";
+						break;
+					case "Date":
+						f.icon = "fa fa-calendar";
+						break;
+					case "Json":
+						f.icon = "fa fa-text-height";
+						break;
+					case "String":
+						f.icon = "fa fa-font";
+						break;
+					case "Point":
+						f.icon = "fa fa-circle";
+						break;
+					case "MultiPoint":
+						f.icon = "fa fa-ellipsis-h";
+						break;
+					case "LineString":
+						f.icon = "fa fa-minus";
+						break;
+					case "MultiLineString":
+						f.icon = "fa fa-navicon";
+						break;
+					case "Polygon":
+						f.icon = "fa fa-object-ungroup";
+						break;
+					case "MultiPolygon":
+						f.icon = "fa fa-object-group";
+						break;
+					default:
+						f.icon = "fa fa-question-circle";
+						break;
+				}
+				if(field.pid == 1) {
+					if(!this.table.isgeom) {
+						this.table.isgeom = true;
+						this.table.geomtype = field.name;
+						this.table.geomcolumn = "geom";
+						f.name = "geom";
+						f.id = id;
+						f.aliasname = "几何字段";
+						f.value = field.name;
+						f.type = field.value;
+						f.typename = field.cnname;
+						f.isnull = false;
+						f.iskey = false;
+						this.table.list.push(f);
+					}
+
+				} else {
+					f.name = field.name + "_" + id;
+					f.id = id;
+					f.aliasname = field.cnname + "_" + id;
+					f.value = field.value;
+					f.type = field.name;
+					f.typename = field.cnname;
+					f.isnull = false;
+					f.iskey = false;
+					this.table.list.push(f);
+				}
+				id += 1;
+				if(this.datas.type=="UPDATE"){
+					var t=this.$Tools.cloneObj(this.table)
+					t.list=f;
+					t.geomsrid=4326;
+					var params = "data=" + JSON.stringify(t);
+					var url = this.$http.defaults.baseURL + 'TBUSER000001/datacenter/table/' + that.datas.tableid + '/field/add';
+					that.$http.post(url, params).then((r) => {
+						if(!r.data.result) {
+							this.$message.error(r.data.message);
+						}
+					});
+				}
+			},
+			deleteField(field) {
+				var that = this;
+				var tablelist = [];
+				if(that.table.type == "UPDATE") {
+					var url = this.$http.defaults.baseURL + "TBUSER000001/datacenter/table/" + that.datas.tableid + "/field/delete";
+					var params = "data=" + JSON.stringify(field);
+					that.$http.post(url, params).then((r) => {
+						if(r.data.result) {
+							for(var item in that.table.list) {
+								if(that.table.list[item].id != field.id) {
+									tablelist.push(that.table.list[item]);
+								} else {
+									if(field.name == "geom") {
+										that.table.isgeom = false;
+										that.table.geomtype = "";
+										that.table.geomcolumn = "";
+									}
+								}
+							}
+							this.table.list = tablelist;
+							this.fieldinfo = {};
+							that.$message({
+								message: r.data.message,
+								type: 'success'
+							});
+						}
+					});
+				}else{
+						for(var item in that.table.list) {
+								if(that.table.list[item].id != field.id) {
+									tablelist.push(that.table.list[item]);
+								} else {
+									if(field.name == "geom") {
+										that.table.isgeom = false;
+										that.table.geomtype = "";
+										that.table.geomcolumn = "";
+									}
+								}
+							}
+							this.table.list = tablelist;
+							this.fieldinfo = {};
+				}
+				console.log(JSON.stringify(this.table));
+			},
+			//编辑字段
+			fieldselect(field, evt) {
+				this.currentfield = this.$Tools.cloneObj(field);
+				if(evt.target.className != "el-icon-close") {
+					var ele = this.$Tools.siblings(evt.currentTarget);
+					evt.currentTarget.lastElementChild.setAttribute("class", "dbtc_con_close active")
+					for(var i in ele) {
+						if(ele[i].lastElementChild != undefined) {
+							if(ele[i].lastElementChild.getAttribute("class") == "dbtc_con_close active") {
+								ele[i].lastElementChild.setAttribute("class", "dbtc_con_close")
+							}
+						}
+					}
+					if(field.defaultvalue != null && field.defaultvalue != "") {
+						var fs = field.defaultvalue.split("'");
+						if(fs.length > 2) field.defaultvalue = fs[1];
+					}
+					this.fieldinfo = field;
+					if(this.table.type == "UPDATE") {
+
+					}
+				}
+			},
+			//更新字段
+			updateitem(field,name) {
+				
+				var that = this;
+				if(this.currentfield != null&&this.datas.type=="UPDATE") {
+					var param = {
+						oldfield: this.currentfield,
+						newfield: field,
+						name:name
+					}
+					var params = "data=" + JSON.stringify(param);
+					console.log(params);
+					var url = this.$http.defaults.baseURL + 'TBUSER000001/datacenter/table/' + this.datas.tableid + '/field/update';
+					that.$http.post(url, params).then((r) => {
+						if(r.data.result) {
+							/*this.$bus.$emit('hide_mwdialog');
+							this.table.list = [];*/
+						} else {
+							this.$message.error(r.data.message);
+						}
+					});
+				}
+				console.log("updateitem");
+			},
+			//新建表保存
+			save() {
+				var that = this;
+				
+				debugger
+				if(this.datas.type == "CREATE") {
+					var params = "data=" + JSON.stringify(this.table);
+					var url = this.$http.defaults.baseURL + 'TBUSER000001/datacenter/datas/add/custom';
+					that.$http.post(url, params).then((r) => {
+						if(r.data.result) {
+							this.$bus.$emit('hide_mwdialog');
+							this.table.list = [];
+							this.$message({
+								message: r.data.message,
+								type: 'success'
+							});
+						} else {
+							this.$message.error(r.data.message);
+						}
+					});
+				} else {
+					var url = this.$http.defaults.baseURL + 'TBUSER000001/datacenter/table/' + this.datas.tableid + '/rename?newname=' + this.table.name;
+					that.$http.get(url).then((r) => {
+						debugger
+						if(r.data.result) {
+							this.$bus.$emit('hide_mwdialog');
+							this.table.list = [];
+							this.$message({
+								message: r.data.message,
+								type: 'success'
+							});
+						} else {
+							this.$message.error(r.data.message);
+						}
+					});
+				}
+
+			},
+			init() {
+				var that = this;
+				var url = this.$http.defaults.baseURL + 'TBUSER000001/datacenter/dictionary/19';
+				that.$http.get(url).then((r) => {
+					if(r.data.result) {
+						that.fieldstype.general = r.data.data;
+					}
+				});
+				var geomurl = this.$http.defaults.baseURL + 'TBUSER000001/datacenter/dictionary/1';
+				that.$http.get(geomurl).then((r) => {
+					if(r.data.result) {
+						that.fieldstype.geom = r.data.data;
+					}
+				});
+
+				this.getMaxId();
+				//this.table.name = "XX数据表";
+					
+			},
+
+			getTableById() {
+				var that = this;
+				if(this.datas.tableid != null && this.datas.tableid != "") {
+					var url = this.$http.defaults.baseURL + 'TBUSER000001/datacenter/table/' + this.datas.tableid + '/field';
+					that.$http.get(url).then((r) => {
+						debugger
+						if(r.data.result) {
+							that.table = r.data.data;
+							that.datas.type = "UPDATE";
+							console.log(that.table);
+							that.getMaxId();
+						} else {
+							that.datas.type = "CREATE";
+							that.table.name = "table_" + that.datas.tableid;
+						}
+					});
+				} else {
+					this.table.type = "CREATE";
+					this.table.name = "XX信息表";
+				}
+			},
+			getMaxId() {
+				if(this.table.list.length > 0) {
+					id = 1;
+					for(var item in this.table.list) {
+						if(this.table.list[item].id > id) id = this.table.list[item].id;
+					}
+				} else {
+					id = 1;
+				}
+			}
+
+		},
+		updated(evt, data, event) {
+			console.log("updated" + this.datas.tableid);
+		},
+		activated() {
+			console.log("activated");
+		},
+		destroyed() {
+			//this.$bus.off('initDBTableCreate');
+		},
+		created() {
+			
+			this.init();
+			console.log("created");
+		},
+		mounted() {
+			
+			this.initEvent();
+			
+			console.log("mounted");
+		}
+	}
+</script>
+
+<style>
+	.dbtable-create {
+		width: 80%;
+		margin: 0 auto;
+		height: 100%;
+	}
+	
+	.dbtc_top {
+		padding: 20px;
+		box-sizing: content-box;
+		box-shadow: 0px 5px 15px rgba(0, 0, 0, .2);
+	}
+	
+	.dbtc_pub {
+		background: #9BC63B;
+		height: auto;
+		border-radius: 4px;
+		color: #FFF;
+		display: inline-block;
+		line-height: 14px;
+		font-size: 10px;
+		font-family: 'Open Sans';
+		padding: 5px;
+		border: 1px solid #9BC63B;
+	}
+	
+	.dbtc_time {
+		height: 24px;
+		line-height: 24px;
+		font-size: 12px;
+		color: #979EA1;
+		font-family: 'Open Sans';
+	}
+	
+	.dbtc_save {
+		float: right;
+		margin-right: 20px;
+	}
+	
+	.dbtc_name {
+		font-size: 26px;
+		line-height: 34px;
+		border: 0px;
+		background: rgba(0, 0, 0, 0);
+		width: auto;
+		font-family: 'Open Sans';
+		text-overflow: ellipsis;
+		width: 200px;
+		height: 35px;
+		line-height: 35px;
+		margin-bottom: 5px;
+		box-sizing: border-box;
+		-moz-box-sizing: border-box;
+		/* Firefox */
+		-webkit-box-sizing: border-box;
+		/* Safari */
+	}
+	
+	.dbtc_name:focus {
+		outline: none;
+		border: 1px solid #1181FB;
+		font-size: 16px;
+		border-radius: 4px;
+	}
+	
+	.dbtc_panal {
+		border: 1px solid #d1dbe5;
+		background: #fff;
+		display: inline-block;
+		vertical-align: middle;
+		box-sizing: border-box;
+		position: relative;
+		float: left;
+		height: 65%;
+		border-radius: 3px;
+	}
+	
+	.dbtcf_title {
+		height: 36px;
+		line-height: 36px;
+		background: #fbfdff;
+		margin: 0;
+		padding-left: 20px;
+		border-bottom: 1px solid #d1dbe5;
+		box-sizing: border-box;
+		color: #1f2d3d;
+	}
+	
+	.dbtc_content {
+		margin-top: 15px;
+		height: 100%;
+	}
+	
+	.dbtcf_title {
+		border-radius: 3px 3px 0 0;
+	}
+	
+	.dbtc_fields {
+		width: 100%;
+	}
+	
+	.dbtc_info {
+		width: 100%;
+	}
+	
+	.dbtcf_con ul {
+		margin: 10px;
+	}
+	
+	.dbtcf_con ul li {
+		height: 35px;
+		line-height: 35px;
+		margin: 10px 20px;
+		position: relative;
+	}
+	
+	.dbtcf_con ul li:hover {
+		cursor: pointer;
+	}
+	
+	.dbtc_con_icon {
+		width: 120px;
+		height: 35px;
+		position: absolute;
+		border: 1px solid #d1dbe5;
+		border-radius: 3px 0 0 3px;
+		text-align: center;
+	}
+	
+	.dbtc_con_close {
+		width: 16px;
+		height: 16px;
+		float: right;
+		position: relative;
+		margin-right: 5px;
+		font-size: 12px;
+		color: rgba(255, 255, 255, 0.56);
+		display: none;
+	}
+	
+	.dbtc_con_close:hover {
+		color: rgba(255, 255, 255, 1);
+	}
+	
+	.active {
+		display: block;
+	}
+	
+	.dbtc_con_name {
+		height: 35px;
+		position: absolute;
+		left: 122px;
+		right: 0px;
+		border: 1px solid #7acbfb;
+		border-left: 0px;
+		border-radius: 0px 3px 3px 0px;
+		background: #7acbfb;
+		color: white;
+		padding: 0 10px;
+	}
+	
+	.dbtc_con_add {
+		text-align: center;
+		border: 1px solid #d1dbe5;
+		border-radius: 3px;
+	}
+	
+	.dbtc_con_add:hover {
+		cursor: pointer;
+	}
+	
+	.dbtc_con_add span {
+		padding: 0 10px;
+	}
+	
+	.dbtc_pop_fields {
+		width: 175px;
+		float: left;
+		margin: 0 10px;
+	}
+	
+	.dbtc_pop_fields li {
+		height: 35px;
+		line-height: 35px;
+		margin: 10px 0;
+		border: 1px solid transparent;
+		border-radius: 3px;
+	}
+	
+	.dbtc_pop_fields h3 {
+		margin: 0;
+		border-bottom: 1px solid #ccc;
+		padding-bottom: 5px;
+	}
+	
+	.dbtc_pop_fields li:hover {
+		cursor: pointer;
+		border: 1px solid #9bc63b;
+	}
+	
+	.pop_fields_icon {
+		border: 1px solid #d1dbe5;
+		border-radius: 3px 0 0 3px;
+		text-align: center;
+		width: 50px;
+		float: left;
+		height: 33px;
+	}
+	
+	.pop_fields_name {
+		border: 1px solid #7acbfb;
+		border-left: 0px;
+		border-radius: 0px 3px 3px 0px;
+		background: #7acbfb;
+		color: white;
+		width: 121px;
+		float: left;
+		padding: 0 10px;
+		box-sizing: border-box;
+		height: 35px;
+	}
+	
+	.dbtcf_content {
+		margin: 20px;
+	}
+	
+	.dbtcf_content h4 {
+		margin: 10px 0;
+		padding: 0px;
+	}
+</style>

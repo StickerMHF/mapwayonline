@@ -1,0 +1,281 @@
+<template>
+  <div class="render-config-content">
+    <div class="map-info">
+      <h2>{{ render.newMapInfo.name }}</h2>
+      <!--2017-5-5-->
+    </div>
+
+    <el-tabs :value="tabValue" @tab-click="tabClick">
+      <el-tab-pane label="图层" name="layer">
+        <div class="layer-tree">
+          <div class="addBtnDiv">
+            <el-button type="success" @click="addData">添加数据</el-button>
+          </div>
+
+          <draggable v-model="layerTree" @end="layerDradEnd">
+            <div :class="[ 'layer', item.isAdded ? 'is-added' : 'is-not-added', item.isRendering ? 'layer-rendering' : 'layer-not-rendering']" v-for="item in layerTree" :key="item.id"  @click="renderCurrent(item)">
+              <div class="left">
+                <div class="box"><img src="../../../assets/mapDesign/img/esriGeometryPoint.png" alt=""></div>
+              </div>
+              <div style="display: table-cell">{{ item.id }}</div>
+              <div class="right">
+                <div class="box">
+                  <i :class="[ item.isAdded ? 'fa-eye' : 'fa-eye-slash', 'fa']" @click.stop.prevent="layerDisplayControl(item)"></i>
+                </div>
+              </div>
+            </div>
+          </draggable>
+
+
+        </div>
+      </el-tab-pane>
+      <el-tab-pane label="组件" name="widget">
+        <div class="addBtnDiv">
+          <el-button type="success" @click="addWidget">添加组件</el-button>
+        </div>
+      </el-tab-pane>
+    </el-tabs>
+  </div>
+</template>
+
+<script>
+  import { mapActions, mapGetters, mapMutations } from 'vuex'
+  import draggable from 'vuedraggable'
+  import Tool from '@/components/tool.vue'
+
+  export default {
+    name: 'renderConfig',
+    components: {
+      draggable,
+    },
+    computed: {
+      ...mapGetters([
+        'render'
+      ])
+    },
+    data () {
+      return {
+        // tab页
+        tabValue: 'layer',
+
+        // 图层树
+        layerTree: [],
+        /*layerTree: {
+         id: TBDATA00001,
+         isAdded: true
+         }*/
+        currentLayer: {
+          /*id: '',
+          name: '',
+          isAdded: true,
+          idRendering: false,*/
+        },
+      };
+    },
+    created () {
+      this.initEvent();
+    },
+    mounted () {
+
+    },
+    beforeDestroy () {
+      this.destroyEvent();
+    },
+    methods: {
+      ...mapActions([
+        'setRenderType','addGeoJsons', 'resetGeoJsons', 'setCurrentLayerId', 'setLayers'
+      ]),
+      initEvent () {
+        this.$bus.on('update-layers',(layerTree) => {
+          this.layerTree = layerTree;
+          console.log('layerTree', this.layerTree)
+        });
+      },
+      destroyEvent () {
+        this.$bus.off('update-layers');
+      },
+      /* tab页点击事件 */
+      tabClick (tab) {
+        this.tabValue = tab.name;
+      },
+
+      /* 添加新图层数据 */
+      addData () {
+          // TODO
+      },
+
+      /* 添加新图层数据 */
+      addWidget () {
+        // TODO
+      },
+
+      /* 清空当前存储的状态 */
+      clearCurrentLayer () {
+        /* 当前组件 */
+        this.currentLayer = {};
+        this.layerTree.forEach((item) => {
+            item.isRendering = false;
+        });
+
+        /* vuex 中 render */
+        this.setCurrentLayerId('');
+        this.setLayers(Tool.clone(this.layerTree));
+      },
+
+      layerDradEnd(drag) {
+        console.log(drag.newIndex)
+        console.log(drag.oldIndex)
+      },
+
+      saveCurrentLayer (id) {
+        var overLayers = this.render.savedLayers.over_layer;
+
+        this.setCurrentLayerId(id);
+        this.$bus.emit('show-render-set');
+        this.$bus.emit('init-render-set', id, overLayers);
+
+        this.$bus.emit('init-label');
+
+        this.layerTree.forEach((item) => {
+            if (item.id === id) {
+                item.isRendering = true;
+            } else {
+              item.isRendering = false;
+            }
+        });
+
+        this.setLayers(Tool.clone(this.layerTree));
+      },
+
+      /* 选择图层进行渲染 */
+      renderCurrent (item) {
+
+        if (!item.isAdded) {
+          this.$message({
+            showClose: true,
+            message: '未添加的图层不允许编辑',
+            type: 'warning',
+          });
+          return;
+        }
+
+        if (this.currentLayer.id === item.id) {  // 点击图层 === 当前渲染ing的图层
+          console.log('点击图层 === 当前渲染ing的图层')
+          item.isRendering = !item.isRendering;
+          if (item.isRendering) { // 当前图层正处在编辑状态
+            this.$bus.emit('show-render-set');
+          } else {
+            this.$bus.emit('hide-render-set');
+            this.clearCurrentLayer();
+          }
+          this.setLayers(Tool.clone(this.layerTree));
+
+          return;
+        }
+
+
+        console.log('this.render.savedLayers.over_layer: ',this.render.savedLayers.over_layer);
+
+        this.currentLayer = Tool.clone(item);
+
+        this.saveCurrentLayer(item.id);
+        console.log('item.isRendering', item.isRendering)
+      },
+
+      /* 点击眼睛的图层是否正处在编辑状态 */
+      currentLayerIsRendering (id) {
+        var layers = this.render.layers, isRendering = false;
+
+        layers.some((item) => {
+          if (item.id === id) {
+            isRendering = item.isRendering;
+          }
+        });
+
+        return isRendering;
+      },
+
+      layerDisplayControl (item) {
+        item.isAdded = !item.isAdded;
+        var isRendering = this.currentLayerIsRendering(item.id);
+        if (item.isAdded) { // 图层眼睛睁着
+          this.$bus.emit('show-layer', item.id);
+          this.$bus.emit('show-label');
+
+          if (isRendering) {  // 当前图层正处在编辑状态
+            this.$bus.emit('show-render-set');
+            console.log('显示 set')
+          }
+        } else {            // 图层眼睛闭着
+          this.$bus.emit('hide-layer', item.id);
+          this.$bus.emit('hide-label');
+
+
+          if (isRendering) {  // 当前图层正处在编辑状态
+            this.$bus.emit('hide-render-set');
+            console.log('隐藏 set')
+          }
+        }
+
+        this.$bus.emit('render-map-resize'); // renderSet容器宽度变化，map也要适应新的宽度
+        this.setLayers(Tool.clone(this.layerTree));
+      },
+    },
+  }
+</script>
+
+<style scoped>
+  .addBtnDiv {
+    text-align: center;
+  }
+
+  .layer {
+    display: table;
+    width: 100%;
+    margin: 10px 0;
+    box-sizing: border-box;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+
+  /* isRendering */
+  .layer-not-rendering {
+    border: 1px solid #eee;
+  }
+
+  .layer-rendering {
+    border: 1px solid #AAA;
+  }
+
+  /* isAdded */
+  .is-not-added {
+    opacity: 0.5;
+  }
+
+  .is-added {
+    opacity: 1;
+  }
+
+  .layer:hover {
+    border: 1px solid #AAA;
+  }
+
+  .box {
+    width: 50px;
+    height: 50px;
+    line-height: 50px;
+    text-align: center;
+    display: inline-block;
+    color: #20a0ff;
+  }
+
+  .box img {
+    width: 30px;
+    height: 30px;
+    vertical-align: middle;
+  }
+
+  .box i {
+    vertical-align: middle;
+  }
+</style>

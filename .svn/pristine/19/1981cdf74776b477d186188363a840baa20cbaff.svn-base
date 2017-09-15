@@ -1,0 +1,347 @@
+<template>
+
+	<div class="folder_list" id="tree-folder" >
+		<!--<div class="sub_ui_title">-->
+			<!--<h3>分类目录</h3></div>-->
+		<el-tree style="" :data="treedata" node-key="id" @click="getDataByCondition" default-expand-all :expand-on-click-node="false" :render-content="renderContent">
+
+		</el-tree>
+
+		<!--//新建文件夹-->
+		<el-dialog v-bind:title="form.title" size="tiny" :visible.sync="dialogTreeNameVisible">
+			<span slot="element-name">slot</span>
+			<el-form :model="form">
+				<el-form-item label="目录名称：" :label-width="formLabelWidth" style="margin:0;">
+					<el-input v-model="form.treename" auto-complete="off"></el-input>
+				</el-form-item>
+			</el-form>
+			<div slot="footer" class="dialog-footer">
+				<el-button @click="dialogTreeNameVisible = false">取 消</el-button>
+				<el-button type="primary" @click="createtree">确 定</el-button>
+			</div>
+		</el-dialog>
+	</div>
+</template>
+<script>
+	let id = 1000;
+	import {
+		mapGetters,
+		mapActions
+	} from 'vuex'
+	export default {
+		name: 'tree-folder',
+		data() {
+			return {
+				treedata: [],
+				form: {
+					title: "新建子目录",
+					treename: '',
+					store: null,
+					data: null,
+					type: null
+				},
+				dialogTreeNameVisible: false,
+				formLabelWidth: '100px',
+				isleaveul: false,
+				isleaveli: false,
+			}
+		},
+
+		computed: {
+			...mapGetters([
+				'getFormList'
+			])
+		},
+		methods: {
+			...mapActions([
+				'_setTreeData'
+			]),
+      getDataByCondition(store, data, evt){
+			    debugger
+			  this.$emit('getDataByCondition',0,"我的数据");
+        var treeNname =document.getElementsByClassName("treename");
+        for(var i=0;i<treeNname.length;i++){
+          treeNname[i].style.color="#5a5a5a";
+        }
+			  var nodeContent =document.getElementsByClassName("el-tree-node__content");
+			  for(var i=0;i<nodeContent.length;i++){
+			      nodeContent[i].style.background="#fff";
+        }
+        var nodeContent2 =document.getElementsByClassName("el-tree-node__children");
+        for(var i=0;i<nodeContent2.length;i++){
+          nodeContent2[i].style.background="#fff";
+        }
+			  if(evt.target.className=="treename"){
+          evt.target.parentElement.parentElement.parentElement.parentElement.style.background="#009688";
+          evt.target.parentElement.parentElement.parentElement.parentElement.style.borderRadius="10px";
+          evt.target.style.color="#fff";
+        }
+      },
+			initEvent() {
+				this.$bus.on('initTreeList', (obj) => {
+					this.treedata = obj;
+				});
+			},
+			showmenu(store, data, evt) {
+				var evtTargetThis = evt.target.parentElement.parentElement.children[2];
+				if(evtTargetThis.style.display == "block") {
+					evtTargetThis.style.display = "none";
+				} else {
+					evtTargetThis.style.display = "block";
+				}
+
+			},
+			update(store, data, type) {
+				this.dialogTreeNameVisible = true;
+				this.form.store = store;
+				this.form.data = data;
+				this.form.type = type;
+				this.getMaxIDs(store.root.childNodes[0].data);
+				console.log("id:" + id);
+				if(type == "update") {
+					this.form.treename = data.name;
+					this.form.title = "重命名";
+				}
+			},
+			getByTreeId(node, store, data) {
+				var childids = [];
+				this.getChildIDs(node, childids);
+				this.$emit("getByTreeId", node, store, data, childids);
+			},
+			getChildIDs(node, arr) {
+				if(node.childNodes.length == 0) {
+					if(arr != null) arr.push(node.data.id);
+				} else {
+					arr.push(node.data.id);
+					for(var i = 0; i < node.childNodes.length; i++) {
+						this.getChildIDs(node.childNodes[i], arr);
+					}
+				}
+
+			},
+			getMaxIDs(node) {
+				if(node.id >= id) {
+					id = node.id + 1;
+				}
+				if(node.children.length > 0) {
+					for(var i = 0; i < node.children.length; i++) {
+						this.getMaxIDs(node.children[i], id);
+					}
+
+				}
+
+			},
+			createtree() {
+				this.dialogTreeNameVisible = false;
+				if(this.form.type == "add") {
+					if(this.form.store.currentNode.level > 2) {
+						this.form.store.append({
+							id: id++,
+							name: this.form.treename,
+							children: []
+						}, this.form.store.currentNode.parent.data);
+					} else {
+						this.form.store.append({
+							id: id++,
+							name: this.form.treename,
+							children: []
+						}, this.form.data);
+
+					}
+				} else if(this.form.type == "update") {
+					this.form.store.currentNode.data.name = this.form.treename;
+				}
+				this.form.data = [];
+				this.updateFormData(this.form.data, this.form.store.root.childNodes);
+				this.treedata = this.form.data;
+				this.$emit("updateTreeList", this.treedata);
+			},
+			updateFormData(formdata, nodes) {
+				for(var item in nodes) {
+					var obj = {};
+					obj.id = nodes[item].data.id;
+					obj.name = nodes[item].data.name;
+					if(nodes[item].childNodes.length > 0) {
+						obj.children = [];
+						this.updateFormData(obj.children, nodes[item].childNodes);
+					} else {
+						obj.children = [];
+					}
+					formdata.push(obj);
+				}
+
+			},
+			remove(store, data) {
+				this.form.store = store;
+				if(this.form.store.currentNode.level == 1) {
+					this.$message({
+						showClose: true,
+						message: '主人，留一个目录吧！'
+					});
+				} else {
+					store.remove(data);
+					this.form.store = store;
+				}
+				//this._setTreeData(this.form.store.data);
+				this.form.data = [];
+				this.updateFormData(this.form.data, this.form.store.root.childNodes);
+				this.treedata = this.form.data;
+				this.$emit("updateTreeList", this.treedata);
+			},
+			mouseOver(store, data, evt) {
+//        evt.target.parentElement.parentElement.style.background="#E4E8F1";
+				evt.target.children[1].style.display = 'block';
+			},
+
+			mouseOutLi(store, data, evt) {
+				this.isleaveli = true;
+				evt.target.children[1].style.display = 'none';
+				if(this.isleaveli == true & this.isleaveul == true) {
+					debugger
+					evt.target.children[1].style.display = 'none';
+					evt.target.children[2].style.display = 'none';
+					this.isleaveli = false;
+				} else {
+					evt.target.children[1].style.display = 'none';
+					evt.target.children[2].style.display = 'none';
+				}
+//        evt.target.parentElement.parentElement.style.background="#fff";
+
+			},
+			mouseOutUl(store, data, evt) {
+				this.isleaveul = true;
+				evt.target.parentElement.children[1].style.display = 'none';
+				if(this.isleaveli = this.isleaveul) {
+					evt.target.style.display = 'none';
+					this.isleaveul = false;
+				}
+				evt.target.style.display = 'none';
+			},
+			renderContent(h, {
+				node,
+				data,
+				store
+			}) {
+				return(
+					 <ul class="tree_folder" on-click={ (evt) => this.getDataByCondition(store, data,evt) }>
+					 <li style=" box-sizing:border-box;"  on-mouseenter={ (evt) => this.mouseOver(store, data,evt) } on-mouseleave={ (evt) => this.mouseOutLi(store, data,evt) }>
+                        <span>
+                             <span class="treename" on-click={ () => this.getByTreeId(node,store,data) }>{node.data.name}</span>
+                        </span>
+                         <span style="float: right; display:none; margin-right:20px; position:absolute; top:0;right:0;" class="icon_bar">
+                             <i class="fa fa-bars"  on-click={ (evt) => this.showmenu(store, data,evt) }></i>
+                         </span>
+                            <ul class="tree_menu" on-mouseleave={ (evt) => this.mouseOutUl(store, data,evt) } style="position: absolute;right: 15px;top: 30px;font-size: 12px;line-height: 16px; z-index:9; display:none;width: 100px; border:1px solid #ccc;background:#fff;">
+                                <li style="line-height: 25px;" on-click={ () => this.update(store, data,"add") }><div  style="padding:3px 8px;"><i class="fa fa-plus"></i><span>创建目录</span></div></li>
+                                <li style="line-height: 25px;" on-click={ () => this.update(store, data,"update") }><div  style="padding:3px 8px;"><i class="el-icon-edit"></i><span>重命名</span></div></li>
+                                <li style="line-height: 25px;" on-click={ () => this.remove(store, data) }><div  style="padding:3px 8px;"><i class="el-icon-delete"></i><span>删除</span></div></li>
+                             </ul>
+                      </li>
+                      </ul>
+				);
+
+			},
+
+			addTreeData() {
+
+			},
+		},
+
+		created() {
+			this.initEvent();
+		},
+		mounted() {
+
+		}
+	}
+</script>
+
+<style>
+	.el-tree {
+		cursor: default;
+		background: #ffffff;
+		border: 0px;
+		font-size: 12px;
+	}
+
+	.treename {
+		font-size: 12px;
+		display: block;
+		width: 100%;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.treename {}
+
+	.el-tree-node>.el-tree-node__children {
+		overflow: visible;
+	}
+
+	.sub_ui_title {
+		border-bottom: 1px solid #e5e9ed;
+		height: 35px;
+		padding: 0 15px;
+		margin-bottom: 10px;
+		text-align: left;
+	}
+
+	.tree_folder {
+		float: left;
+		width: 79%;
+		box-sizing: border-box;
+	}
+
+	.el-tree-node__content {
+		position: relative;
+	}
+
+	.el-tree-node__expand-icon {
+		float: left;
+		margin: 0;
+		margin-top: 10px;
+		margin-right: 8px;
+		margin-left: 12px;
+	}
+
+	.sub_ui_title h3 {
+		display: inline-block;
+		line-height: 33px;
+		border-bottom: 3px solid #333;
+		font-size: 12px;
+		font-weight: bold;
+		color: #333;
+		margin: 0;
+	}
+
+	.tree_menu li i {
+		margin-right: 8px;
+	}
+
+	.tree_menu li:hover {
+		background: #E4E8F1;
+	}
+
+	.el-tree-node__expand-icon {
+		border: none;
+	}
+	/*替换下三角*/
+
+	.el-tree-node__expand-icon {
+		display: block;
+		width: 16px;
+		height: 16px;
+		background: url("/static/Login/img/login_ico.png") no-repeat;
+		background-size: 250px 160px;
+		background-position: -148px -6px;
+	}
+
+	.expanded {
+		background-position: -181px -6px;
+		transform: rotate(0deg) !important;
+	}
+  .el-tree-node__content:hover{
+    background-color:#E4E8F1;
+  }
+
+</style>

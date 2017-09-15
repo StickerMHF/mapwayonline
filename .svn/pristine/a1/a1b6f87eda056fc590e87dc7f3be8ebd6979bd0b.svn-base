@@ -1,0 +1,184 @@
+<template>
+	<div id="formheader">
+		
+		<ul class="form-list">
+			<li class="form-item">+</li>
+			<li class="form-item">1</li>
+			<li class="form-item">2</li>
+		</ul>
+		
+	
+		<div class="header-tool" >
+			<el-button :plain="true" type="success" @click = "previewForm">预览</el-button>
+			<el-button :plain="true" type="success" @click = "goPreview">保存</el-button>
+		
+		</div>
+		
+		
+		
+	</div>
+</template>
+
+<script>
+	
+	import {mapGetters, mapActions } from 'vuex'
+	
+	export default {
+		name:'formheader',
+		components:{},
+		props:['oid'],
+		data(){
+			return {
+				
+				
+				
+			}
+		},
+		computed: {
+			...mapGetters([
+				'getForm'
+			])
+		},
+		methods:{
+			...mapActions([
+        		'_setCurrent',	
+        	]),
+			previewForm(){
+				// 预览数据	
+				if(this.getForm.formConfig.isinputform){
+					// 预览应用界面
+					this.$router.replace({name: 'appformpreview', params: {id:this.oid}});
+				}else{
+					// 预览展示界面
+					this.$router.replace({name:'showformpreview',params:{id:this.oid,detail:'new'}});
+				}
+				
+			
+				
+			},
+			goPreview(){
+				// 跳转到预览页，获取缩略图 并且保存数据
+				this._setCurrent({attr:'isSaveInPreview',value:true})
+				
+				if(this.getForm.formConfig.isinputform){
+					// 预览应用界面
+					this.$router.replace({name: 'appformpreview', params: {id:this.oid}});
+				}else{
+					// 预览展示界面
+					this.$router.replace({name:'showformpreview',params:{id:this.oid,detail:'new'}});
+				}
+				
+			},
+			fifterForm(obj){
+				// 过滤数据，一些字段不能为空
+				
+				return false;
+//				return true; 
+				
+			},
+			saveForm(){
+				var that = this;
+				
+				// 保存数据
+			
+				if(this.fifterForm(this.getForm)){
+					// 过滤一部分数据  比如：一些字段不为空之类的
+					let prams = 'data='+JSON.stringify({
+						widgetList:that.getForm.widgetList,
+						formConfig:that.getForm.formConfig
+					});
+	//				console.log(prams);	
+					prams = encodeURI(prams);
+			      	that.$http.post('TBUSER000002/formdesign/forms/add',prams)
+			      	.then(
+			      		(res) => {
+			      			console.log(res);
+			      			if(res.data.result == true){
+			      				// 上传成功
+			      				// 跳转到。。。。
+			      				that.$notify.success({
+						          title: '提交成功！',
+						          message: '提交成功！！！',
+						          offset: 100
+						        });
+			      				
+			      			}else{
+			      				that.$notify.error({
+						          title: '保存失败！',
+						          message: '保存失败！！！ ',
+						          offset: 100
+						        });
+			      			}
+			      			
+			      		}     		
+			      	).catch((error) => {
+			      		console.log(error);	
+			      	});
+			      	
+				}else{
+					that.$notify.error({
+			          title: '请求失败！',
+			          message: '请求失败！存在控件未绑定数据或者值错误！！！',
+			          offset: 100
+			        });
+
+				}
+			
+				
+				
+				
+			}
+		},
+		created(){
+			
+		},
+		mounted(){
+			
+		}
+	}
+</script>
+
+<style lang="less" scoped>
+#formheader{
+	text-align: left;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding-right: 40px;
+	ul,li{
+		list-style: none;
+		text-decoration: none;
+		margin: 0;
+		padding: 0;
+	}
+	.form-list{
+		height:100px;
+		background-color: #F0F8FF;
+		text-align: left;
+		vertical-align: middle;
+		padding-left: 20px;
+		display: inline-block;
+		.form-item{
+			display: inline-block;
+			margin-top:1px;
+			margin-left: 5px;
+			height: 98px;
+			width: 98px;
+			box-sizing: border-box;
+			border: 1px solid #BBBBBB;
+			text-align: center;
+		}
+			
+	}
+	.header-tool{
+		display: inline-block;
+		margin-left: 150px;
+		
+		
+		
+	}
+	
+	
+}
+
+</style>

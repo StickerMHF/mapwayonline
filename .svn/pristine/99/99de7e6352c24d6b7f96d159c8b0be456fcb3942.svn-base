@@ -1,0 +1,15 @@
+{
+  "style": [
+    {
+      "opacity": "0.3",
+      "outline-color": "#006363",
+      "zoom_level_min": "0",
+      "outline-opacity": "1",
+      "color": "#672191",
+      "outline-size": "1",
+      "zoom_level_max": "22",
+      "type": "polygon",
+      "size": "0"
+    }
+  ]
+}

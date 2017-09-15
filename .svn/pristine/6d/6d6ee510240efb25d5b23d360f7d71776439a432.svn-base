@@ -1,0 +1,16 @@
+{
+  "count": 1,
+  "data": {
+    "features": [{
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [[108, 34], [116, 39]]
+      },
+      "properties": {
+        "name": "北京-西安",
+        "污染": 10
+      }
+    }]
+  }
+}

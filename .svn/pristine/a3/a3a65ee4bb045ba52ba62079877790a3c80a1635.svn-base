@@ -1,0 +1,86 @@
+<template>
+	<div class="realtimenum">
+		<span :id="ids">{{num}}</span>
+	</div>
+</template>
+
+<script>
+	export default {
+		name: "tb-chart",
+		data() {
+			return {
+
+			}
+		},
+		props: {
+			ids: {
+				type: String
+			},
+			num: {
+				type: Number,
+				default: function() {
+					return 0
+				}
+			},
+			time: {
+				type: Number,
+				default: function() {
+					return 1
+				}
+			},
+			option: {
+				type: Object
+			}
+		},
+		methods: {
+			load() {
+				var that = this;
+				setTimeout(() => {
+					that.dynamicnum(that.num, that.time);
+				}, 100)
+			},
+			dynamicnum(num, time) {
+				var that = this;
+				var step = num * 16 / (time * 1000);
+				var start = 0; //计数器
+				var interval; //定时器
+				var old = 0;
+
+				//每帧不能超过16ms，所以理想的interval间隔为16ms
+				//step为每16ms增加的数值
+
+				interval = setInterval(function() {
+					start = start + step;
+					if(start >= num) {
+						clearInterval(interval);
+						interval = undefined;
+						start = num;
+					}
+
+					var t = Math.floor(start);
+
+					//t未发生改变的话就直接返回
+					//避免调用text函数，提高DOM性能
+					if(t == old) {
+						return;
+					}
+
+					old = t;
+					document.getElementById(that.ids).innerText=old;
+				}, 16);
+			}
+		},
+		created() {
+
+		},
+		mounted() {
+			this.load();
+		}
+	}
+</script>
+
+<style>
+.realtimenum span{
+	text-align: center;
+}
+</style>

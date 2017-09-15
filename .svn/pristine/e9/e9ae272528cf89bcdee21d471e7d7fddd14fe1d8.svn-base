@@ -1,0 +1,16 @@
+{
+  "count": 1,
+  "schema": [
+    {
+      "name": "text_0",
+      "alias": "城市",
+      "default": "haha41",
+      "nullable": true,
+      "editable": false,
+      "visible": false,
+      "max_length": 7,
+      "type": "string"
+    }
+  ]
+}
+

@@ -1,0 +1,292 @@
+<template>
+
+	<div id="map-index">
+		<ContentLeft @getByTree="getByTreepid" @backTomapList="backTomapList" @getmapByCondition="getmapByCondition"></ContentLeft>
+
+		<div id="map_content2" class="map_content map_content2">
+			<div class="fc_title">
+				<h3>{{listdata.title}}</h3>
+			</div>
+			<div class="fc_content" >
+				<!--<DataShowModel :child-data="defaultAddData.data"></DataShowModel>-->
+			</div>
+			<div class="fc_content">
+				<DataShowModel :child-data="listdata.data" @deleteItem="deleteItem"></DataShowModel>
+			</div>
+		</div>
+		<div id="map_content1" class="map_content map_content1">
+			<el-tabs class="fc_tabs" v-model="activeName" @tab-click="handleClick">
+				<el-tab-pane class="fc_tab" label="新建地图" name="first">
+					<DataShowModel :child-data="defaultAddData.data" @deleteItem="deleteItem"></DataShowModel>
+					<div class="fct1_title">从共享中心新建地图</div>
+					<DataShowModel :child-data="mapdata.recentlyshare"></DataShowModel>
+				</el-tab-pane>
+				<el-tab-pane label="最近编辑" name="second">
+					<DataShowModel :child-data="mapdata.recently" :show-list="true" @deleteItem="deleteItem"></DataShowModel>
+				</el-tab-pane>
+				<el-tab-pane label="共享中心" name="third">
+					<DataShowModel :child-data="mapdata.exchange" :show-list="true"></DataShowModel>
+				</el-tab-pane>
+			</el-tabs>
+		</div>
+	</div>
+</template>
+
+<script>
+	import ContentLeft from './ContentLeft.vue';
+	import DataShowModel from '../common/DataShowModel.vue';
+	export default {
+		name: 'map-index',
+		components: {
+			ContentLeft,
+			DataShowModel
+		},
+		data() {
+			return {
+				mapPath: '/mapDesign/init/',
+				title: "文件夹",
+				activeName: 'first',
+				type:16,
+				defaultAddData: {
+					data: {
+						data: [{
+							formid: 1,
+							name: "创建地图",
+							type: 27,
+							img: "/static/Index/img/newform.png",
+							url: "/formDesign/init/new",
+							usable: true,
+							price: 0,
+							author: "管理员",
+							createdate: "2017-08-08"
+						}]
+					}
+				},
+				listdata: {
+					title: "未命名文件夹",
+					data: {
+						url: {
+							preview: "/formDesign/init",
+							edit: "/formDesign/init",
+							share: "/formDesign/init",
+							delete: this.$http.defaults.baseURL + "TBUSER000001/formdesign/forms/delete/",
+							move: ""
+						},
+						data: []
+					}
+				},
+				mapdata: {
+					recentlyshare: {
+						url: {
+							preview: "/formDesign/init",
+							edit: "/formDesign/init",
+							share: "/formDesign/init",
+							delete: this.$http.defaults.baseURL + "TBUSER000001/formdesign/forms/delete/",
+							move: ""
+						},
+						data:[]
+					},
+					recently: {
+						url: {
+							preview: "/formDesign/init",
+							edit: "/formDesign/init",
+							share: "/formDesign/init",
+							delete: this.$http.defaults.baseURL + "TBUSER000001/formdesign/forms/delete/",
+							move: ""
+						},
+						data:[]
+					},
+					exchange: {
+						url: {
+							preview: "/formDesign/init",
+							edit: "/formDesign/init",
+							share: "/formDesign/init",
+							delete: this.$http.defaults.baseURL + "TBUSER000001/formdesign/forms/delete/",
+							move: ""
+						},
+						data:[]
+					}
+				}
+
+			}
+		},
+		methods: {
+			editmap(oid) {
+				this.$router.push(this.mapPath + oid);
+				console.log(this.mapPath + oid);
+
+			},
+			handleClick(tab, event) {
+				console.log(tab, event);
+			},
+
+			getByTreepid(node, store, data, childids) {
+				document.getElementById("map_content1").style.display = "none";
+				document.getElementById("map_content2").style.display = "block";
+				this.listdata.title = data.name;
+				if(data.id == "999") {
+					var url = this.$http.defaults.baseURL + 'TBUSER000001/mapdesign/maps';
+					this.getFormByUrl(url, 0);
+				} else {
+					var url = this.$http.defaults.baseURL + 'TBUSER000001/mapdesign/maps/folder/' + data.id;
+					this.getFormByUrl(url, 0);
+				}
+				this.getFormByUrl(url, 28);
+			},
+			getmapByCondition(type, name) {
+				var that = this;
+				this.listdata.title = name;
+				document.getElementById("map_content1").style.display = "none";
+				document.getElementById("map_content2").style.display = "block";
+				if(type == 0) { //我的地图
+					var url = this.$http.defaults.baseURL + 'TBUSER000001/mapdesign/maps';
+					this.getFormByUrl(url, type);
+				}  else if(type == 2) { //已分享的表单
+					var url = this.$http.defaults.baseURL + 'TBUSER000001/mapdesign/maps/share';
+					this.getFormByUrl(url, type);
+				}
+			},
+			getFormByUrl(url, type) {
+				var that = this;
+				that.$http.get(url).then((res) => {
+					if(res.data.result) {
+						switch(type) {
+							case 0:
+								that.listdata.data.url.preview = "/mapdesign/preview/";
+								that.listdata.data.url.render = "/mapdesign/render/";
+								that.listdata.data.url.share = "/mapdesign/init/";
+								that.listdata.data.url.delete = this.$http.defaults.baseURL + "TBUSER000001/mapdesign/maps/delete/";
+								that.listdata.data.url.move = "";
+								break;
+							case 2:
+								break;
+							default:
+
+								break;
+						}
+						that.listdata.data.data = res.data.data;
+					}
+				});
+			},
+			backTomapList(evt) {
+				document.getElementById("map_content2").style.display = "none";
+				document.getElementById("map_content1").style.display = "block";
+			},
+			deleteItem(id) {
+				var that = this;
+				var url = this.$http.defaults.baseURL + "TBUSER000001/mapdesign/maps/delete/" + id;
+				that.$http.get(url).then((res) => {
+					if(res.data.result) {
+						this.$message({
+							message: res.data.message,
+							type: 'success'
+						});
+						this.$bus.$emit("gettreedata");
+						this.init();
+						this.updateListData(this.listdata.data.data, id);
+						this.updateListData(this.mapdata.recently.data, id);
+					} else {
+						this.$message.error("删除失败");
+					}
+				});
+			},
+			updateListData(list, id) {
+				var data = [];
+				for(var item in list) {
+					if(list[item].id != id) {
+						data.push(list[item]);
+					}
+				}
+				list = data;
+			},
+			init() {
+				var that = this;
+				var url = this.$http.defaults.baseURL + "TBUSER000001/mapdesign/maps/inits";
+				that.$http.get(url).then((res) => {
+					if(res.data != null) {
+						that.mapdata.recently.data = res.data.data.Modify;
+						that.mapdata.recentlyshare.data = res.data.data.RecentlyShare;
+						that.mapdata.exchange.data = res.data.data.OtherShare;
+
+					}
+				});
+			}
+		},
+		created() {
+
+		},
+		mounted() {
+this.init();
+
+		}
+	}
+</script>
+
+<style>
+	#map-index {
+		height: 100%;
+		padding-left: 260px;
+	}
+
+	.map_content {
+		height: 100%;
+		margin-left: 1px;
+	}
+
+	.fc_title {
+		height: 55px;
+		box-shadow: 0 0 5px rgba(0, 0, 0, .1);
+		background: #fff;
+		position: relative;
+		z-index: 10;
+		border-bottom: 1px solid #eee;
+		line-height: 55px;
+	}
+
+	.fc_title h3 {
+		font-size: 16px;
+		float: left;
+		line-height: 55px;
+		padding-left: 20px;
+		color: #333;
+		margin: 0;
+	}
+
+	.fc_tabs {
+		padding: 40px 0 0 0;
+		margin: 0 35px;
+	}
+
+	.map_content .el-tabs__active-bar {}
+
+	.map_content .el-tabs__item {
+		background: #eee;
+	}
+
+	.map_content .el-tabs__item.is-active {
+		color: #fbfdff;
+		background: #232c32 !important;
+	}
+
+	.map_content1 {}
+
+	.map_content2 {
+		display: none;
+	}
+
+	.fct1_title {
+		font-size: 14px;
+		line-height: 30px;
+		padding: 0 20px;
+		font-weight: bold;
+		width: 100%;
+		float: left;
+		color: #758697;
+	}
+
+	.fc_content {
+		margin-top: 20px;
+		width: 100%;
+    float: left;
+	}
+</style>
